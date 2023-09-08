@@ -1,0 +1,51 @@
+<title>coup::lobby</title>
+<link rel="stylesheet" href="style.css">
+
+<script type="module">
+  import { html, render } from 'https://esm.sh/htm/preact'
+  import { signal } from 'https://esm.sh/@preact/signals';
+  import { Socket } from "./socket.js"
+
+  const socket = new Socket(`ws:${window.location.host}/lobby${window.location.search}`)
+  const players = signal([])
+  const startingIn = signal(null)
+
+  function updateLobby({ lobby }) {
+    setLobbyId(lobby.id)
+    players.value = lobby.players
+    startingIn.value = lobby.startingIn
+  }
+
+  function setLobbyId(id) {
+    const url = new URL(location)
+    const currentLobbyId = url.searchParams.get("lobby")
+    if (id != currentLobbyId) {
+      url.searchParams.set("lobby", id)
+      window.location.assign(url)
+    }
+  }
+
+  function gameUrl(id) {
+    const url = new URL(location)
+    url.pathname = "/game.html"
+    url.search = ""
+    url.searchParams.set("id", id)
+    return url
+  }
+
+  socket.on("LobbyUpdate", updateLobby)
+  socket.on("GameStarted", ({gameId}) => location.assign(gameUrl(gameId)))
+
+  const Lobby = () => html`
+    <p>Current players:</p>
+    <ul>
+      ${(players.value).map(player => html`<li>${player}</li>`)}
+    </ul>
+    ${startingIn.value === null
+      ? html`<button disabled=${players.value.length <= 1} onclick=${() => socket.send("StartGame")}>Start game</button>`
+      : html`<p>Starting in ${startingIn.value}</p><button onclick=${() => socket.send("CancelGameStart")}>Cancel</button>`
+    }
+    `
+
+  render(html`<${Lobby}/>`, document.body)
+</script>

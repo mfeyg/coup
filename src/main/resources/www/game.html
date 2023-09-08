@@ -1,0 +1,84 @@
+<title>coup::game</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="game.css">
+
+<script type="module">
+  import { html, render } from 'https://esm.sh/htm/preact'
+  import { signal } from 'https://esm.sh/@preact/signals';
+  import { Socket } from "./socket.js"
+  import { Prompt } from "./prompt.js"
+
+  const socket = new Socket(`ws:${window.location.host}/game${window.location.search}`)
+  const player = signal(null)
+  const opponents = signal([])
+  const prompt = signal(null)
+  const events = signal([])
+  const currentTurn = signal(null)
+  const loading = signal(true)
+
+  const Game = () => loading.value ? "Loading..." : html`
+  <main>
+    <div class="player">
+      <p>${player.value.name}</p>
+      <p>${player.value.isk} ISK</p>
+      ${currentTurn.value == player.value.number && html`<p><strong>It's your turn</strong></p>`}
+      ${player.value.revealedInfluences.length > 0 && html`<span>
+        Revealed influences: <ul>${player.value.revealedInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
+      ${player.value.heldInfluences.length > 0 && html`<span>
+        Held influences: <ul>${player.value.heldInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
+    </div>
+    <p>Opponents:</p>
+    ${opponents.value.map(opponent => html`
+      <div class="opponent">
+        <p>${opponent.name}</p>
+        <p>${opponent.isk} ISK</p>
+        ${currentTurn.value == opponent.number && html`<p><strong>It's ${opponent.name}'s turn</strong></p>`}
+        ${opponent.revealedInfluences.length > 0 && html`<span>
+          Revealed influences: <ul>${opponent.revealedInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
+        <p>Held influences: ${opponent.heldInfluences}</p>
+      </div>
+    `)}
+    <${Prompt} prompt=${prompt.value} 
+      player=${player.value}
+      opponents=${opponents.value}
+      close=${() => prompt.value = null}/>
+  </main>
+  <aside>
+    ${events.value.map(event => html`<p>${event}</p>`)}
+  </aside>`
+
+  socket.on("GameUpdate", ({ game }) => {
+    player.value = {
+      name: game.playerName,
+      number: game.playerNumber,
+      isk: game.playerIsk,
+      heldInfluences: game.heldInfluences,
+      revealedInfluences: game.revealedInfluences,
+    }
+    const _opponents = []
+    game.opponents.forEach(opponent => {
+      _opponents[opponent.number] = {
+        name: opponent.name,
+        number: opponent.number,
+        isk: opponent.isk,
+        heldInfluences: opponent.heldInfluences,
+        revealedInfluences: opponent.revealedInfluences,
+      }
+    })
+    opponents.value = _opponents
+    currentTurn.value = game.currentTurn
+    loading.value = false
+  })
+
+  const promptTypes = [
+    "TakeTurn", "RespondToAction", "RespondToChallenge",
+    "RespondToBlock", "SurrenderInfluence", "Exchange",
+  ]
+  promptTypes.forEach(type =>
+    socket.on(type, (message, respond) => prompt.value = { type, message, respond })
+  )
+
+  socket.on("Event", ({ description }) => events.value = events.value.concat([description]))
+
+  render(html`<${Game}/>`, document.body)
+</script>

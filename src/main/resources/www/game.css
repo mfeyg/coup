@@ -1,0 +1,10 @@
+body {
+    display: flex;
+    flex-direction: row;
+}
+
+aside {
+    height: 100%;
+    flex-basis: content;
+    overflow-y: scroll;
+}
