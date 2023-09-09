@@ -4,8 +4,8 @@ function readMessage(data) {
 }
 
 export class Socket {
-  constructor(address) {
-    this.ws = new WebSocket(address)
+  constructor(path) {
+    this.ws = new WebSocket(`wss:${window.location.host}${path}${window.location.search}`)
     this.handlers = new Map()
     this.ws.onmessage = (msg) => {
       const [type, message, id] = readMessage(msg.data)

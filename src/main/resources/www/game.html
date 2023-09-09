@@ -8,7 +8,7 @@
   import { Socket } from "./socket.js"
   import { Prompt } from "./prompt.js"
 
-  const socket = new Socket(`ws:${window.location.host}/game${window.location.search}`)
+  const socket = new Socket("/game")
   const player = signal(null)
   const opponents = signal([])
   const prompt = signal(null)

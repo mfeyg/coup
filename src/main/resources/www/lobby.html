@@ -6,7 +6,7 @@
   import { signal } from 'https://esm.sh/@preact/signals';
   import { Socket } from "./socket.js"
 
-  const socket = new Socket(`ws:${window.location.host}/lobby${window.location.search}`)
+  const socket = new Socket("/lobby")
   const players = signal([])
   const startingIn = signal(null)
 
