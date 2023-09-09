@@ -8,7 +8,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-publish-image:
+  build-and-deploy-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
