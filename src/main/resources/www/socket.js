@@ -3,9 +3,11 @@ function readMessage(data) {
   return [type, payload && JSON.parse(payload), id]
 }
 
+const protocol = location.protocol === "https:" ? "wss:" : "ws:"
+
 export class Socket {
   constructor(path) {
-    this.ws = new WebSocket(`wss:${window.location.host}${path}${window.location.search}`)
+    this.ws = new WebSocket(`${protocol}${location.host}${path}${location.search}`)
     this.handlers = new Map()
     this.ws.onmessage = (msg) => {
       const [type, message, id] = readMessage(msg.data)
