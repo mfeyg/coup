@@ -20,13 +20,12 @@ kotlin {
 ktor {
   docker {
     externalRegistry.set(DockerImageRegistry.externalRegistry(
-      project = provider { "coup" },
-      namespace = providers.environmentVariable("IMAGE_NAME"),
+      project = providers.environmentVariable("IMAGE_NAME"),
       hostname = providers.environmentVariable("REGISTRY"),
       username = providers.environmentVariable("REGISTRY_USERNAME"),
       password = providers.environmentVariable("REGISTRY_PASSWORD"),
     ))
-    imageTag.set("latest")
+    imageTag.set("main")
   }
 }
 
