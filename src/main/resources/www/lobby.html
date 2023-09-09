@@ -36,7 +36,7 @@
   socket.on("LobbyUpdate", updateLobby)
   socket.on("GameStarted", ({gameId}) => location.assign(gameUrl(gameId)))
 
-  const Lobby = () => player.value == null ? "Loading..." : html`
+  const Lobby = () => players.value == null ? "Loading..." : html`
     <p>Current players:</p>
     <ul>
       ${(players.value).map(player => html`<li>${player}</li>`)}
