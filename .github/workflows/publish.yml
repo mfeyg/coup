@@ -25,3 +25,7 @@ jobs:
           IMAGE_VERSION: ${{ steps.meta.outputs.version }}
           REGISTRY_USERNAME: ${{ github.actor }}
           REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy to Render
+        run: curl "$WEBHOOK_URL"
+        env:
+          WEBHOOK_URL: ${{ secrets.DEPLOY_HOOK_URL }}
