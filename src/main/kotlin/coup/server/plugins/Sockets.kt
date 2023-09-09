@@ -61,7 +61,7 @@ fun Application.configureSockets() {
       sendErrors {
         socketController.withSocket(this) { socket ->
           val id = call.parameters["id"] ?: throw BadRequest("Game ID is required")
-          val game = gameController.getGame(id) ?: throw BadRequest("Game $id not found")
+          gameController.getGame(id) ?: throw BadRequest("Game $id not found")
           socket.connect(this)
         }
       }
