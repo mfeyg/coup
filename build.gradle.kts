@@ -25,7 +25,7 @@ ktor {
       username = providers.environmentVariable("REGISTRY_USERNAME"),
       password = providers.environmentVariable("REGISTRY_PASSWORD"),
     ))
-    imageTag.set("main")
+    imageTag.set(providers.environmentVariable("IMAGE_VERSION"))
   }
 }
 
