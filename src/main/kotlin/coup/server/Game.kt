@@ -44,6 +44,7 @@ class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
               combine(playerUpdates, game.turns) { _, _ ->
                 observer.setState(gameState())
               }.launchIn(this)
+              game.events.onEach { event -> observer.event(Event(event)) }
             }
           }
         }
