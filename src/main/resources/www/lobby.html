@@ -1,5 +1,6 @@
 <title>coup::lobby</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="lobby.css">
 
 <script type="module">
   import { html, render } from 'https://esm.sh/htm/preact'
@@ -34,17 +35,20 @@
   }
 
   socket.on("LobbyState", updateLobby)
-  socket.on("GameStarted", ({gameId}) => location.assign(gameUrl(gameId)))
+  socket.on("GameStarted", ({ gameId }) => location.assign(gameUrl(gameId)))
 
   const Lobby = () => players.value == null ? "Loading..." : html`
-    <p>Current players:</p>
-    <ul>
-      ${(players.value).map(player => html`<li>${player}</li>`)}
-    </ul>
+    <div class="lobby">
+    <h2>Players</h2>
+    ${(players.value).map(player => html`
+      <div class="player"><div class="player-icon" style="background-color: ${player.color}"></div>${player.name}</div>
+    `)}
     ${startingIn.value === null
       ? html`<button disabled=${players.value.length <= 1} onclick=${() => socket.send("StartGame")}>Start game</button>`
-      : html`<p>Starting in ${startingIn.value}</p><button onclick=${() => socket.send("CancelGameStart")}>Cancel</button>`
+      : html`<button onclick=${() => socket.send("CancelGameStart")}>Cancel</button>`
     }
+    </div>
+    ${startingIn.value !== null && html`<p class="counter">Starting in ${startingIn.value}</p>`}
     `
 
   render(html`<${Lobby}/>`, document.body)
