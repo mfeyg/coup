@@ -10,7 +10,7 @@
   const players = signal(null)
   const startingIn = signal(null)
 
-  function updateLobby({ lobby }) {
+  function updateLobby(lobby) {
     setLobbyId(lobby.id)
     players.value = lobby.players
     startingIn.value = lobby.startingIn
@@ -33,7 +33,7 @@
     return url
   }
 
-  socket.on("LobbyUpdate", updateLobby)
+  socket.on("LobbyState", updateLobby)
   socket.on("GameStarted", ({gameId}) => location.assign(gameUrl(gameId)))
 
   const Lobby = () => players.value == null ? "Loading..." : html`

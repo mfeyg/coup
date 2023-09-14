@@ -47,24 +47,12 @@
     ${events.value.map(event => html`<p>${event}</p>`)}
   </aside>`
 
-  socket.on("GameUpdate", ({ game }) => {
-    player.value = {
-      name: game.playerName,
-      number: game.playerNumber,
-      isk: game.playerIsk,
-      heldInfluences: game.heldInfluences,
-      revealedInfluences: game.revealedInfluences,
-    }
+  socket.on("GameState", (game) => {
+    player.value = game.player
     const _opponents = []
-    game.opponents.forEach(opponent => {
-      _opponents[opponent.number] = {
-        name: opponent.name,
-        number: opponent.number,
-        isk: opponent.isk,
-        heldInfluences: opponent.heldInfluences,
-        revealedInfluences: opponent.revealedInfluences,
-      }
-    })
+    game.opponents.forEach(opponent =>
+      _opponents[opponent.number] = opponent
+    )
     opponents.value = _opponents
     currentTurn.value = game.currentTurn
     loading.value = false

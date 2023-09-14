@@ -1,15 +1,22 @@
 package coup.server
 
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import coup.server.ConnectionController.SocketConnection
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 
 class GameController {
-  private val mutex = Mutex()
-  private val games: MutableMap<String, Game> = mutableMapOf()
+  private val games = MutableStateFlow(mapOf<String, Game>())
 
-  suspend fun getGame(id: String) = mutex.withLock { games[id] }
+  class GameNotFound : ServerError("Game not found")
 
-  suspend fun newGame(players: List<Socket>) = mutex.withLock {
-    Game(players).also { games[it.id] = it }
+  suspend fun connect(connection: SocketConnection, id: String) {
+    val game = games.value[id] ?: throw GameNotFound()
+    game.connect(connection)
+  }
+
+  fun newGame(players: Iterable<Session<*>>, lobby: Lobby): Game {
+    val game = Game(players, lobby)
+    games.update { it + (game.id to game) }
+    return game
   }
 }

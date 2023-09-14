@@ -9,6 +9,7 @@ export class Socket {
   constructor(path) {
     this.ws = new WebSocket(`${protocol}${location.host}${path}${location.search}`)
     this.handlers = new Map()
+    this.errorHandlers = new Map()
     this.ws.onmessage = (msg) => {
       const [type, message, id] = readMessage(msg.data)
       const handler = this.handlers.get(type)
@@ -19,9 +20,16 @@ export class Socket {
       const respond = id ? (msg => this.send(`[${id}]`, msg)) : (msg => this.send("", msg))
       handler(message, respond)
     }
-    this.on("Id", ({ id }) => sessionStorage.setItem("id", id))
-    this.on("GetId", (_, respond) => respond({ id: sessionStorage.getItem("id") }))
-    this.on("Error", (error) => console.error(error.message))
+    this.on("Id", ({ id }) => localStorage.setItem("id", id))
+    this.on("GetId", (_, respond) => respond({ id: localStorage.getItem("id") }))
+    this.on("GetName", (_, respond) => {
+      const name = localStorage.getItem('name')
+      name ? respond({name}) : location.replace('/')
+    })
+    this.on("Error", (error) => {
+      console.error(error.message)
+      this.errorHandlers.get(error.type)?.(error) 
+    })
   }
 
   send(messageType, content) {
@@ -31,5 +39,9 @@ export class Socket {
 
   on(type, handler) {
     this.handlers.set(type, handler)
+  }
+
+  onError(type, handler) {
+    this.errorHandlers.set(type, handler)
   }
 }

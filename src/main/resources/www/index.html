@@ -13,4 +13,6 @@
   }
 </style>
 
-<form action="lobby.html"><label>Enter your name <input name="name" autofocus></label></form>
+<form action="lobby.html" onsubmit="localStorage.setItem('name', event.target.name.value)">
+  <label>Enter your name <input name="name" autofocus></label>
+</form>

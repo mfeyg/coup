@@ -4,10 +4,9 @@ import coup.game.ActionResponse.Allow
 import coup.game.GameEvent.*
 import coup.game.Permission.Companion.allow
 import coup.server.newId
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 class Game(
   private val players: List<Player>,
@@ -20,8 +19,7 @@ class Game(
   private val _events = MutableSharedFlow<GameEvent>(replay = UNLIMITED)
   val events get() = _events.asSharedFlow()
 
-  private val _currentPlayer =
-    MutableStateFlow(players.first())
+  private val _currentPlayer = MutableStateFlow(players.first())
   var currentPlayer
     get() = _currentPlayer.value
     private set(value) {
@@ -31,10 +29,13 @@ class Game(
 
   private val activePlayers get() = players.filter { it.isActive }
 
+  val scope = CoroutineScope(Dispatchers.Default)
+
   suspend fun start() {
     while (true) {
       if (activePlayers.size < 2) {
         emit(GameOver(activePlayers.first()))
+        scope.cancel()
         break
       }
       takeTurn()

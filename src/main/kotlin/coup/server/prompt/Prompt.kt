@@ -10,7 +10,7 @@ sealed class Prompt<T> {
   val id = newId
   private val config: PromptStrategy<*, T> by lazy { prompt() }
 
-  val requestFrame: Frame get() = Frame.Text(config.request)
+  private val requestFrame: Frame get() = Frame.Text(config.request)
   fun readResponse(response: String) = config.readResponse(response)
 
   protected abstract fun prompt(): PromptStrategy<*, T>
@@ -46,4 +46,6 @@ sealed class Prompt<T> {
       return read(Json.decodeFromString(deserializer, text))
     }
   }
+
+  suspend fun WebSocketSession.send(prompt: Prompt<*>) = send(prompt.requestFrame)
 }

@@ -5,7 +5,7 @@ data class Board(val players: List<Player>, val deck: Deck) {
     fun setUp(players: List<Player>, deck: Deck = Deck.standard()): Board {
       for (player in players) {
         repeat(2) {
-          player.draw(deck.draw())
+          player.drawFrom(deck)
         }
         player.gainIsk(3)
       }
