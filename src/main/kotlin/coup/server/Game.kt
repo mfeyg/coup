@@ -77,7 +77,7 @@ class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
           player.revealedInfluences,
         )
       },
-      players.filter { it.playerNumber != forPlayer }.map { opponent ->
+      players.map { opponent ->
         GameState.Opponent(
           opponent.name,
           opponent.playerNumber,

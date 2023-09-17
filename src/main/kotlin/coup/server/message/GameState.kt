@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GameState(
   val player: Player?,
-  val opponents: List<Opponent>,
+  val players: List<Opponent>,
   val currentTurn: Int
 ) : Message {
   @Serializable

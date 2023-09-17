@@ -10,7 +10,7 @@
 
   const socket = new Socket("/game")
   const player = signal(null)
-  const opponents = signal([])
+  const players = signal([])
   const prompt = signal(null)
   const events = signal([])
   const currentTurn = signal(null)
@@ -18,7 +18,7 @@
 
   const Game = () => loading.value ? "Loading..." : html`
   <main>
-    <div class="player">
+    ${player.value != null && html`<div class="player">
       <p>${player.value.name}</p>
       <p>${player.value.isk} ISK</p>
       ${currentTurn.value == player.value.number && html`<p><strong>It's your turn</strong></p>`}
@@ -26,9 +26,9 @@
         Revealed influences: <ul>${player.value.revealedInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
       ${player.value.heldInfluences.length > 0 && html`<span>
         Held influences: <ul>${player.value.heldInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
-    </div>
+    </div>`}
     <p>Opponents:</p>
-    ${opponents.value.map(opponent => html`
+    ${players.value.filter(p => p.playerNumber != player.value?.playerNumber).map(opponent => html`
       <div class="opponent">
         <p>${opponent.name}</p>
         <p>${opponent.isk} ISK</p>
@@ -40,7 +40,7 @@
     `)}
     <${Prompt} prompt=${prompt.value} 
       player=${player.value}
-      opponents=${opponents.value}
+      opponents=${players.value}
       close=${() => prompt.value = null}/>
   </main>
   <aside>
@@ -49,11 +49,7 @@
 
   socket.on("GameState", (game) => {
     player.value = game.player
-    const _opponents = []
-    game.opponents.forEach(opponent =>
-      _opponents[opponent.number] = opponent
-    )
-    opponents.value = _opponents
+    players.value = game.players
     currentTurn.value = game.currentTurn
     loading.value = false
   })
