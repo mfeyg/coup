@@ -12,6 +12,7 @@ data class GameState(
   @Serializable
   data class Player (
     val name: String,
+    val color: String,
     val number: Int,
     val isk: Int,
     val heldInfluences: List<Influence>,
@@ -21,6 +22,7 @@ data class GameState(
   @Serializable
   data class Opponent(
     val name: String,
+    val color: String,
     val number: Int,
     val isk: Int,
     val heldInfluences: Int,
