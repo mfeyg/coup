@@ -1,9 +1,9 @@
 package coup.server.plugins
 
 import coup.server.*
+import coup.server.Sendable.Companion.send
 import coup.server.ServerError.BadRequest
 import coup.server.message.Error
-import coup.server.message.StartGame.send
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
