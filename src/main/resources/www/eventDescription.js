@@ -1,6 +1,6 @@
 export function describe({ event, type }, players) {
     function player(number) {
-        return players[number === undefined ? event.player : number].name
+        return players?.[number === undefined ? event.player : number]?.name
     }
 
     switch (type) {
