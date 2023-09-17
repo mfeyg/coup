@@ -38,7 +38,6 @@ class TakeTurn(private val player: Player, private val targets: List<Player>) : 
   }
 
   override fun validate(response: Action) {
-    val action = response
-    require { availableActions.contains(action.type) }
+    require { response.type in availableActions }
   }
 }

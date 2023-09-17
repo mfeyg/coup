@@ -22,6 +22,6 @@ class RespondToChallenge(
     }
 
   override fun validate(response: ChallengeResponse) {
-    require { heldInfluences.contains(response.influence) }
+    require { response.influence in heldInfluences }
   }
 }

@@ -58,7 +58,7 @@ class RespondToAction(private val player: Player, private val action: coup.game.
       ActionResponse.Allow -> {}
       is ActionResponse.Block -> {
         require { canBeBlocked }
-        require { blockingInfluences.contains(response.influence) }
+        require { response.influence in blockingInfluences }
       }
 
       is ActionResponse.Challenge -> require { canBeChallenged }

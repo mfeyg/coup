@@ -10,6 +10,6 @@ class SurrenderInfluence(private val heldInfluences: List<Influence>) : Prompt<I
   override fun prompt() = sendAndReceive { response: Response -> response.influence }
 
   override fun validate(response: Influence) {
-    require { heldInfluences.contains(response) }
+    require { response in heldInfluences }
   }
 }
