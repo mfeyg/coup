@@ -9,10 +9,10 @@ import kotlinx.serialization.serializer
 
 sealed class Prompt<T> {
   val id = newId
-  private val config: PromptStrategy<*, T> by lazy { prompt() }
+  private val strategy: PromptStrategy<*, T> by lazy { prompt() }
 
-  private val requestFrame: Frame get() = Frame.Text(config.request)
-  fun readResponse(response: String) = config.readResponse(response).also { validate(it) }
+  private val requestFrame: Frame get() = Frame.Text(strategy.request)
+  fun readResponse(response: String) = strategy.readResponse(response).also { validate(it) }
 
   protected abstract fun prompt(): PromptStrategy<*, T>
 
