@@ -9,12 +9,12 @@ import kotlinx.serialization.serializer
 
 sealed class Prompt<T> {
   val id = newId
-  private val strategy: PromptStrategy<*, T> by lazy { prompt() }
+  private val strategy: Strategy<*, T> by lazy { prompt() }
 
   private val requestFrame: Frame get() = Frame.Text(strategy.request)
   fun readResponse(response: String) = strategy.readResponse(response).also { validate(it) }
 
-  protected abstract fun prompt(): PromptStrategy<*, T>
+  protected abstract fun prompt(): Strategy<*, T>
 
   protected abstract fun validate(response: T)
 
@@ -28,9 +28,9 @@ sealed class Prompt<T> {
   protected inline fun <reified RequestT, reified ResponseT> sendAndReceive(
     request: RequestT?,
     noinline readResponse: (ResponseT) -> T
-  ): PromptStrategy<*, T> {
+  ): Strategy<*, T> {
     val promptType = this::class.simpleName!!
-    return PromptStrategy(
+    return Strategy(
       promptType,
       id,
       request?.let { Json.encodeToString(serializer<RequestT>(), request) },
@@ -43,7 +43,7 @@ sealed class Prompt<T> {
     noinline readResponse: (ResponseT) -> T
   ) = sendAndReceive<Void, ResponseT>(null, readResponse)
 
-  class PromptStrategy<ResponseT, ValueT>(
+  class Strategy<ResponseT, ValueT>(
     promptType: String,
     id: String,
     serializedRequest: String?,
