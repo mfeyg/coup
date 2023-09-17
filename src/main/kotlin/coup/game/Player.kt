@@ -10,7 +10,7 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
     suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse
     suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse
     suspend fun surrenderInfluence(player: Player): Influence
-    suspend fun exchange(player: Player, influences: List<Influence>): List<Influence>
+    suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence>
   }
 
   data class State(val isk: Int, val heldInfluences: List<Influence>, val revealedInfluences: List<Influence>)
