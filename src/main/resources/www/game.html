@@ -29,7 +29,7 @@
         Held influences: <ul>${player.value.heldInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
     </div>`}
     <p>Opponents:</p>
-    ${players.value.filter(p => p.playerNumber != player.value?.playerNumber).map(opponent => html`
+    ${players.value.filter(p => p.number != player.value?.number).map(opponent => html`
       <div class="opponent">
         <p>${opponent.name}</p>
         <p>${opponent.isk} ISK</p>
