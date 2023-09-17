@@ -94,10 +94,7 @@ sealed class Action(val type: Type) {
   }
 
   data class Exchange(override val player: Player) : Action(Type.Exchange) {
-    override suspend fun perform(deck: Deck) {
-      player.exchangeWith(deck)
-      deck.shuffle()
-    }
+    override suspend fun perform(deck: Deck) = player.exchangeWith(deck)
   }
 
   data class Assassinate(override val player: Player, override val target: Player) : Action(Type.Assassinate) {

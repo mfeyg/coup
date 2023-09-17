@@ -58,6 +58,16 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
       heldInfluences -= it
       deck.putBack(it)
     }
+    deck.shuffle()
+    state.update { it.copy(heldInfluences = heldInfluences) }
+  }
+
+  fun swapOut(influence: Influence, deck: Deck) {
+    val heldInfluences = heldInfluences.toMutableList()
+    heldInfluences -= influence
+    deck.putBack(influence)
+    deck.shuffle()
+    heldInfluences += deck.draw()
     state.update { it.copy(heldInfluences = heldInfluences) }
   }
 

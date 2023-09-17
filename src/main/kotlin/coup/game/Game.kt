@@ -74,6 +74,7 @@ class Game(
           val challengeResponse = blocker.respondToChallenge(blockingInfluence, challenger)
           emit(InfluenceRevealed(blocker, challengeResponse.influence))
           if (challengeResponse.influence == blockingInfluence) {
+            blocker.swapOut(blockingInfluence, deck)
             emit(ActionBlocked(action, blocker, blockingInfluence))
             val lostInfluence = challenger.loseInfluence()
             emit(InfluenceSurrendered(challenger, lostInfluence))
@@ -90,13 +91,10 @@ class Game(
         emit(ActionChallenged(action, challenger))
         val (influence) = player.respondToChallenge(action.type.neededInfluence!!, challenger)
         if (influence == action.type.neededInfluence) {
-          coroutineScope {
-            launch { perform(action) }
-            launch {
-              val surrenderedInfluence = challenger.loseInfluence()
-              emit(InfluenceSurrendered(challenger, surrenderedInfluence))
-            }
-          }
+          player.swapOut(influence, deck)
+          val surrenderedInfluence = challenger.loseInfluence()
+          emit(InfluenceSurrendered(challenger, surrenderedInfluence))
+          perform(action)
         }
       }
     }
