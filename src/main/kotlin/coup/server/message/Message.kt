@@ -1,13 +1,14 @@
 package coup.server.message
 
+import coup.server.Sendable
 import io.ktor.websocket.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import kotlin.reflect.full.createType
 
-sealed interface Message {
+sealed interface Message : Sendable {
   private val serializer get() = serializer(this::class.createType())
-  fun toFrame(): Frame = Frame.Text(this::class.simpleName + Json.encodeToString(serializer, this))
+  override fun toFrame(): Frame = Frame.Text(this::class.simpleName + Json.encodeToString(serializer, this))
 
   companion object {
     private val messageTypes = Message::class.sealedSubclasses.associateBy { it.simpleName!! }
@@ -22,6 +23,4 @@ sealed interface Message {
       } as Message?
     }
   }
-
-  suspend fun WebSocketSession.send(message: Message) = send(message.toFrame())
 }
