@@ -1,4 +1,4 @@
-package coup.server.message
+package coup.server
 
 import coup.game.GameEvent
 import io.ktor.websocket.*

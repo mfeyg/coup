@@ -1,7 +1,6 @@
 package coup.server
 
-import coup.server.message.Event
-import coup.server.message.Event.Companion.send
+import coup.server.Event.Companion.send
 import coup.server.message.Message
 import coup.server.message.StartGame.send
 import coup.server.prompt.GetId.send
