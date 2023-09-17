@@ -21,7 +21,7 @@ export function describe({ event, type }, players) {
 function performed(actionType, target) {
     switch (actionType) {
         case "Income": return "took income"
-        case "ForeignAid": return "accepted foreign aid"
+        case "Foreign Aid": return "accepted foreign aid"
         case "Tax": return "collected taxes"
         case "Steal": return `stole from ${target}`
         case "Exchange": return "exchanged with the court"
@@ -32,7 +32,7 @@ function performed(actionType, target) {
 
 function attempted(actionType, target) {
     switch (actionType) {
-        case "ForeignAid": return "invoked foreign aid"
+        case "Foreign Aid": return "invoked foreign aid"
         case "Tax": return "tried to collect taxes"
         case "Steal": return `tried to steal from ${target}`
         case "Exchange": return "tried to exchange with the court"
