@@ -17,9 +17,9 @@ class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
     })
   }
   private val game = Game(Board.setUp(this.players))
+  private val playerColors = players.map { idColor(it.id).cssColor }
   private val playerSessions: List<Session<GameState>> =
     players.mapIndexed { index, it -> Session(it.id, it.name, gameState(index)) }
-  private val playerColors = players.map { idColor(it.id).cssColor }
   private val playerUpdates = combine(this.players.map { it.updates }) { it.toList() }
   private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
   private val scope by game::scope
