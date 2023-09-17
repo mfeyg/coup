@@ -42,7 +42,7 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
   private fun loseInfluence(influence: Influence) {
     state.update {
       it.copy(
-        revealedInfluences = it.revealedInfluences - influence,
+        revealedInfluences = it.revealedInfluences + influence,
         heldInfluences = it.heldInfluences - influence,
       )
     }

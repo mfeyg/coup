@@ -22,23 +22,25 @@
     ${player.value != null && html`<div class="player">
       <p>${player.value.name}</p>
       <p>${player.value.isk} ISK</p>
-      ${currentTurn.value == player.value.number && html`<p><strong>It's your turn</strong></p>`}
       ${player.value.revealedInfluences.length > 0 && html`<span>
         Revealed influences: <ul>${player.value.revealedInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
       ${player.value.heldInfluences.length > 0 && html`<span>
         Held influences: <ul>${player.value.heldInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
     </div>`}
-    <p>Opponents:</p>
+    <div class="opponents">
     ${players.value.filter(p => p.number != player.value?.number).map(opponent => html`
-      <div class="opponent">
-        <p>${opponent.name}</p>
-        <p>${opponent.isk} ISK</p>
-        ${currentTurn.value == opponent.number && html`<p><strong>It's ${opponent.name}'s turn</strong></p>`}
-        ${opponent.revealedInfluences.length > 0 && html`<span>
-          Revealed influences: <ul>${opponent.revealedInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
-        <p>Held influences: ${opponent.heldInfluences}</p>
+      <div class="player">
+        <div class="player-name">${opponent.name}</div>
+        <div class="player-isk">${opponent.isk}</div>
+        <div class="player-influences">
+        ${[...new Array(opponent.heldInfluences)].map(() => html`<div class="player-influence player-influence-hidden"></div>`)}
+        ${opponent.revealedInfluences.map(influence => html`<div class="player-influence player-influence-revealed">${influence}</div>`)}
+        </div>
       </div>
     `)}
+    </div>
+    ${currentTurn.value === player.value?.number && html`<p><strong>It's your turn</strong></p>`}
+    ${currentTurn.value !== player.value?.number && players.value[currentTurn.value] && html`<p><strong>It's ${players.value[currentTurn.value].name}'s turn</strong></p>`}
     <${Prompt} prompt=${prompt.value} 
       player=${player.value}
       opponents=${players.value}

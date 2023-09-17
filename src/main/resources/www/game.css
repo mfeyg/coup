@@ -8,3 +8,35 @@ aside {
     flex-basis: content;
     overflow-y: scroll;
 }
+
+.players {
+    display: flex;
+    flex-direction: row;
+}
+
+.player {
+    border: 1px solid black;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.player-isk::after {
+    content: "ISK"
+}
+
+.player-influence {
+    display: inline-block;
+    border: 1px solid black;
+    width: 5rem;
+    height: 2rem;
+}
+
+.player-influence.player-influence-hidden {
+    border-color: darkgreen;
+    content: "?"
+}
+
+.player-influence.player-influence-revealed {
+    border-color: lightgrey;
+}
