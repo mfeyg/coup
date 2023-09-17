@@ -19,14 +19,14 @@ abstract class SocketPlayer : Player.Agent {
   }
 
   override suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse {
-    return prompt(RespondToChallenge(claim, challenger))
+    return prompt(RespondToChallenge(claim, challenger, player.heldInfluences))
   }
 
   override suspend fun surrenderInfluence(player: Player): Influence {
-    return prompt(SurrenderInfluence())
+    return prompt(SurrenderInfluence(player.heldInfluences))
   }
 
   override suspend fun exchange(player: Player, influences: List<Influence>): List<Influence> {
-    return prompt(Exchange(influences))
+    return prompt(Exchange(influences, player.heldInfluences))
   }
 }
