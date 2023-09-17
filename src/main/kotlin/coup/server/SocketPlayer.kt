@@ -27,6 +27,6 @@ abstract class SocketPlayer : Player.Agent {
   }
 
   override suspend fun exchange(player: Player, influences: List<Influence>): List<Influence> {
-    return prompt(Exchange(influences, player.heldInfluences))
+    return prompt(Exchange(heldInfluences = player.heldInfluences, drawnInfluences = influences))
   }
 }
