@@ -7,4 +7,6 @@ data object GetId : Prompt<String?>() {
   data class Response(val id: String?)
 
   override fun prompt() = sendAndReceive { (id): Response -> id }
+
+  override fun validate(response: String?) {}
 }

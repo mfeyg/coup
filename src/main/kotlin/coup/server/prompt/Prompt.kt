@@ -1,5 +1,6 @@
 package coup.server.prompt
 
+import coup.server.ServerError
 import coup.server.newId
 import io.ktor.websocket.*
 import kotlinx.serialization.DeserializationStrategy
@@ -11,9 +12,18 @@ sealed class Prompt<T> {
   private val config: PromptStrategy<*, T> by lazy { prompt() }
 
   private val requestFrame: Frame get() = Frame.Text(config.request)
-  fun readResponse(response: String) = config.readResponse(response)
+  fun readResponse(response: String) = config.readResponse(response).also { validate(it) }
 
   protected abstract fun prompt(): PromptStrategy<*, T>
+
+  protected abstract fun validate(response: T)
+
+  class ValidationError(requirement: String?) :
+    ServerError(if (requirement != null) "Validation failed: $requirement" else "Validation failed")
+
+  protected fun require(requirement: String? = null, check: () -> Boolean) {
+    if (!check()) throw ValidationError(requirement)
+  }
 
   protected inline fun <reified RequestT, reified ResponseT> sendAndReceive(
     request: RequestT?,

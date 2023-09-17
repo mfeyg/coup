@@ -3,7 +3,6 @@ package coup.server.prompt
 import coup.game.ActionResponse
 import coup.game.Influence
 import coup.game.Player
-import coup.server.ServerError
 import kotlinx.serialization.Serializable
 import coup.game.Action.Type as ActionType
 
@@ -26,14 +25,20 @@ class RespondToAction(private val player: Player, private val action: coup.game.
   @Serializable
   data class Response(val response: ResponseType, val influence: Influence? = null)
 
+  private val canBeChallenged = action.type.neededInfluence != null
+
+  private val canBeBlocked = action.canBeBlockedBy(player)
+
+  private val blockingInfluences = action.type.blockingInfluences
+
   override fun prompt() = sendAndReceive(
     Request(
       player = action.player.playerNumber,
       type = action.type,
       target = action.target?.playerNumber,
-      canBeChallenged = action.type.neededInfluence != null,
-      canBeBlocked = action.canBeBlockedBy(player),
-      blockingInfluences = action.type.blockingInfluences,
+      canBeChallenged = canBeChallenged,
+      canBeBlocked = canBeBlocked,
+      blockingInfluences = blockingInfluences,
       claimedInfluence = action.type.neededInfluence
     )
   ) { response: Response ->
@@ -41,10 +46,22 @@ class RespondToAction(private val player: Player, private val action: coup.game.
       ResponseType.Allow -> ActionResponse.Allow
       ResponseType.Block -> ActionResponse.Block(
         player,
-        response.influence ?: throw ServerError("Influence required to block")
+        response.influence ?: throw ValidationError("Influence required to block")
       )
 
       ResponseType.Challenge -> ActionResponse.Challenge(player)
+    }
+  }
+
+  override fun validate(response: ActionResponse) {
+    when (response) {
+      ActionResponse.Allow -> {}
+      is ActionResponse.Block -> {
+        require { canBeBlocked }
+        require { blockingInfluences.contains(response.influence) }
+      }
+
+      is ActionResponse.Challenge -> require { canBeChallenged }
     }
   }
 }

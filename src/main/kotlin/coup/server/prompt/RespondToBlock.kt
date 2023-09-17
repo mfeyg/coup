@@ -27,4 +27,6 @@ class RespondToBlock(
         ResponseType.Challenge -> BlockResponse.Challenge(player)
       }
     }
+
+  override fun validate(response: BlockResponse) {}
 }

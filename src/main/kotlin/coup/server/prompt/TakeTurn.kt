@@ -36,4 +36,9 @@ class TakeTurn(private val player: Player, private val targets: List<Player>) : 
   override fun prompt() = sendAndReceive(request) { (actionType, target): Response ->
     Action.create(actionType, player, targets.find { it.playerNumber == target })
   }
+
+  override fun validate(response: Action) {
+    val action = response
+    require { availableActions.contains(action.type) }
+  }
 }

@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 
 class RespondToChallenge(
   private val claim: Influence,
-  private val challenger: Player
+  private val challenger: Player,
+  private val heldInfluences: List<Influence>,
 ) : Prompt<ChallengeResponse>() {
   @Serializable
   data class Request(val claim: Influence, val challenger: Int)
@@ -19,4 +20,8 @@ class RespondToChallenge(
     sendAndReceive(Request(claim, challenger.playerNumber)) { response: Response ->
       ChallengeResponse(response.influence)
     }
+
+  override fun validate(response: ChallengeResponse) {
+    require { heldInfluences.contains(response.influence) }
+  }
 }
