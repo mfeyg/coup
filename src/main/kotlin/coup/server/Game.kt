@@ -4,7 +4,6 @@ import coup.game.Board
 import coup.game.Game
 import coup.game.Player
 import coup.server.ConnectionController.SocketConnection
-import coup.server.GameEvent.description
 import coup.server.message.Event
 import coup.server.message.GameState
 import coup.server.prompt.Prompt
@@ -30,7 +29,7 @@ class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
     scope.launch {
       game.events.onEach { event ->
         playerSessions.forEach { session ->
-          session.event(Event(event.description))
+          session.event(Event(event))
         }
       }.launchIn(this)
       combine(playerUpdates, game.turns) { _, _ ->
@@ -45,7 +44,7 @@ class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
               combine(playerUpdates, game.turns) { _, _ ->
                 observer.setState(gameState())
               }.launchIn(this)
-              game.events.onEach { event -> observer.event(Event(event.description)) }
+              game.events.onEach { event -> observer.event(Event(event)) }
             }
           }
         }

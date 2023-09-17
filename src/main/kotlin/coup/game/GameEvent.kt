@@ -1,19 +1,98 @@
 package coup.game
 
+import kotlinx.serialization.Serializable
+
 sealed interface GameEvent {
-  data class TurnStarted(val player: Player) : GameEvent
-  data class GameOver(val winner: Player) : GameEvent
-  data class ActionAttempted(val action: Action) : GameEvent
-  data class ActionPerformed(val action: Action) : GameEvent
-  data class ActionChallenged(val action: Action, val challenger: Player) : GameEvent
-  data class BlockAttempted(val action: Action, val blocker: Player, val influence: Influence) : GameEvent
-  data class ActionBlocked(val action: Action, val blocker: Player, val influence: Influence) : GameEvent
+  @Serializable
+  data class TurnStarted(val player: Int) : GameEvent {
+    constructor(player: Player) : this(player.playerNumber)
+  }
+
+  @Serializable
+  data class GameOver(val winner: Int) : GameEvent {
+    constructor(winner: Player) : this(winner.playerNumber)
+  }
+
+  @Serializable
+  data class ActionAttempted(val player: Int, val actionType: Action.Type, val target: Int?) : GameEvent {
+    constructor(action: Action) : this(action.player.playerNumber, action.type, action.target?.playerNumber)
+  }
+
+  @Serializable
+  data class ActionPerformed(val player: Int, val actionType: Action.Type, val target: Int?) : GameEvent {
+    constructor(action: Action) : this(action.player.playerNumber, action.type, action.target?.playerNumber)
+  }
+
+  @Serializable
+  data class ActionChallenged(
+    val player: Int,
+    val actionType: Action.Type,
+    val neededInfluence: Influence,
+    val target: Int?,
+    val challenger: Int
+  ) :
+    GameEvent {
+    constructor(action: Action, challenger: Player) : this(
+      action.player.playerNumber,
+      action.type,
+      action.type.neededInfluence!!,
+      action.target?.playerNumber,
+      challenger.playerNumber
+    )
+  }
+
+  @Serializable
+  data class BlockAttempted(
+    val player: Int,
+    val actionType: Action.Type,
+    val target: Int?,
+    val blocker: Int,
+    val influence: Influence
+  ) : GameEvent {
+    constructor(action: Action, blocker: Player, influence: Influence) : this(
+      action.player.playerNumber, action.type, action.target?.playerNumber, blocker.playerNumber, influence
+    )
+  }
+
+  @Serializable
+  data class ActionBlocked(
+    val player: Int,
+    val actionType: Action.Type,
+    val target: Int?,
+    val blocker: Int,
+    val influence: Influence
+  ) : GameEvent {
+    constructor(action: Action, blocker: Player, influence: Influence) : this(
+      action.player.playerNumber, action.type, action.target?.playerNumber, blocker.playerNumber, influence
+    )
+  }
+
+  @Serializable
   data class BlockChallenged(
-    val action: Action,
-    val blocker: Player,
+    val player: Int,
+    val actionType: Action.Type,
+    val target: Int?,
+    val blocker: Int,
     val influence: Influence,
-    val challenger: Player
-  ) : GameEvent
-  data class InfluenceRevealed(val player: Player, val influence: Influence) : GameEvent
-  data class InfluenceSurrendered(val player: Player, val influence: Influence) : GameEvent
+    val challenger: Int,
+  ) : GameEvent {
+    constructor(action: Action, blocker: Player, influence: Influence, challenger: Player) : this(
+      action.player.playerNumber,
+      action.type,
+      action.target?.playerNumber,
+      blocker.playerNumber,
+      influence,
+      challenger.playerNumber
+    )
+  }
+
+  @Serializable
+  data class InfluenceRevealed(val player: Int, val influence: Influence) : GameEvent {
+    constructor(player: Player, influence: Influence) : this(player.playerNumber, influence)
+  }
+
+  @Serializable
+  data class InfluenceSurrendered(val player: Int, val influence: Influence) : GameEvent {
+    constructor(player: Player, influence: Influence) : this(player.playerNumber, influence)
+  }
 }

@@ -1,5 +1,7 @@
 package coup.server
 
+import coup.server.message.Event
+import coup.server.message.Event.Companion.send
 import coup.server.message.Message
 import coup.server.message.StartGame.send
 import coup.server.prompt.GetId.send
@@ -17,7 +19,7 @@ class Session<State : Message>(
 ) {
   private val activePrompts = MutableStateFlow(mapOf<String, Pair<Prompt<*>, CompletableDeferred<String>>>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
-  private val events = MutableSharedFlow<Message>(replay = UNLIMITED)
+  private val events = MutableSharedFlow<Event>(replay = UNLIMITED)
   private val state = MutableStateFlow(initialState)
   private val activeConnections = MutableStateFlow(listOf<WebSocketSession>())
 
@@ -34,7 +36,7 @@ class Session<State : Message>(
     return prompt.readResponse(responseValue)
   }
 
-  suspend fun event(event: Message) {
+  suspend fun event(event: Event) {
     events.emit(event)
   }
 

@@ -7,6 +7,7 @@
   import { signal } from 'https://esm.sh/@preact/signals';
   import { Socket } from "./socket.js"
   import { Prompt } from "./prompt.js"
+  import { describe } from "./eventDescription.js"
 
   const socket = new Socket("/game")
   const player = signal(null)
@@ -44,7 +45,7 @@
       close=${() => prompt.value = null}/>
   </main>
   <aside>
-    ${events.value.map(event => html`<p>${event}</p>`)}
+    ${events.value.map(event => html`<p>${describe(event, players.value)}</p>`)}
   </aside>`
 
   socket.on("GameState", (game) => {
@@ -62,7 +63,7 @@
     socket.on(type, (message, respond) => prompt.value = { type, message, respond })
   )
 
-  socket.on("Event", ({ description }) => events.value = events.value.concat([description]))
+  socket.on("Event", (event) => events.value = events.value.concat([event]))
 
   render(html`<${Game}/>`, document.body)
 </script>
