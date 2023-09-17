@@ -1,6 +1,6 @@
 package coup.server
 
-import coup.server.message.CancelGameStart.send
+import coup.server.Sendable.Companion.send
 import coup.server.message.Id
 import io.ktor.websocket.*
 import kotlinx.serialization.Serializable
