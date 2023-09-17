@@ -14,7 +14,6 @@ export function describe({ event, type }, players) {
         case "InfluenceRevealed": return `${player()} revealed ${the(event.influence)}.`
         case "InfluenceSurrendered": return `${player()} surrendered their influence with ${the(event.influence)}.`
         case "TurnStarted": return `${player()}'s turn has started.`
-
     }
 }
 
