@@ -9,6 +9,11 @@ aside {
     overflow-y: scroll;
 }
 
+aside>p {
+    margin: 0;
+    font-size: 0.8rem;
+}
+
 .players {
     display: flex;
     flex-direction: row;
