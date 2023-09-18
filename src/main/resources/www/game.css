@@ -21,6 +21,7 @@ aside>p {
 
 .player {
     border: 1px solid black;
+    border-radius: 2px;
     display: grid;
     grid-template-columns: max-content 1fr;
     grid-template-rows: 1fr 1fr;
