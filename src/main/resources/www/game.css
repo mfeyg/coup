@@ -25,11 +25,16 @@ aside>p {
     grid-template-columns: max-content 1fr;
     grid-template-rows: 1fr 1fr;
     padding: 0.5rem;
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+}
+
+.player.player-current {
+    box-shadow: 2px 2px 2px 4px rgba(97, 81, 203, 0.2);
 }
 
 .player-isk {
     display: list-item;
-    margin-left : 1rem;
+    margin-left: 1rem;
 }
 
 .player-isk::after {

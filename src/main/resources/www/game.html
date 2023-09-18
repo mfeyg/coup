@@ -21,7 +21,7 @@
   <main>
     <div class="players">
     ${players.value.map(current => current.number === player.value?.number ? html`
-    <div class="player">
+    <div class="player ${currentTurn.value === current.number ? "player-current" : ""}">
       <div class="player-name"><strong>You</strong></div>
       <div class="player-isk">${player.value.isk}</div>
       <div class="player-influences">
@@ -29,7 +29,7 @@
       ${player.value.revealedInfluences.map(influence => html`<div class="player-influence player-influence-revealed">${influence}</div>`)}
       </div>
     </div>` : html`
-    <div class="player">
+    <div class="player ${currentTurn.value === current.number ? "player-current" : ""}">
       <div class="player-name">${current.name}</div>
       <div class="player-isk">${current.isk}</div>
       <div class="player-influences">
