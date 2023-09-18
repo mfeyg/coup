@@ -58,3 +58,13 @@ aside {
     border-color: lightgrey;
     color: lightslategrey;
 }
+
+ul.buttons {
+    display: flex;
+    flex-direction: row;
+}
+
+ul.buttons>li {
+    display: block;
+    margin: 0.2rem;
+}

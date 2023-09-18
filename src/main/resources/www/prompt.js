@@ -4,7 +4,7 @@ import { useState } from 'https://esm.sh/preact/hooks'
 function ActionPrompt({ options, onSelect }) {
   return html`
     Choose an action:
-    <ul>
+    <ul class="buttons">
     ${options.map(option => html`
       <li><button onclick=${() => onSelect(option)}>${option.actionType}</button></li>
     `)}
@@ -15,7 +15,7 @@ function ActionPrompt({ options, onSelect }) {
 function TargetPrompt({ targets, onSelect }) {
   return html`
     Choose a target:
-    <ul>
+    <ul class="buttons">
     ${targets.map(target => html`
       <li><button onclick=${() => onSelect(target)}>${target.name}</button></li>
     `)}
