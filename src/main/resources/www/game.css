@@ -24,7 +24,7 @@ aside>p {
     border-radius: 2px;
     display: grid;
     grid-template-columns: max-content 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr 2fr;
     padding: 0.5rem;
     box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
 }
@@ -44,7 +44,7 @@ aside>p {
 
 .player-influences {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     grid-column-end: span 2;
 }
 
