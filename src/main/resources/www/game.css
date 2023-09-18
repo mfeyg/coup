@@ -62,6 +62,7 @@ aside {
 ul.buttons {
     display: flex;
     flex-direction: row;
+    padding: 0;
 }
 
 ul.buttons>li {
