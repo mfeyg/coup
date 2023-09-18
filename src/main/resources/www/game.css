@@ -76,7 +76,17 @@ ul.buttons {
     padding: 0;
 }
 
+@media (orientation: portrait) {
+    ul.buttons {
+        flex-direction: column;
+    }
+}
+
 ul.buttons>li {
     display: block;
     margin: 0.2rem;
+}
+
+ul.buttons button {
+    margin: 0;
 }
