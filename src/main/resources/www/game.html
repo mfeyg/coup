@@ -19,25 +19,24 @@
 
   const Game = () => loading.value ? "Loading..." : html`
   <main>
-    ${player.value != null && html`<div class="player">
-      <p>${player.value.name}</p>
-      <p>${player.value.isk} ISK</p>
-      ${player.value.revealedInfluences.length > 0 && html`<span>
-        Revealed influences: <ul>${player.value.revealedInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
-      ${player.value.heldInfluences.length > 0 && html`<span>
-        Held influences: <ul>${player.value.heldInfluences.map(influence => html`<li>${influence}</li>`)}</ul></span>`}
-    </div>`}
-    <div class="opponents">
-    ${players.value.filter(p => p.number != player.value?.number).map(opponent => html`
-      <div class="player">
-        <div class="player-name">${opponent.name}</div>
-        <div class="player-isk">${opponent.isk}</div>
-        <div class="player-influences">
-        ${[...new Array(opponent.heldInfluences)].map(() => html`<div class="player-influence player-influence-hidden"></div>`)}
-        ${opponent.revealedInfluences.map(influence => html`<div class="player-influence player-influence-revealed">${influence}</div>`)}
-        </div>
+    <div class="players">
+    ${players.value.map(current => current.number === player.value?.number ? html`
+    <div class="player">
+      <div class="player-name"><strong>You</strong></div>
+      <div class="player-isk">${player.value.isk}</div>
+      <div class="player-influences">
+      ${player.value.heldInfluences.map(influence => html`<div class="player-influence player-influence-hidden">${influence}</div>`)}
+      ${player.value.revealedInfluences.map(influence => html`<div class="player-influence player-influence-revealed">${influence}</div>`)}
       </div>
-    `)}
+    </div>` : html`
+    <div class="player">
+      <div class="player-name">${current.name}</div>
+      <div class="player-isk">${current.isk}</div>
+      <div class="player-influences">
+      ${[...new Array(current.heldInfluences)].map(() => html`<div class="player-influence player-influence-hidden"></div>`)}
+      ${current.revealedInfluences.map(influence => html`<div class="player-influence player-influence-revealed">${influence}</div>`)}
+      </div>
+    </div>`)}
     </div>
     ${currentTurn.value === player.value?.number && html`<p><strong>It's your turn</strong></p>`}
     ${currentTurn.value !== player.value?.number && players.value[currentTurn.value] && html`<p><strong>It's ${players.value[currentTurn.value].name}'s turn</strong></p>`}

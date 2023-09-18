@@ -40,20 +40,21 @@ aside {
 .player-influence {
     display: inline-flex;
     border: 1px solid black;
-    width: 5rem;
+    width: 6rem;
     height: 2rem;
     text-align: center;
     justify-content: center;
     align-items: center;
     margin: 0.1rem;
-    color: slategrey;
 }
 
 .player-influence.player-influence-hidden {
     border-color: darkgreen;
     background-color: rgb(189, 211, 212);
+    color: slateblue;
 }
 
 .player-influence.player-influence-revealed {
     border-color: lightgrey;
+    color: lightslategrey;
 }
