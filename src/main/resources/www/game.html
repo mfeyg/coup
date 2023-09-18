@@ -44,10 +44,7 @@
       player=${player.value}
       opponents=${players.value}
       close=${() => prompt.value = null}/>
-  </main>
-  <aside>
-    ${events.value.map(event => html`<p>${describe(event, players.value)}</p>`)}
-  </aside>`
+  </main>`
 
   socket.on("GameState", (game) => {
     player.value = game.player
