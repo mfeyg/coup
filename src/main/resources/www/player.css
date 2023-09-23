@@ -1,0 +1,50 @@
+.player {
+    border: 1px solid black;
+    border-radius: 2px;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-template-rows: 1fr 2fr;
+    padding: 0.5rem;
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+}
+
+.player.player-turn {
+    box-shadow: 0 0 8px 4px royalblue;
+}
+
+.player-isk {
+    display: list-item;
+    margin-left: 1rem;
+}
+
+.player-isk::after {
+    content: " ISK";
+}
+
+.player-influences {
+    display: flex;
+    flex-direction: column;
+    grid-column-end: span 2;
+}
+
+.player-influence {
+    display: inline-flex;
+    border: 1px solid black;
+    width: 6rem;
+    height: 2rem;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    margin: 0.1rem;
+}
+
+.player-influence.player-influence-hidden {
+    border-color: darkgreen;
+    background-color: rgb(189, 211, 212);
+    color: slateblue;
+}
+
+.player-influence.player-influence-revealed {
+    border-color: lightgrey;
+    color: lightslategrey;
+}

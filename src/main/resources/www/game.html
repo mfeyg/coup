@@ -1,16 +1,19 @@
 <title>coup::game</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="game.css">
+<link rel="stylesheet" href="player.css">
+<link rel="stylesheet" href="turnIndicator.css">
 
 <script type="module">
   import { html, render } from 'https://esm.sh/htm/preact'
   import { signal } from 'https://esm.sh/@preact/signals';
   import { Socket } from "./socket.js"
   import { Prompt } from "./prompt.js"
-  import { describe } from "./eventDescription.js"
+  import { Player } from "./player.js"
+  import { TurnIndicator } from "./turnIndicator.js"
 
   const socket = new Socket("/game")
-  const player = signal(null)
+  const thisPlayer = signal(null)
   const players = signal([])
   const prompt = signal(null)
   const events = signal([])
@@ -20,34 +23,19 @@
   const Game = () => loading.value ? "Loading..." : html`
   <main>
     <div class="players">
-    ${players.value.map(current => current.number === player.value?.number ? html`
-    <div class="player ${currentTurn.value === current.number ? "player-current" : ""}">
-      <div class="player-name"><strong>You</strong></div>
-      <div class="player-isk">${player.value.isk}</div>
-      <div class="player-influences">
-      ${player.value.heldInfluences.map(influence => html`<div class="player-influence player-influence-hidden">${influence}</div>`)}
-      ${player.value.revealedInfluences.map(influence => html`<div class="player-influence player-influence-revealed">${influence}</div>`)}
-      </div>
-    </div>` : html`
-    <div class="player ${currentTurn.value === current.number ? "player-current" : ""}">
-      <div class="player-name">${current.name}</div>
-      <div class="player-isk">${current.isk}</div>
-      <div class="player-influences">
-      ${[...new Array(current.heldInfluences)].map(() => html`<div class="player-influence player-influence-hidden"></div>`)}
-      ${current.revealedInfluences.map(influence => html`<div class="player-influence player-influence-revealed">${influence}</div>`)}
-      </div>
-    </div>`)}
+    ${players.value.map(player => player.number === thisPlayer.value?.number ? html`
+      <${Player} player=${thisPlayer.value} current active=${currentTurn.value === player.number} />` : html`
+      <${Player} player=${player} active=${currentTurn.value === player.number} />`)}
     </div>
-    ${currentTurn.value === player.value?.number && html`<p><strong>It's your turn</strong></p>`}
-    ${currentTurn.value !== player.value?.number && players.value[currentTurn.value] && html`<p><strong>It's ${players.value[currentTurn.value].name}'s turn</strong></p>`}
+    <${TurnIndicator} thisPlayer=${thisPlayer.value} activePlayer=${players.value?.[currentTurn.value]} />
     <${Prompt} prompt=${prompt.value} 
-      player=${player.value}
+      player=${thisPlayer.value}
       opponents=${players.value}
       close=${() => prompt.value = null}/>
   </main>`
 
   socket.on("GameState", (game) => {
-    player.value = game.player
+    thisPlayer.value = game.player
     players.value = game.players
     currentTurn.value = game.currentTurn
     loading.value = false
