@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Error(val type: String, val message: String?) : Message {
   companion object {
-    inline fun <reified T : ServerError> from(error: T) = Error(T::class.simpleName!!, error.message)
+    fun from(error: ServerError) = Error(error::class.simpleName!!, error.message)
   }
 }

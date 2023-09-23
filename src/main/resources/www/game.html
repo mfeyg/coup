@@ -63,5 +63,7 @@
 
   socket.on("Event", (event) => events.value = events.value.concat([event]))
 
+  socket.onError("GameNotFound", () => location.assign("/lobby"))
+
   render(html`<${Game}/>`, document.body)
 </script>
