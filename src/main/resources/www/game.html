@@ -22,7 +22,7 @@
   const Game = () => !socket.state.value ? "Loading..." : html`
   <main>
     <div class="players">
-    ${players.value.map(player => player.number === thisPlayer.value?.number ? html`
+    ${players.value?.map(player => player.number === thisPlayer.value?.number ? html`
       <${Player} player=${thisPlayer.value} current active=${currentTurn.value === player.number} />` : html`
       <${Player} player=${player} active=${currentTurn.value === player.number} />`)}
     </div>
