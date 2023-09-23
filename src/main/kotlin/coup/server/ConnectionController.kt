@@ -4,7 +4,7 @@ import coup.server.Sendable.Companion.send
 import coup.server.message.Id
 import io.ktor.websocket.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.Json.Default.decodeFromString
 
 class ConnectionController {
   class SocketConnection(private val socket: WebSocketSession, val name: String, val id: String) :
@@ -24,13 +24,13 @@ class ConnectionController {
 
   private suspend fun readSocketId(socket: WebSocketSession): String? {
     socket.send("GetId")
-    val (id) = Json.decodeFromString<IdResponse>(socket.receiveText())
+    val (id) = decodeFromString<IdResponse>(socket.receiveText())
     return id
   }
 
   private suspend fun readSocketName(socket: WebSocketSession): String {
     socket.send("GetName")
-    val (name) = Json.decodeFromString<NameResponse>(socket.receiveText())
+    val (name) = decodeFromString<NameResponse>(socket.receiveText())
     return name
   }
 
