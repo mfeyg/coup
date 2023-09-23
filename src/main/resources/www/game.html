@@ -6,21 +6,20 @@
 
 <script type="module">
   import { html, render } from 'https://esm.sh/htm/preact'
-  import { signal } from 'https://esm.sh/@preact/signals';
+  import { signal, computed } from 'https://esm.sh/@preact/signals';
   import { Socket } from "./socket.js"
   import { Prompt } from "./prompt.js"
   import { Player } from "./player.js"
   import { TurnIndicator } from "./turnIndicator.js"
 
   const socket = new Socket("/game")
-  const thisPlayer = signal(null)
-  const players = signal([])
+  const thisPlayer = computed(() => socket.state.value?.player)
+  const players = computed(() => socket.state.value?.players)
+  const currentTurn = computed(() => socket.state.value?.currentTurn)
   const prompt = signal(null)
   const events = signal([])
-  const currentTurn = signal(null)
-  const loading = signal(true)
 
-  const Game = () => loading.value ? "Loading..." : html`
+  const Game = () => !socket.state.value ? "Loading..." : html`
   <main>
     <div class="players">
     ${players.value.map(player => player.number === thisPlayer.value?.number ? html`
@@ -33,13 +32,6 @@
       opponents=${players.value}
       close=${() => prompt.value = null}/>
   </main>`
-
-  socket.on("GameState", (game) => {
-    thisPlayer.value = game.player
-    players.value = game.players
-    currentTurn.value = game.currentTurn
-    loading.value = false
-  })
 
   const promptTypes = [
     "TakeTurn", "RespondToAction", "RespondToChallenge",

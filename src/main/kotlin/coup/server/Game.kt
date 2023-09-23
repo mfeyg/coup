@@ -4,7 +4,6 @@ import coup.game.Board
 import coup.game.Game
 import coup.game.Player
 import coup.server.ConnectionController.SocketConnection
-import coup.server.message.GameState
 import coup.server.prompt.Prompt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*

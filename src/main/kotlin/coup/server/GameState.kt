@@ -1,4 +1,4 @@
-package coup.server.message
+package coup.server
 
 import coup.game.Influence
 import kotlinx.serialization.Serializable
@@ -8,7 +8,7 @@ data class GameState(
   val player: Player?,
   val players: List<Opponent>,
   val currentTurn: Int
-) : Message {
+) {
   @Serializable
   data class Player (
     val name: String,

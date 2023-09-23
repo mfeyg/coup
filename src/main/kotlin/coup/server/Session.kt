@@ -1,6 +1,7 @@
 package coup.server
 
 import coup.server.Sendable.Companion.send
+import coup.server.StateUpdate.Companion.send
 import coup.server.message.Message
 import coup.server.prompt.GetId.send
 import coup.server.prompt.Prompt
@@ -10,7 +11,7 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
 
 /** Represents a user's session. */
-class Session<State : Message>(
+class Session<State : Any>(
   val id: String,
   var name: String,
   initialState: State,
@@ -63,7 +64,7 @@ class Session<State : Message>(
 
   suspend fun connect(connection: WebSocketSession) = coroutineScope {
     val listeningJob = launch {
-      state.onEach { connection.send(it) }.launchIn(this)
+      state.onEach { connection.send(StateUpdate(it)) }.launchIn(this)
       events.onEach { connection.send(it) }.launchIn(this)
       val sentPrompts = mutableSetOf<String>()
       activePrompts.onEach { prompts ->

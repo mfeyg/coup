@@ -4,25 +4,21 @@
 
 <script type="module">
   import { html, render } from 'https://esm.sh/htm/preact'
-  import { signal } from 'https://esm.sh/@preact/signals';
+  import { signal, computed, effect } from 'https://esm.sh/@preact/signals';
   import { Socket } from "./socket.js"
 
   const socket = new Socket("/lobby")
-  const players = signal(null)
-  const startingIn = signal(null)
+  const players = computed(() => socket.state.value?.players)
+  const startingIn = computed(() => socket.state.value?.startingIn)
 
-  function updateLobby(lobby) {
-    setLobbyId(lobby.id)
-    players.value = lobby.players
-    startingIn.value = lobby.startingIn
-  }
+  effect(() => socket.state.value?.id != null && setLobbyId(socket.state.value.id))
 
   function setLobbyId(id) {
     const url = new URL(location)
     const currentLobbyId = url.searchParams.get("lobby")
     if (id != currentLobbyId) {
       url.searchParams.set("lobby", id)
-      window.location.assign(url)
+      location.assign(url)
     }
   }
 
@@ -34,7 +30,6 @@
     return url
   }
 
-  socket.on("LobbyState", updateLobby)
   socket.on("GameStarted", ({ gameId }) => location.assign(gameUrl(gameId)))
 
   const Lobby = () => players.value == null ? "Loading..." : html`
