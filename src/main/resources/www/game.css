@@ -35,7 +35,7 @@ aside>p {
 }
 
 .player.player-current {
-    box-shadow: 2px 2px 2px 4px rgba(97, 81, 203, 0.2);
+    box-shadow: 0 0 8px 4px royalblue;
 }
 
 .player-isk {
