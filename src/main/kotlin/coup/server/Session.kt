@@ -1,7 +1,6 @@
 package coup.server
 
 import coup.server.Sendable.Companion.send
-import coup.server.StateUpdate.Companion.send
 import coup.server.message.Message
 import coup.server.prompt.GetId.send
 import coup.server.prompt.Prompt
