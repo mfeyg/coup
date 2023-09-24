@@ -17,10 +17,6 @@
     margin-left: 1rem;
 }
 
-.player-isk::after {
-    content: " ISK";
-}
-
 .player-influences {
     display: flex;
     flex-direction: column;

@@ -1,4 +1,5 @@
 import { html } from 'https://esm.sh/htm/preact'
+import { PlayerIsk } from "./playerIsk.js"
 
 function Influence({ children, hidden }) {
     if (hidden) {
@@ -9,7 +10,6 @@ function Influence({ children, hidden }) {
 }
 
 function Influences({ influences, hidden }) {
-    console.debug(influences)
     if (typeof influences === "number") {
         return [...new Array(influences)].map(() => html`<${Influence} hidden=${hidden} />`)
     } else {
@@ -21,7 +21,7 @@ export function Player({ player, current, active }) {
     return html`
     <div class="player ${active ? "player-turn" : ""}">
       <div class="player-name">${current ? html`<strong>You</strong>` : player.name}</div>
-      <div class="player-isk">${player.isk}</div>
+      <${PlayerIsk} amount=${player.isk} />
       <div class="player-influences">
         <${Influences} influences=${player.heldInfluences} hidden />
         <${Influences} influences=${player.revealedInfluences} />
