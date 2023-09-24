@@ -8,17 +8,12 @@ import coup.server.prompt.Prompt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-class Game private constructor(players: Iterable<Session<*>>, private val lobby: Lobby) {
-  private val players = players.mapIndexed { index, it ->
-    Player(it.name, index, object : SocketPlayer() {
-      override suspend fun <T> prompt(prompt: Prompt<T>) =
-        playerSessions[index].prompt(prompt)
-    })
-  }
-  private val game = Game(Board.setUp(this.players))
-  private val playerColors = players.map { idColor(it.id).cssColor }
-  private val playerSessions: List<Session<GameState>> =
-    players.mapIndexed { index, it -> Session(it.id, it.name, gameState(index)) }
+class Game private constructor(
+  private val baseGame: Game,
+  private val players: List<Player>,
+  private val playerSessions: Iterable<Session<GameState>>,
+  private val playerColors: List<String>,
+) {
   private val playerUpdates = combine(this.players.map { it.updates }) { it.toList() }
   private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
   private val scope = CoroutineScope(Dispatchers.Default)
@@ -26,13 +21,13 @@ class Game private constructor(players: Iterable<Session<*>>, private val lobby:
 
   init {
     scope.launch {
-      game.events.onEach { event ->
-        playerSessions.forEach { session ->
+      baseGame.events.onEach { event ->
+        this@Game.playerSessions.forEach { session ->
           session.event(Event(event))
         }
       }.launchIn(this)
-      combine(playerUpdates, game.turns) { _, _ ->
-        playerSessions.forEachIndexed { index, player ->
+      combine(playerUpdates, baseGame.turns) { _, _ ->
+        this@Game.playerSessions.forEachIndexed { index, player ->
           player.setState(gameState(index))
         }
       }.launchIn(this)
@@ -40,33 +35,47 @@ class Game private constructor(players: Iterable<Session<*>>, private val lobby:
         observers.collectLatest { observers ->
           coroutineScope {
             observers.values.forEach { observer ->
-              combine(playerUpdates, game.turns) { _, _ ->
+              combine(playerUpdates, baseGame.turns) { _, _ ->
                 observer.setState(gameState())
               }.launchIn(this)
-              game.events.onEach { event -> observer.event(Event(event)) }
+              baseGame.events.onEach { event -> observer.event(Event(event)) }
             }
           }
         }
       }
-      game.start()
+      baseGame.start()
     }
   }
 
   companion object {
-    fun new(players: Iterable<Session<*>>, lobby: Lobby) = Game(players, lobby)
+    suspend fun new(playerSessions: Iterable<Session<*>>): coup.server.Game {
+
+      val sessions = playerSessions.map { it.newSession<GameState>() }
+      val players: List<Player> = playerSessions.mapIndexed { index, it ->
+        Player(it.name, index, object : SocketPlayer() {
+          override suspend fun <T> prompt(prompt: Prompt<T>) = sessions[index].prompt(prompt)
+        })
+      }
+      val baseGame = Game(Board.setUp(players))
+      val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
+      return Game(baseGame, players, sessions, playerColors)
+    }
   }
 
   suspend fun connect(connection: SocketConnection) {
-    playerSessions.find { session -> session.id == connection.id }?.let { session ->
-      session.connect(connection)
-      return
-    }
-    val observers = observers.updateAndGet { observers ->
-      if (observers.containsKey(connection.id)) observers else
-        observers + (connection.id to Session(connection.id, connection.name, gameState()))
-    }
-    observers.getValue(connection.id).connect(connection)
+    session(connection).connect(connection)
   }
+
+  private fun session(connection: SocketConnection): Session<GameState> =
+    playerSession(connection.id) ?: observingSession(connection.id, connection.name)
+
+  private fun playerSession(id: String) = playerSessions.find { it.id == id }
+
+  private fun observingSession(id: String, observerName: String) =
+    observers.updateAndGet { observers ->
+      if (observers.containsKey(id)) observers else
+        observers + (id to Session(id, observerName))
+    }.getValue(id)
 
   private fun gameState(forPlayer: Int? = null) =
     GameState(
@@ -90,6 +99,6 @@ class Game private constructor(players: Iterable<Session<*>>, private val lobby:
           opponent.revealedInfluences,
         )
       },
-      game.currentPlayer.playerNumber,
+      baseGame.currentPlayer.playerNumber,
     )
 }

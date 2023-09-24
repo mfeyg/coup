@@ -13,12 +13,11 @@ import kotlinx.coroutines.flow.*
 class Session<State : Any>(
   val id: String,
   var name: String,
-  initialState: State,
 ) {
   private val activePrompts = MutableStateFlow(mapOf<String, Pair<Prompt<*>, CompletableDeferred<String>>>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<Sendable>(replay = UNLIMITED)
-  private val state = MutableStateFlow(initialState)
+  private val state = MutableStateFlow<State?>(null)
   private val activeConnections = MutableStateFlow(listOf<WebSocketSession>())
 
   val messages get() = incomingMessages.asSharedFlow()
@@ -42,6 +41,8 @@ class Session<State : Any>(
     state.value = newState
   }
 
+  fun <T: Any> newSession(): Session<T> = Session(id, name)
+
   private suspend fun receiveFrame(frame: Frame) {
     val text = (frame as Frame.Text).readText()
     val promptResponsePattern = Regex("\\[(\\w+)](\\{.*})")
@@ -63,7 +64,7 @@ class Session<State : Any>(
 
   suspend fun connect(connection: WebSocketSession) = coroutineScope {
     val listeningJob = launch {
-      state.onEach { connection.send(StateUpdate(it)) }.launchIn(this)
+      state.onEach { it?.let { connection.send(StateUpdate(it)) } }.launchIn(this)
       events.onEach { connection.send(it) }.launchIn(this)
       val sentPrompts = mutableSetOf<String>()
       activePrompts.onEach { prompts ->

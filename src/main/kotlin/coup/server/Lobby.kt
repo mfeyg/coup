@@ -57,15 +57,11 @@ class Lobby(
     }
   }
 
-  private suspend fun sessionFor(socket: SocketConnection) = sessionFor(socket.id, socket.name)
-
-  private suspend fun sessionFor(id: String, name: String) = mutex.withLock {
-    val session = players.value[id] ?: newSession(id, name)
+  private suspend fun sessionFor(socket: SocketConnection) = mutex.withLock {
+    val session = players.value[socket.id] ?: Session(socket.id, socket.name)
     players.update { it + (session.id to session) }
     session
   }
-
-  private suspend fun newSession(id: String, name: String) = Session(id, name, state.first())
 
   private suspend fun startGame() {
     try {

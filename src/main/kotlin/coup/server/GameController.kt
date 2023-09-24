@@ -14,8 +14,8 @@ class GameController {
     game.connect(connection)
   }
 
-  fun newGame(players: Iterable<Session<*>>, lobby: Lobby): Game {
-    val game = Game.new(players, lobby)
+  suspend fun newGame(players: Iterable<Session<*>>): Game {
+    val game = Game.new(players)
     games.update { it + (game.id to game) }
     return game
   }
