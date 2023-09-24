@@ -24,7 +24,11 @@ class TakeTurn(private val player: Player, private val targets: List<Player>) : 
   @Serializable
   data class Response(val actionType: Action.Type, val target: Int? = null)
 
-  private val availableActions get() = Action.Type.entries.filter { action -> action.cost <= player.isk }
+  private val availableActions: List<Action.Type>
+    get() {
+      if (player.isk >= 10) return listOf(Action.Type.Coup)
+      return Action.Type.entries.filter { action -> action.cost <= player.isk }
+    }
 
   private val request: Request
     get() = Request(availableActions.map { action ->
