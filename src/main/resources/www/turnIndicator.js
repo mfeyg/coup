@@ -1,3 +1,5 @@
+import { html } from 'https://esm.sh/htm/preact'
+
 export function TurnIndicator({ thisPlayer, activePlayer }) {
     if (!activePlayer) return null;
     if (activePlayer.number === thisPlayer.number) {
