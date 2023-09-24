@@ -18,7 +18,7 @@ export class Socket {
     this.on("GetId", (_, respond) => respond({ id: localStorage.getItem("id") }))
     this.on("GetName", (_, respond) => {
       const name = localStorage.getItem('name')
-      name ? respond({ name }) : location.assign('/')
+      name ? respond({ name }) : location.assign('/name.html')
     })
     this.on("Error", (error) => {
       console.error(error.message)
