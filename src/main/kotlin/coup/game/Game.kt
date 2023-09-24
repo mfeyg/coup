@@ -3,7 +3,6 @@ package coup.game
 import coup.game.ActionResponse.Allow
 import coup.game.GameEvent.*
 import coup.game.Permission.Companion.allow
-import coup.server.newId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
@@ -12,7 +11,6 @@ class Game(
   private val players: List<Player>,
   private val deck: Deck,
 ) {
-  val id = newId
 
   constructor(board: Board) : this(board.players, board.deck)
 

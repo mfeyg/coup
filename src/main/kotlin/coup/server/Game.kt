@@ -22,7 +22,7 @@ class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
   private val playerUpdates = combine(this.players.map { it.updates }) { it.toList() }
   private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
   private val scope by game::scope
-  val id get() = game.id
+  val id = newId
 
   init {
     scope.launch {
