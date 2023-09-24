@@ -1,22 +1,29 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.Collections
+import java.util.WeakHashMap
 
 class GameController {
-  private val games = MutableStateFlow(mapOf<String, Game>())
+  private val games = Collections.newSetFromMap(WeakHashMap<Game, Boolean>())
+  private val mutex = Mutex()
 
   class GameNotFound : ServerError("Game not found")
 
   suspend fun connect(connection: SocketConnection, id: String) {
-    val game = games.value[id] ?: throw GameNotFound()
+    val game = game(id) ?: throw GameNotFound()
     game.connect(connection)
+  }
+
+  private suspend fun game(id: String): Game? = mutex.withLock {
+    games.find { it.id == id }
   }
 
   suspend fun newGame(players: Iterable<Session<*>>): Game {
     val game = Game.new(players)
-    games.update { it + (game.id to game) }
+    mutex.withLock { games.add(game) }
     return game
   }
 }
