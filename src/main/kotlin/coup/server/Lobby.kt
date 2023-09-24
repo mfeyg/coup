@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.seconds
 typealias LobbySession = Session<LobbyState>
 
 class Lobby(
-  private val newGame: suspend Lobby.(Iterable<Session<*>>) -> Game,
+  private val newGame: suspend Lobby.(Iterable<Session<*>>) -> String,
   private val newLobby: suspend () -> Lobby
 ) {
   val id = newId
@@ -78,6 +78,6 @@ class Lobby(
   private suspend fun newGame() {
     val players = this.players.value.values
     val game = newGame(players)
-    players.forEach { player -> player.event(GameStarted(game.id)) }
+    players.forEach { player -> player.event(GameStarted(game)) }
   }
 }

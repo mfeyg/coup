@@ -3,11 +3,10 @@ package coup.server
 import coup.server.ConnectionController.SocketConnection
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.Collections
 import java.util.WeakHashMap
 
 class GameController {
-  private val games = Collections.newSetFromMap(WeakHashMap<Game, Boolean>())
+  private val games = WeakHashMap<Game, String>()
   private val mutex = Mutex()
 
   class GameNotFound : ServerError()
@@ -17,13 +16,14 @@ class GameController {
     game.connect(connection)
   }
 
-  private suspend fun game(id: String): Game? = mutex.withLock {
-    games.find { it.id == id }
+  private suspend fun game(gameId: String): Game? = mutex.withLock {
+    games.entries.find { (_, id) -> id == gameId }?.let { (game, _) -> game }
   }
 
-  suspend fun newGame(players: Iterable<Session<*>>): Game {
+  suspend fun newGame(players: Iterable<Session<*>>): String {
     val game = Game.new(players)
-    mutex.withLock { games.add(game) }
-    return game
+    val gameId = newId
+    mutex.withLock { games.put(game, gameId) }
+    return gameId
   }
 }

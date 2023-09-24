@@ -17,7 +17,6 @@ class Game private constructor(
   private val playerUpdates = combine(this.players.map { it.updates }) { it.toList() }
   private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
   private val scope = CoroutineScope(Dispatchers.Default)
-  val id = newId
 
   init {
     scope.launch {
