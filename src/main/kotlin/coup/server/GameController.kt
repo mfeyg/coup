@@ -10,7 +10,7 @@ class GameController {
   private val games = Collections.newSetFromMap(WeakHashMap<Game, Boolean>())
   private val mutex = Mutex()
 
-  class GameNotFound : ServerError("Game not found")
+  class GameNotFound : ServerError()
 
   suspend fun connect(connection: SocketConnection, id: String) {
     val game = game(id) ?: throw GameNotFound()
