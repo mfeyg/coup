@@ -10,8 +10,9 @@
   const socket = new Socket("/lobby")
   const players = computed(() => socket.state.value?.players)
   const startingIn = computed(() => socket.state.value?.startingIn)
+  const lobbyId = computed(() => socket.state.value?.id)
 
-  effect(() => socket.state.value?.id != null && setLobbyId(socket.state.value.id))
+  effect(() => lobbyId.value != null && setLobbyId(lobbyId.value))
 
   function setLobbyId(id) {
     const url = new URL(location)
