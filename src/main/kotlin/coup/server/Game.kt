@@ -8,7 +8,7 @@ import coup.server.prompt.Prompt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
+class Game private constructor(players: Iterable<Session<*>>, private val lobby: Lobby) {
   private val players = players.mapIndexed { index, it ->
     Player(it.name, index, object : SocketPlayer() {
       override suspend fun <T> prompt(prompt: Prompt<T>) =
@@ -21,7 +21,7 @@ class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
     players.mapIndexed { index, it -> Session(it.id, it.name, gameState(index)) }
   private val playerUpdates = combine(this.players.map { it.updates }) { it.toList() }
   private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
-  private val scope by game::scope
+  private val scope = CoroutineScope(Dispatchers.Default)
   val id = newId
 
   init {
@@ -50,6 +50,10 @@ class Game(players: Iterable<Session<*>>, private val lobby: Lobby) {
       }
       game.start()
     }
+  }
+
+  companion object {
+    fun new(players: Iterable<Session<*>>, lobby: Lobby) = Game(players, lobby)
   }
 
   suspend fun connect(connection: SocketConnection) {

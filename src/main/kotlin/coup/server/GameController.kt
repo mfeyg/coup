@@ -15,7 +15,7 @@ class GameController {
   }
 
   fun newGame(players: Iterable<Session<*>>, lobby: Lobby): Game {
-    val game = Game(players, lobby)
+    val game = Game.new(players, lobby)
     games.update { it + (game.id to game) }
     return game
   }

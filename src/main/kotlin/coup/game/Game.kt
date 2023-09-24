@@ -3,7 +3,6 @@ package coup.game
 import coup.game.ActionResponse.Allow
 import coup.game.GameEvent.*
 import coup.game.Permission.Companion.allow
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
 
@@ -27,13 +26,10 @@ class Game(
 
   private val activePlayers get() = players.filter { it.isActive }
 
-  val scope = CoroutineScope(Dispatchers.Default)
-
   suspend fun start() {
     while (true) {
       if (activePlayers.size < 2) {
         emit(GameOver(activePlayers.first()))
-        scope.cancel()
         break
       }
       takeTurn()
