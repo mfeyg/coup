@@ -11,7 +11,7 @@ class ConnectionController {
     WebSocketSession by socket
 
   suspend fun connection(socket: WebSocketSession): SocketConnection {
-    val id = readSocketId(socket) ?: newId.also { socket.send(Id(it)) }
+    val id = readSocketId(socket) ?: newId(100).also { socket.send(Id(it)) }
     val name = readSocketName(socket)
     return SocketConnection(socket, name, id)
   }
