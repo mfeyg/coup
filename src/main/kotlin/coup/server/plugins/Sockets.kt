@@ -8,8 +8,6 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import java.time.Duration
-import java.util.logging.Level
-import java.util.logging.Logger
 
 fun Application.configureSockets() {
   install(WebSockets) {
@@ -44,6 +42,5 @@ suspend fun WebSocketServerSession.sendErrors(block: suspend () -> Unit) {
     block()
   } catch (e: ServerError) {
     send(Error.from(e))
-    Logger.getGlobal().log(Level.WARNING, e.message, e)
   }
 }
