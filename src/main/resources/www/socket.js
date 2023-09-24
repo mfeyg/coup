@@ -21,7 +21,6 @@ export class Socket {
       name ? respond({ name }) : location.assign('/name.html')
     })
     this.on("Error", (error) => {
-      error.message && console.error(error.message)
       this.errorHandlers.get(error.type)?.(error)
     })
     window.addEventListener("load", () => this.connect())
