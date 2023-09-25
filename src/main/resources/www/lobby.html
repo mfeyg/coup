@@ -21,6 +21,7 @@
     const currentLobbyId = url.searchParams.get("id")
     if (id != currentLobbyId) {
       url.searchParams.set("id", id)
+      url.searchParams.delete("new")
       location.assign(url)
     }
   }
