@@ -11,8 +11,7 @@ import kotlin.time.Duration.Companion.seconds
 typealias LobbySession = Session<LobbyState>
 
 class Lobby(
-  private val newGame: suspend Lobby.(Iterable<Session<*>>) -> String,
-  private val newLobby: suspend () -> Lobby
+  private val newGame: suspend Lobby.(Iterable<Session<*>>) -> String
 ) {
   val id = newId
 
@@ -35,7 +34,6 @@ class Lobby(
               when (message) {
                 StartGame -> startGameJob = this@DynamicTask.launch { startGame() }
                 CancelGameStart -> startGameJob?.cancelAndJoin()
-                NewLobby -> player.event(LobbyCreated(newLobby().id))
                 else -> {}
               }
             }.launchIn(this)

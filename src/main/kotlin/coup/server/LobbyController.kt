@@ -23,7 +23,7 @@ class LobbyController(private val gameController: GameController) {
     lobbies.find { it.id == id }
   }
 
-  private fun createLobby(): Lobby = Lobby({ gameController.newGame(it) }, { newLobby() })
+  private fun createLobby(): Lobby = Lobby { gameController.newGame(it) }
 
   private suspend fun newLobby(): Lobby = mutex.withLock { createLobby().also { lobbies.add(it) } }
 }
