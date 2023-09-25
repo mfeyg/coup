@@ -21,7 +21,7 @@
   const winner = signal(null)
 
   function lobbyPath() {
-    const lobby = new URLSearchParams(location.search).get("lobby")
+    const lobbyId = new URLSearchParams(location.search).get("lobbyId")
     return lobby ? "/lobby.html?id=" + lobby : "/lobby.html"
   }
 
