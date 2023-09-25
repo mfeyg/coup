@@ -28,7 +28,7 @@
       <${Player} player=${player} active=${currentTurn.value === player.number} />`)}
     </div>
     <${TurnIndicator} thisPlayer=${thisPlayer.value} activePlayer=${players.value?.[currentTurn.value]} />
-    ${winner.value && html`<div class="winner">${winner.value} wins!</div>`}
+    ${winner.value && html`<div class="winner">${players.value[winner.value].name} wins!</div>`}
     <${Prompt} prompt=${prompt.value} 
       player=${thisPlayer.value}
       opponents=${players.value}
