@@ -25,6 +25,7 @@ fun Application.configureSockets() {
         lobbyController.connect(
           connectionController.connection(this),
           id = call.parameters["id"],
+          newLobby = call.parameters.contains("new"),
         )
       }
     }

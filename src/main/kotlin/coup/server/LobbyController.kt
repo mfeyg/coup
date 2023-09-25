@@ -13,8 +13,9 @@ class LobbyController(private val gameController: GameController) {
 
   class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
 
-  suspend fun connect(socket: SocketConnection, id: String?) {
-    val lobby = id?.let { getLobby(id) ?: throw LobbyNotFound(id) } ?: defaultLobby
+  suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
+    val lobby = if (newLobby) newLobby() else
+      id?.let { getLobby(id) ?: throw LobbyNotFound(id) } ?: defaultLobby
     lobby.connect(socket)
   }
 
