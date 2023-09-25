@@ -10,32 +10,16 @@
   const socket = new Socket("/lobby")
   const players = computed(() => socket.state.value?.players)
   const startingIn = computed(() => socket.state.value?.startingIn)
-  const lobbyId = computed(() => socket.state.value?.id)
-
-  effect(() => lobbyId.value != null && setLobbyId(lobbyId.value))
 
   socket.onError("LobbyNotFound", () => location.assign("/lobby.html"))
+  socket.on("NewLobby", ({ id }) => location.replace("/lobby.html?id=" + id))
 
-  function setLobbyId(id) {
-    const url = new URL(location)
-    const currentLobbyId = url.searchParams.get("id")
-    if (id != currentLobbyId) {
-      url.searchParams.set("id", id)
-      url.searchParams.delete("new")
-      location.replace(url)
-    }
+  function goToGame(gameId) {
+    const lobbyId = new URLSearchParams(location.search).get("id")
+    location.assign(`/game.html?id=${gameId}&lobbyId=${lobbyId}`)
   }
 
-  function gameUrl(id) {
-    const url = new URL(location)
-    url.pathname = "/game.html"
-    url.search = ""
-    url.searchParams.set("id", id)
-    url.searchParams.set("lobbyId", lobbyId.value)
-    return url
-  }
-
-  socket.on("GameStarted", ({ gameId }) => location.assign(gameUrl(gameId)))
+  socket.on("GameStarted", ({ id }) => goToGame(id))
 
   const Lobby = () => players.value == null ? "Loading..." : html`
     <div class="lobby">

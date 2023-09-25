@@ -1,6 +1,8 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
+import coup.server.Sendable.Companion.send
+import coup.server.message.NewLobby
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.*
@@ -14,8 +16,15 @@ class LobbyController(private val gameController: GameController) {
   class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
 
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
-    val lobby = if (newLobby) newLobby() else
-      id?.let { getLobby(id) ?: throw LobbyNotFound(id) } ?: defaultLobby
+    if (newLobby) {
+      val lobby = newLobby()
+      socket.send(NewLobby(lobby.id))
+      return
+    } else if (id == null) {
+      socket.send(NewLobby(defaultLobby.id))
+      return
+    }
+    val lobby = getLobby(id) ?: throw LobbyNotFound(id)
     lobby.connect(socket)
   }
 
