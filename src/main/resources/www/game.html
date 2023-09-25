@@ -22,7 +22,7 @@
 
   function lobbyPath() {
     const lobbyId = new URLSearchParams(location.search).get("lobbyId")
-    return lobby ? "/lobby.html?id=" + lobby : "/lobby.html"
+    return lobbyId ? "/lobby.html?id=" + lobbyId : "/lobby.html"
   }
 
   const Game = () => !socket.state.value ? "Loading..." : html`
