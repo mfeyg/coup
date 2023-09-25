@@ -7,6 +7,7 @@ import coup.server.ConnectionController.SocketConnection
 import coup.server.prompt.Prompt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlin.time.Duration.Companion.minutes
 
 class Game private constructor(
   private val baseGame: Game,
@@ -17,6 +18,7 @@ class Game private constructor(
   private val playerUpdates = combine(this.players.map { it.updates }) { it.toList() }
   private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
   private val scope = CoroutineScope(Dispatchers.Default)
+  private val connectionCount = MutableStateFlow(0)
 
   init {
     scope.launch {
@@ -42,6 +44,14 @@ class Game private constructor(
           }
         }
       }
+      launch {
+        connectionCount.collectLatest { connections ->
+          if (connections == 0) {
+            delay(5.minutes)
+            scope.cancel()
+          }
+        }
+      }
       baseGame.start()
     }
   }
@@ -62,7 +72,12 @@ class Game private constructor(
   }
 
   suspend fun connect(connection: SocketConnection) {
-    session(connection).connect(connection)
+    try {
+      connectionCount.update { it + 1 }
+      session(connection).connect(connection)
+    } finally {
+      connectionCount.update { it - 1 }
+    }
   }
 
   private fun session(connection: SocketConnection): Session<GameState> =
