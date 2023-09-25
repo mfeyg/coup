@@ -33,7 +33,7 @@ class LobbyController(private val gameController: GameController) {
     lobbies.entries.find { (_, id) -> id == lobbyId }?.let { (lobby, _) -> lobby }
   }
 
-  private fun Lobby() = Lobby { gameController.newGame(it) }
+  private fun Lobby() = Lobby { gameController.newGame(it, this) }
 
   private suspend fun newLobby() = mutex.withLock {
     val lobby = Lobby()

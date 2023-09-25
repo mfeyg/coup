@@ -15,8 +15,12 @@ class Lobby(
 ) {
   private val players = MutableStateFlow(mapOf<String, LobbySession>())
   private val startingIn = MutableStateFlow<Int?>(null)
-  private val state = combine(players, startingIn) { players, startingIn ->
-    LobbyState(players.values.map { LobbyState.Player(it.name, idColor(it.id).cssColor) }, startingIn)
+  private val champion = MutableStateFlow<String?>(null)
+  private val state = combine(players, champion, startingIn) { players, champion, startingIn ->
+    LobbyState(
+      players.values.map { LobbyState.Player(it.name, idColor(it.id).cssColor, it.id == champion) },
+      startingIn
+    )
   }
 
   private val mutex = Mutex()
@@ -51,6 +55,10 @@ class Lobby(
     listener.runWhile {
       session.connect(socket)
     }
+  }
+
+  fun setChampion(id: String) {
+    champion.value = id
   }
 
   private suspend fun sessionFor(socket: SocketConnection) = mutex.withLock {

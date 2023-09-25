@@ -20,8 +20,8 @@ class GameController {
     games.entries.find { (_, id) -> id == gameId }?.let { (game, _) -> game }
   }
 
-  suspend fun newGame(players: Iterable<Session<*>>): String {
-    val game = Game.new(players)
+  suspend fun newGame(players: Iterable<Session<*>>, lobby: Lobby): String {
+    val game = Game.new(players, lobby)
     val gameId = newId
     mutex.withLock { games.put(game, gameId) }
     return gameId

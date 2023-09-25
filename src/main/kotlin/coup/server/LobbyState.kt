@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class LobbyState(val players: List<Player>, val startingIn: Int?) {
   @Serializable
-  data class Player(val name: String, val color: String)
+  data class Player(val name: String, val color: String, val champion: Boolean)
 }

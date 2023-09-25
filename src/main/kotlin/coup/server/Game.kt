@@ -2,6 +2,7 @@ package coup.server
 
 import coup.game.Board
 import coup.game.Game
+import coup.game.GameEvent
 import coup.game.Player
 import coup.server.ConnectionController.SocketConnection
 import coup.server.prompt.Prompt
@@ -12,8 +13,9 @@ import kotlin.time.Duration.Companion.minutes
 class Game private constructor(
   private val baseGame: Game,
   private val players: List<Player>,
-  private val playerSessions: Iterable<Session<GameState>>,
+  private val playerSessions: List<Session<GameState>>,
   private val playerColors: List<String>,
+  private val lobby: Lobby,
 ) {
   private val playerUpdates = combine(this.players.map { it.updates }) { it.toList() }
   private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
@@ -52,12 +54,15 @@ class Game private constructor(
           }
         }
       }
+      baseGame.events.filterIsInstance<GameEvent.GameOver>()
+        .onEach { (winner) -> lobby.setChampion(playerSessions[winner].id) }
+        .launchIn(this)
       baseGame.start()
     }
   }
 
   companion object {
-    suspend fun new(playerSessions: Iterable<Session<*>>): coup.server.Game {
+    suspend fun new(playerSessions: Iterable<Session<*>>, lobby: Lobby): coup.server.Game {
 
       val sessions = playerSessions.map { it.newSession<GameState>() }
       val players: List<Player> = playerSessions.mapIndexed { index, it ->
@@ -67,7 +72,7 @@ class Game private constructor(
       }
       val baseGame = Game(Board.setUp(players))
       val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
-      return Game(baseGame, players, sessions, playerColors)
+      return Game(baseGame, players, sessions, playerColors, lobby)
     }
   }
 
