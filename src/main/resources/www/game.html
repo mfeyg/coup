@@ -20,6 +20,11 @@
   const prompt = signal(null)
   const winner = signal(null)
 
+  function lobbyPath() {
+    const lobby = new URLSearchParams(location.search).get("lobby")
+    return lobby ? "/lobby.html?id=" + lobby : "/lobby.html"
+  }
+
   const Game = () => !socket.state.value ? "Loading..." : html`
   <main>
     <div class="players">
@@ -29,7 +34,8 @@
     </div>
     ${winner.value == null ? html`
     <${TurnIndicator} thisPlayer=${thisPlayer.value} activePlayer=${players.value?.[currentTurn.value]} /> ` : html`
-    <div class="winner">${players.value[winner.value].name} wins!</div>`}
+    <div class="winner">${players.value[winner.value].name} wins!</div>
+    <a href=${lobbyPath()}>Back to lobby</a>`}
     <${Prompt} prompt=${prompt.value} 
       player=${thisPlayer.value}
       opponents=${players.value}
@@ -46,7 +52,7 @@
 
   socket.onEvent("GameOver", e => winner.value = e.winner)
 
-  socket.onError("GameNotFound", () => location.assign("/lobby.html"))
+  socket.onError("GameNotFound", () => location.assign(lobbyPath()))
 
   render(html`<${Game}/>`, document.body)
 </script>
