@@ -18,7 +18,7 @@ class Lobby(
   private val players = MutableStateFlow(mapOf<String, LobbySession>())
   private val startingIn = MutableStateFlow<Int?>(null)
   private val state = combine(players, startingIn) { players, startingIn ->
-    LobbyState(id, players.values.map { LobbyState.Player(it.name, idColor(it.id).cssColor) }, startingIn)
+    LobbyState(players.values.map { LobbyState.Player(it.name, idColor(it.id).cssColor) }, startingIn)
   }
 
   private val mutex = Mutex()
