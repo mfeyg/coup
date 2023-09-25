@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.seconds
 typealias LobbySession = Session<LobbyState>
 
 class Lobby(
-  private val newGame: suspend Lobby.(Iterable<Session<*>>) -> String
+  private val createGame: suspend Lobby.(Iterable<Session<*>>) -> String
 ) {
   private val players = MutableStateFlow(mapOf<String, LobbySession>())
   private val startingIn = MutableStateFlow<Int?>(null)
@@ -73,7 +73,7 @@ class Lobby(
 
   private suspend fun newGame() {
     val players = this.players.value.values
-    val game = newGame(players)
+    val game = createGame(players)
     players.forEach { player -> player.event(GameStarted(game)) }
   }
 }
