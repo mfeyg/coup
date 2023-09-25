@@ -57,5 +57,7 @@ sealed class Prompt<T> {
     }
   }
 
-  suspend fun WebSocketSession.send(prompt: Prompt<*>) = send(prompt.requestFrame)
+  companion object {
+    suspend fun WebSocketSession.send(prompt: Prompt<*>) = send(prompt.requestFrame)
+  }
 }

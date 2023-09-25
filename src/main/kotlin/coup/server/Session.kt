@@ -2,8 +2,8 @@ package coup.server
 
 import coup.server.Sendable.Companion.send
 import coup.server.message.Message
-import coup.server.prompt.GetId.send
 import coup.server.prompt.Prompt
+import coup.server.prompt.Prompt.Companion.send
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
