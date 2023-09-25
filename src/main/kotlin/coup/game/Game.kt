@@ -94,9 +94,7 @@ class Game(
     }
   }
 
-  private suspend fun emit(event: GameEvent) {
-    _events.emit(event)
-  }
+  private suspend fun emit(event: GameEvent) = _events.emit(event)
 
   private suspend fun perform(action: Action) {
     emit(ActionPerformed(action))
