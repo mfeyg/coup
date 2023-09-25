@@ -25,7 +25,7 @@
     <div class="lobby">
     <h2>Players</h2>
     ${(players.value).map(player => html`
-      <div class="player"><div class="player-icon" style="background-color: ${player.color}"></div>${player.name}</div>
+      <div class="player ${player.champion ? "champion" : ""}"><div class="player-icon" style="background-color: ${player.color}"></div>${player.name}</div>
     `)}
     ${startingIn.value === null
       ? html`<button disabled=${players.value.length <= 1} onclick=${() => socket.send("StartGame")}>Start game</button>`

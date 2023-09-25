@@ -22,3 +22,7 @@ h2 {
 .new-lobby {
     margin-top: 0.5rem;
 }
+
+.champion {
+    text-shadow: #FC0 1px 0 10px;
+}
