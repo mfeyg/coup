@@ -14,6 +14,8 @@
 
   effect(() => lobbyId.value != null && setLobbyId(lobbyId.value))
 
+  socket.onError("LobbyNotFound", () => location.assign("/lobby.html"))
+
   function setLobbyId(id) {
     const url = new URL(location)
     const currentLobbyId = url.searchParams.get("id")
