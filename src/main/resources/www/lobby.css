@@ -17,3 +17,7 @@ h2 {
 .lobby>button {
     min-width: 7rem;
 }
+
+.new-lobby {
+    margin-top: 0.5rem;
+}

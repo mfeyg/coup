@@ -49,7 +49,7 @@
     </div>
     ${startingIn.value !== null ?
       html`<p class="counter">Starting in ${startingIn.value}</p>` :
-      html`<a href="/lobby.html?new">New lobby</a>`}
+      html`<div class="new-lobby"><a href="/lobby.html?new">New lobby</a></div>`}
     `
 
   render(html`<${Lobby}/>`, document.body)
