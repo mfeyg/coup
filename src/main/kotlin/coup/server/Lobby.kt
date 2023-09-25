@@ -80,7 +80,12 @@ class Lobby(
   }
 
   private suspend fun newGame() {
-    val players = this.players.value.values
+    var players = this.players.value.values.toList()
+    val championId = champion.value
+    val champion = players.indexOfFirst { it.id == championId }
+    if (champion != -1) {
+      players = players.subList(champion, players.size) + players.subList(0, champion)
+    }
     val game = createGame(players)
     players.forEach { player -> player.event(GameStarted(game)) }
   }
