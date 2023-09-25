@@ -91,9 +91,9 @@ class Game private constructor(
         observers + (id to Session(id, observerName))
     }.getValue(id)
 
-  private fun gameState(forPlayer: Int? = null) =
+  private fun gameState(playerNumber: Int? = null) =
     GameState(
-      forPlayer?.let { players[it] }?.let { player ->
+      playerNumber?.let { players[it] }?.let { player ->
         GameState.Player(
           player.name,
           playerColors[player.playerNumber],
