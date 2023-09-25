@@ -22,7 +22,7 @@
     if (id != currentLobbyId) {
       url.searchParams.set("id", id)
       url.searchParams.delete("new")
-      location.assign(url)
+      location.replace(url)
     }
   }
 
