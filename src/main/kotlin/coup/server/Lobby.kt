@@ -13,8 +13,6 @@ typealias LobbySession = Session<LobbyState>
 class Lobby(
   private val newGame: suspend Lobby.(Iterable<Session<*>>) -> String
 ) {
-  val id = newId
-
   private val players = MutableStateFlow(mapOf<String, LobbySession>())
   private val startingIn = MutableStateFlow<Int?>(null)
   private val state = combine(players, startingIn) { players, startingIn ->

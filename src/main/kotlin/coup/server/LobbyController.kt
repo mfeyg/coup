@@ -8,9 +8,10 @@ import kotlinx.coroutines.sync.withLock
 import java.util.*
 
 class LobbyController(private val gameController: GameController) {
-  private val defaultLobby = createLobby()
-  private val lobbies = Collections.newSetFromMap(WeakHashMap<Lobby, Boolean>())
-    .apply { add(defaultLobby) }
+  private val defaultLobby = Lobby()
+  private val defaultLobbyId = newId
+  private val lobbies = WeakHashMap<Lobby, String>()
+    .apply { put(defaultLobby, defaultLobbyId) }
   private val mutex = Mutex()
 
   class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
@@ -18,21 +19,26 @@ class LobbyController(private val gameController: GameController) {
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
     if (newLobby) {
       val lobby = newLobby()
-      socket.send(NewLobby(lobby.id))
+      socket.send(NewLobby(lobby))
       return
     } else if (id == null) {
-      socket.send(NewLobby(defaultLobby.id))
+      socket.send(NewLobby(defaultLobbyId))
       return
     }
-    val lobby = getLobby(id) ?: throw LobbyNotFound(id)
+    val lobby = findLobby(id) ?: throw LobbyNotFound(id)
     lobby.connect(socket)
   }
 
-  private suspend fun getLobby(id: String) = mutex.withLock {
-    lobbies.find { it.id == id }
+  private suspend fun findLobby(lobbyId: String) = mutex.withLock {
+    lobbies.entries.find { (_, id) -> id == lobbyId }?.let { (lobby, _) -> lobby }
   }
 
-  private fun createLobby(): Lobby = Lobby { gameController.newGame(it) }
+  private fun Lobby() = Lobby { gameController.newGame(it) }
 
-  private suspend fun newLobby(): Lobby = mutex.withLock { createLobby().also { lobbies.add(it) } }
+  private suspend fun newLobby() = mutex.withLock {
+    val lobby = Lobby()
+    val id = newId
+    lobbies[lobby] = id
+    id
+  }
 }
