@@ -45,7 +45,9 @@
       : html`<button onclick=${() => socket.send("CancelGameStart")}>Cancel</button>`
     }
     </div>
-    ${startingIn.value !== null && html`<p class="counter">Starting in ${startingIn.value}</p>`}
+    ${startingIn.value !== null ?
+      html`<p class="counter">Starting in ${startingIn.value}</p>` :
+      html`<a href="/lobby.html?new">New lobby</a>`}
     `
 
   render(html`<${Lobby}/>`, document.body)
