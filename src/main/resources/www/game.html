@@ -18,7 +18,7 @@
   const players = computed(() => socket.state.value?.players)
   const currentTurn = computed(() => socket.state.value?.currentTurn)
   const prompt = signal(null)
-  const events = signal([])
+  const winner = signal(null)
 
   const Game = () => !socket.state.value ? "Loading..." : html`
   <main>
@@ -28,6 +28,7 @@
       <${Player} player=${player} active=${currentTurn.value === player.number} />`)}
     </div>
     <${TurnIndicator} thisPlayer=${thisPlayer.value} activePlayer=${players.value?.[currentTurn.value]} />
+    ${winner.value && html`<div class="winner">${winner.value} wins!</div>`}
     <${Prompt} prompt=${prompt.value} 
       player=${thisPlayer.value}
       opponents=${players.value}
@@ -42,7 +43,7 @@
     socket.on(type, (message, respond) => prompt.value = { type, message, respond })
   )
 
-  socket.on("Event", (event) => events.value = events.value.concat([event]))
+  socket.onEvent("GameOver", e => winner.value = e.winner)
 
   socket.onError("GameNotFound", () => location.assign("/lobby.html"))
 

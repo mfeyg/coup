@@ -71,7 +71,7 @@ class Game(
             blocker.swapOut(blockingInfluence, deck)
             emit(ActionBlocked(action, blocker, blockingInfluence))
             val lostInfluence = challenger.loseInfluence()
-            emit(InfluenceSurrendered(challenger, lostInfluence))
+            lostInfluence?.let { emit(InfluenceSurrendered(challenger, lostInfluence)) }
           } else {
             perform(action)
           }
@@ -87,7 +87,7 @@ class Game(
         if (influence == action.type.neededInfluence) {
           player.swapOut(influence, deck)
           val surrenderedInfluence = challenger.loseInfluence()
-          emit(InfluenceSurrendered(challenger, surrenderedInfluence))
+          surrenderedInfluence?.let { emit(InfluenceSurrendered(challenger, surrenderedInfluence)) }
           perform(action)
         }
       }

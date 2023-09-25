@@ -36,8 +36,11 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
     state.update { it.copy(heldInfluences = it.heldInfluences + influences) }
   }
 
-  suspend fun loseInfluence(): Influence = agent.surrenderInfluence(this)
-    .also { loseInfluence(it) }
+  suspend fun loseInfluence(): Influence? {
+    if (heldInfluences.isEmpty()) return null
+    val influence = agent.surrenderInfluence(this)
+    return influence.also { loseInfluence(it) }
+  }
 
   private fun loseInfluence(influence: Influence) {
     state.update {

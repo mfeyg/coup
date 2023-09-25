@@ -10,6 +10,6 @@ class Event(private val event: GameEvent) : Sendable {
   override fun toFrame(): Frame {
     val eventType = event::class.simpleName!!
     val payload = Json.encodeToString(serializer(event::class.createType()), event)
-    return Frame.Text("""Event{"type":"$eventType","event":$payload}""")
+    return Frame.Text("""Event{"type":"$eventType","payload":$payload}""")
   }
 }
