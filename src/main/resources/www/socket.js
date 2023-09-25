@@ -19,7 +19,8 @@ export class Socket {
     this.on("GetId", (_, respond) => respond({ id: localStorage.getItem("id") }))
     this.on("GetName", (_, respond) => {
       const name = localStorage.getItem('name')
-      name ? respond({ name }) : location.assign('/name.html')
+      name ? respond({ name }) :
+        location.assign(`/name.html?redirect=` + encodeURIComponent(location.pathname + location.search))
     })
     this.on("Error", (error) => {
       this.errorHandlers.get(error.type)?.(error)
