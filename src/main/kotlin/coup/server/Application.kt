@@ -1,9 +1,7 @@
 package coup.server
 
 import coup.server.plugins.configureRouting
-import coup.server.plugins.configureSerialization
 import coup.server.plugins.configureSockets
-import coup.server.plugins.configureTemplating
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -15,7 +13,5 @@ fun main() {
 
 fun Application.module() {
   configureSockets()
-  configureTemplating()
-  configureSerialization()
   configureRouting()
 }
