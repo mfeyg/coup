@@ -12,6 +12,14 @@
 let redirect = new URLSearchParams(location.search).get("redirect")
 if (redirect != null) {
   redirect = new URL(location.origin + redirect)
-  document.getElementById("name-form").action = redirect.pathname + redirect.search
+  const form = document.getElementById("name-form")
+  form.action = redirect.pathname
+  new URLSearchParams(redirect.search).forEach((value, name) => {
+    const hidden = document.createElement("input")
+    hidden.type = "hidden"
+    hidden.name = name
+    hidden.value = value
+    form.appendChild(hidden)
+  })
 }
 </script>
