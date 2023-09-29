@@ -1,4 +1,4 @@
-import { signal } from 'https://esm.sh/@preact/signals';
+import { signal } from 'https://esm.sh/@preact/signals@1.2.1';
 
 function readMessage(data) {
   const [_, type, id, payload] = data.match(/(\w+)(?:\[(\w+)\])?({.*})?/s)

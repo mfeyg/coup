@@ -1,4 +1,4 @@
-import { html } from 'https://esm.sh/htm/preact'
+import { html } from 'https://esm.sh/htm@3.1.1/preact'
 import { PlayerIsk } from "./playerIsk.js"
 
 export function Player({ player, current, active }) {

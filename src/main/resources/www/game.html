@@ -6,8 +6,8 @@
 <link rel="stylesheet" href="turnIndicator.css">
 
 <script type="module">
-  import { html, render } from 'https://esm.sh/htm/preact'
-  import { signal, computed } from 'https://esm.sh/@preact/signals';
+  import { html, render } from 'https://esm.sh/htm@3.1.1/preact'
+  import { signal, computed, effect } from 'https://esm.sh/@preact/signals@1.2.1';
   import { Socket } from "./socket.js"
   import { Prompt } from "./prompt.js"
   import { Player } from "./player.js"
@@ -19,6 +19,9 @@
   const currentTurn = computed(() => socket.state.value?.currentTurn)
   const prompt = signal(null)
   const winner = signal(null)
+
+  effect(() => console.log(socket.state.value))
+  effect(() => console.log(prompt.value))
 
   function lobbyPath() {
     const lobbyId = new URLSearchParams(location.search).get("lobbyId")
@@ -37,7 +40,7 @@
       html`${winner.value === thisPlayer.value?.number ? html`<div class="winner">You win!</div>` : html`
     <div class="winner">${players.value[winner.value].name} wins!</div>`}
     <a href=${lobbyPath()}>Back to lobby</a>`}
-    <${Prompt} prompt=${prompt.value} 
+    <${Prompt} prompt=${prompt.value}
       player=${thisPlayer.value}
       opponents=${players.value}
       close=${() => prompt.value = null}/>

@@ -1,5 +1,5 @@
-import { html } from 'https://esm.sh/htm/preact'
-import { useState } from 'https://esm.sh/preact/hooks'
+import { html } from 'https://esm.sh/htm@3.1.1/preact'
+import { useState } from 'https://esm.sh/preact@10.17.1/hooks'
 
 function ActionPrompt({ options, onSelect }) {
   return html`
