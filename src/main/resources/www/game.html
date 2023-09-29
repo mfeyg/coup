@@ -20,9 +20,6 @@
   const prompt = signal(null)
   const winner = signal(null)
 
-  effect(() => console.log(socket.state.value))
-  effect(() => console.log(prompt.value))
-
   function lobbyPath() {
     const lobbyId = new URLSearchParams(location.search).get("lobbyId")
     return lobbyId ? "/lobby.html?id=" + lobbyId : "/lobby.html"
