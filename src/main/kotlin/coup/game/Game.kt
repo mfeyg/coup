@@ -24,12 +24,17 @@ class Game(
     }
   val turns = _currentPlayer.asSharedFlow()
 
+  private val _winner = MutableStateFlow<Player?>(null)
+  val winner = _winner.asStateFlow()
+
   private val activePlayers get() = players.filter { it.isActive }
 
   suspend fun start() {
     while (true) {
       if (activePlayers.size < 2) {
-        emit(GameOver(activePlayers.first()))
+        val winner = activePlayers.first()
+        _winner.value = winner
+        emit(GameOver(winner))
         break
       }
       takeTurn()
