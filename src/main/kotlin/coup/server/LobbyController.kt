@@ -7,8 +7,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.*
 
-class LobbyController(private val gameController: GameController) {
-  private val defaultLobby = Lobby()
+class LobbyController(private val createLobby: () -> Lobby) {
+  private val defaultLobby = createLobby()
   private val defaultLobbyId = newId
   private val lobbies = WeakHashMap<Lobby, String>()
     .apply { put(defaultLobby, defaultLobbyId) }
@@ -33,10 +33,8 @@ class LobbyController(private val gameController: GameController) {
     lobbies.entries.find { (_, id) -> id == lobbyId }?.let { (lobby, _) -> lobby }
   }
 
-  private fun Lobby() = Lobby { gameController.newGame(it, this) }
-
   private suspend fun newLobby() = mutex.withLock {
-    val lobby = Lobby()
+    val lobby = createLobby()
     val id = newId
     lobbies[lobby] = id
     id
