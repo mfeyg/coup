@@ -35,18 +35,42 @@
     return lobbyId ? "/lobby.html?id=" + lobbyId : "/lobby.html"
   }
 
-  const Game = () => !socket.state.value ? "Loading..." : html`
+  function Loading() {
+    return html`<div class="loading-indicator">Loading...</div>`
+  }
+
+  function Players({players, thisPlayer, currentTurn}) {
+    if (!players) return null;
+    return html`<div class="players"> ${players.map(player => {
+      let current = false
+      let active = currentTurn == player.number
+      if (player.number === thisPlayer?.number) {
+        player = thisPlayer
+        current = true
+      }
+      return html`${Player} player=${player} current=${current} active=${active} />`
+    })}</div>`;
+  }
+
+  function WinnerIndicator({winner, thisPlayer, players}) {
+    if (winner == null) return null
+    let message
+    if (winner == thisPlayer?.number) {
+      message = html`<div class="winner">You win!</div>`
+    } else {
+      message = html`<div class="winner">${players[winner].name} wins!</div>`
+    }
+    return html`
+      ${message}
+      <a href=${lobbyPath()}>Back to lobby</a>
+    `
+  }
+
+  const Game = () => !socket.state.value ? html`<${Loading} />` : html`
   <main>
-    <div class="players">
-    ${players.value?.map(player => player.number === thisPlayer.value?.number ? html`
-      <${Player} player=${thisPlayer.value} current active=${currentTurn.value === player.number} />` : html`
-      <${Player} player=${player} active=${currentTurn.value === player.number} />`)}
-    </div>
-    ${winner.value == null ? html`
-    <${TurnIndicator} thisPlayer=${thisPlayer.value} activePlayer=${players.value?.[currentTurn.value]} /> ` :
-      html`${winner.value === thisPlayer.value?.number ? html`<div class="winner">You win!</div>` : html`
-    <div class="winner">${players.value[winner.value].name} wins!</div>`}
-    <a href=${lobbyPath()}>Back to lobby</a>`}
+    <${Players} players=${players.value} thisPlayer=${thisPlayer.value} currentTurn=${currentTurn.value} />
+    <${WinnerIndicator} winner=${winner.value} thisPlayer=${thisPlayer.value} players=${players.value} />
+    <${TurnIndicator} thisPlayer=${thisPlayer.value} activePlayer=${players.value?.[currentTurn.value]} /> 
     <${Prompt} prompt=${prompt.value}
       player=${thisPlayer.value}
       opponents=${players.value}
