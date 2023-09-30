@@ -1,4 +1,4 @@
-import { html } from 'https://esm.sh/htm@3.1.1/preact'
+import { html } from "htm/preact"
 
 export function TurnIndicator({ thisPlayer, activePlayer }) {
     if (!activePlayer) return null;
