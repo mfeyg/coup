@@ -18,8 +18,7 @@ class LobbyController(private val createLobby: () -> Lobby) {
 
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
     if (newLobby) {
-      val lobby = newLobby()
-      socket.send(NewLobby(lobby))
+      socket.send(NewLobby(newLobby()))
       return
     } else if (id == null) {
       socket.send(NewLobby(defaultLobbyId))
