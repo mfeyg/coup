@@ -3,61 +3,62 @@ package coup.server.prompt
 import coup.server.ServerError
 import coup.server.newId
 import io.ktor.websocket.*
-import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.serializer
 
-sealed class Prompt<T> {
+abstract class Prompt<T> {
   val id = newId
-  private val strategy: Strategy<*, T> by lazy { prompt() }
-
-  private val requestFrame: Frame get() = Frame.Text(strategy.request)
-  fun readResponse(response: String) = strategy.readResponse(response).also { validate(it) }
-
-  protected abstract fun prompt(): Strategy<*, T>
-
-  protected abstract fun validate(response: T)
-
-  class ValidationError(requirement: String?) :
-    ServerError(if (requirement != null) "Validation failed: $requirement" else "Validation failed")
-
-  protected fun require(requirement: String? = null, check: () -> Boolean) {
-    if (!check()) throw ValidationError(requirement)
-  }
-
-  protected inline fun <reified RequestT, reified ResponseT> sendAndReceive(
-    request: RequestT?,
-    noinline readResponse: (ResponseT) -> T
-  ): Strategy<*, T> {
-    val promptType = this::class.simpleName!!
-    return Strategy(
-      promptType,
-      id,
-      request?.let { Json.encodeToString(serializer<RequestT>(), request) },
-      serializer<ResponseT>(),
-      readResponse
-    )
-  }
-
-  protected inline fun <reified ResponseT> sendAndReceive(
-    noinline readResponse: (ResponseT) -> T
-  ) = sendAndReceive<Void, ResponseT>(null, readResponse)
-
-  class Strategy<ResponseT, ValueT>(
-    promptType: String,
-    id: String,
-    serializedRequest: String?,
-    private val deserializer: DeserializationStrategy<ResponseT>,
-    private val read: (ResponseT) -> ValueT,
-  ) {
-    val request: String = "${promptType}[${id}]" + (serializedRequest ?: "")
-
-    fun readResponse(text: String): ValueT {
-      return read(Json.decodeFromString(deserializer, text))
-    }
-  }
+  protected abstract val config: Config<T>
+  fun parse(response: String) = config.parse(response)
 
   companion object {
-    suspend fun WebSocketSession.send(prompt: Prompt<*>) = send(prompt.requestFrame)
+    class ValidationError(requirement: String?) :
+      ServerError(if (requirement != null) "Validation failed: $requirement" else "Validation failed")
+
+    fun require(requirement: String? = null, check: () -> Boolean) {
+      if (!check()) throw ValidationError(requirement)
+    }
+
+    suspend fun WebSocketSession.send(prompt: Prompt<*>) = send(Frame.Text(prompt.config.request))
+  }
+
+  protected inline fun <reified RequestT, reified ResponseT> config(
+    request: RequestT,
+    noinline readResponse: (ResponseT) -> T,
+    noinline validate: (T) -> Unit,
+  ) = config(
+    Json.encodeToString(request),
+    { readResponse(Json.decodeFromString(it)) },
+    validate
+  )
+
+  protected inline fun <reified ResponseT> config(
+    noinline readResponse: (ResponseT) -> T,
+    noinline validate: (T) -> Unit,
+  ) = config(
+    "",
+    { readResponse(Json.decodeFromString(it)) },
+    validate
+  )
+
+  private val promptType = this::class.simpleName!!
+
+  protected fun config(request: String, readResponse: (String) -> T, validateResponse: (T) -> Unit) = Config(
+    promptType,
+    id,
+    request,
+    readResponse,
+    validateResponse
+  )
+
+  protected class Config<T>(
+    type: String,
+    id: String,
+    request: String,
+    private val readResponse: (String) -> T,
+    private val validateResponse: (T) -> Unit,
+  ) {
+    val request = "$type[$id]$request"
+    fun parse(response: String) = readResponse(response).also(validateResponse)
   }
 }

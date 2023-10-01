@@ -30,7 +30,7 @@ class Session<State : Any>(
     }
     val responseValue = response.await()
     activePrompts.update { it - prompt.id }
-    return prompt.readResponse(responseValue)
+    return prompt.parse(responseValue)
   }
 
   suspend fun event(event: Sendable) {

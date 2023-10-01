@@ -4,12 +4,13 @@ import coup.game.Influence
 import kotlinx.serialization.Serializable
 
 class SurrenderInfluence(private val heldInfluences: List<Influence>) : Prompt<Influence>() {
+
   @Serializable
-  data class Response(val influence: Influence)
+  private data class Response(val influence: Influence)
 
-  override fun prompt() = sendAndReceive { response: Response -> response.influence }
+  override val config = config(
+    readResponse = { response: Response -> response.influence },
+    validate = { require { it in heldInfluences } }
+  )
 
-  override fun validate(response: Influence) {
-    require { response in heldInfluences }
-  }
 }

@@ -6,22 +6,22 @@ import coup.game.Player
 import kotlinx.serialization.Serializable
 
 class RespondToChallenge(
-  private val claim: Influence,
-  private val challenger: Player,
+  claim: Influence,
+  challenger: Player,
   private val heldInfluences: List<Influence>,
 ) : Prompt<ChallengeResponse>() {
   @Serializable
-  data class Request(val claim: Influence, val challenger: Int)
+  private data class Request(val claim: Influence, val challenger: Int)
 
   @Serializable
-  data class Response(val influence: Influence)
+  private data class Response(val influence: Influence)
 
-  override fun prompt() =
-    sendAndReceive(Request(claim, challenger.playerNumber)) { response: Response ->
+  override val config = config(
+    request = Request(claim, challenger.playerNumber),
+    readResponse = { response: Response ->
       ChallengeResponse(response.influence)
-    }
+    },
+    validate = { require { it.influence in heldInfluences } }
+  )
 
-  override fun validate(response: ChallengeResponse) {
-    require { response.influence in heldInfluences }
-  }
 }

@@ -7,26 +7,36 @@ import kotlinx.serialization.Serializable
 
 class RespondToBlock(
   private val player: Player,
-  private val blocker: Player,
-  private val blockingInfluence: Influence
+  blocker: Player,
+  blockingInfluence: Influence
 ) : Prompt<BlockResponse>() {
+
   @Serializable
-  data class Request(val blocker: Int, val blockingInfluence: Influence)
+  private data class Request(
+    val blocker: Int,
+    val blockingInfluence: Influence
+  )
+
+  @Serializable
+  private data class Response(val response: ResponseType)
 
   enum class ResponseType {
     Allow, Challenge
   }
 
-  @Serializable
-  data class Response(val response: ResponseType)
+  private val request = Request(
+    blocker = blocker.playerNumber,
+    blockingInfluence = blockingInfluence,
+  )
 
-  override fun prompt() =
-    sendAndReceive(Request(blocker.playerNumber, blockingInfluence)) { response: Response ->
-      when (response.response) {
-        ResponseType.Allow -> BlockResponse.Allow
-        ResponseType.Challenge -> BlockResponse.Challenge(player)
-      }
-    }
+  override val config = config(
+    request = request,
+    readResponse = ::read,
+    validate = {}
+  )
 
-  override fun validate(response: BlockResponse) {}
+  private fun read(response: Response) = when (response.response) {
+    ResponseType.Allow -> BlockResponse.Allow
+    ResponseType.Challenge -> BlockResponse.Challenge(player)
+  }
 }

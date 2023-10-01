@@ -1,14 +1,16 @@
 package coup.server.prompt
 
+import coup.game.Action
 import coup.game.ActionResponse
 import coup.game.Influence
 import coup.game.Player
+import coup.server.prompt.Prompt.Companion.ValidationError
 import kotlinx.serialization.Serializable
 import coup.game.Action.Type as ActionType
 
-class RespondToAction(private val player: Player, private val action: coup.game.Action) : Prompt<ActionResponse>() {
+class RespondToAction(private val player: Player, action: Action) : Prompt<ActionResponse>() {
   @Serializable
-  data class Request(
+  private data class Request(
     val player: Int,
     val type: ActionType,
     val target: Int?,
@@ -18,12 +20,15 @@ class RespondToAction(private val player: Player, private val action: coup.game.
     val claimedInfluence: Influence?,
   )
 
-  enum class ResponseType {
+  @Serializable
+  private data class Response(
+    val response: ResponseType,
+    val influence: Influence? = null
+  )
+
+  private enum class ResponseType {
     Allow, Block, Challenge
   }
-
-  @Serializable
-  data class Response(val response: ResponseType, val influence: Influence? = null)
 
   private val canBeChallenged = action.type.neededInfluence != null
 
@@ -31,29 +36,33 @@ class RespondToAction(private val player: Player, private val action: coup.game.
 
   private val blockingInfluences = action.type.blockingInfluences
 
-  override fun prompt() = sendAndReceive(
-    Request(
-      player = action.player.playerNumber,
-      type = action.type,
-      target = action.target?.playerNumber,
-      canBeChallenged = canBeChallenged,
-      canBeBlocked = canBeBlocked,
-      blockingInfluences = blockingInfluences,
-      claimedInfluence = action.type.neededInfluence
-    )
-  ) { response: Response ->
-    when (response.response) {
-      ResponseType.Allow -> ActionResponse.Allow
-      ResponseType.Block -> ActionResponse.Block(
-        player,
-        response.influence ?: throw ValidationError("Influence required to block")
-      )
+  private val request = Request(
+    player = action.player.playerNumber,
+    type = action.type,
+    target = action.target?.playerNumber,
+    canBeChallenged = canBeChallenged,
+    canBeBlocked = canBeBlocked,
+    blockingInfluences = blockingInfluences,
+    claimedInfluence = action.type.neededInfluence
+  )
 
-      ResponseType.Challenge -> ActionResponse.Challenge(player)
-    }
+  override val config = config(
+    request = request,
+    readResponse = ::read,
+    validate = ::validate
+  )
+
+  private fun read(response: Response) = when (response.response) {
+    ResponseType.Allow -> ActionResponse.Allow
+    ResponseType.Block -> ActionResponse.Block(
+      player,
+      response.influence ?: throw ValidationError("Influence required to block")
+    )
+
+    ResponseType.Challenge -> ActionResponse.Challenge(player)
   }
 
-  override fun validate(response: ActionResponse) {
+  private fun validate(response: ActionResponse) {
     when (response) {
       ActionResponse.Allow -> {}
       is ActionResponse.Block -> {
