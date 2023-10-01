@@ -17,12 +17,7 @@ class Game(
   val events get() = _events.asSharedFlow()
 
   private val _currentPlayer = MutableStateFlow(players.first())
-  var currentPlayer
-    get() = _currentPlayer.value
-    private set(value) {
-      _currentPlayer.value = value
-    }
-  val turns = _currentPlayer.asSharedFlow()
+  val currentPlayer = _currentPlayer.asStateFlow()
 
   private val _winner = MutableStateFlow<Player?>(null)
   val winner = _winner.asStateFlow()
@@ -45,14 +40,14 @@ class Game(
   private val turnOrder = sequence { while (true) yieldAll(players) }
 
   private fun nextPlayer() {
-    currentPlayer = turnOrder
-      .dropWhile { it != currentPlayer }
+    _currentPlayer.value = turnOrder
+      .dropWhile { it != currentPlayer.value }
       .drop(1)
       .dropWhile { !it.isActive }
       .first()
   }
 
-  private suspend fun takeTurn(player: Player = currentPlayer) {
+  private suspend fun takeTurn(player: Player = currentPlayer.value) {
     emit(TurnStarted(player))
     val others = activePlayers - player
     val action = player.takeTurn(others)

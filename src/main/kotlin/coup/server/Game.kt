@@ -29,7 +29,7 @@ class Game private constructor(
           session.event(Event(event))
         }
       }.launchIn(this)
-      combine(playerUpdates, baseGame.turns, baseGame.winner) { _, _, _ ->
+      combine(playerUpdates, baseGame.currentPlayer, baseGame.winner) { _, _, _ ->
         this@Game.playerSessions.forEachIndexed { index, player ->
           player.setState(gameState(index))
         }
@@ -38,7 +38,7 @@ class Game private constructor(
         observers.collectLatest { observers ->
           coroutineScope {
             observers.values.forEach { observer ->
-              combine(playerUpdates, baseGame.turns, baseGame.winner) { _, _, _ ->
+              combine(playerUpdates, baseGame.currentPlayer, baseGame.winner) { _, _, _ ->
                 observer.setState(gameState())
               }.launchIn(this)
               baseGame.events.onEach { event -> observer.event(Event(event)) }
@@ -118,7 +118,7 @@ class Game private constructor(
           opponent.revealedInfluences,
         )
       },
-      baseGame.currentPlayer.playerNumber.takeIf { baseGame.winner.value == null },
+      baseGame.currentPlayer.value.playerNumber.takeIf { baseGame.winner.value == null },
       baseGame.winner.value?.playerNumber,
     )
 }
