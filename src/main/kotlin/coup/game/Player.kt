@@ -13,7 +13,7 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
     suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence>
   }
 
-  data class State(val isk: Int, val heldInfluences: List<Influence>, val revealedInfluences: List<Influence>)
+  private data class State(val isk: Int, val heldInfluences: List<Influence>, val revealedInfluences: List<Influence>)
 
   private val state = MutableStateFlow(State(0, emptyList(), emptyList()))
   val updates = state.map { this }
