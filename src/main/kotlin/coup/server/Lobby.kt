@@ -1,19 +1,18 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
-import coup.server.message.*
+import coup.server.message.CancelGameStart
+import coup.server.message.GameStarted
+import coup.server.message.StartGame
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-
-typealias LobbySession = Session<LobbyState>
 
 class Lobby(
   private val createGame: suspend Lobby.(Iterable<Session<*>>) -> String
 ) {
-  private val players = MutableStateFlow(mapOf<String, LobbySession>())
+  private val players = MutableStateFlow(mapOf<String, Session<LobbyState>>())
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
   private val state = combine(players, champion, startingIn) { players, champion, startingIn ->
@@ -22,28 +21,35 @@ class Lobby(
       startingIn
     )
   }
+  private val scope = CoroutineScope(Dispatchers.Default)
 
-  private val mutex = Mutex()
-
-  private val listener = DynamicTask {
+  init {
     var startGameJob: Job? = null
-    launch {
-      players.collectLatest { currentPlayers ->
+    scope.launch {
+      players.collectLatest { players ->
+        if (players.isEmpty()) {
+          delay(5.minutes)
+          scope.cancel()
+        }
         coroutineScope {
-          for (player in currentPlayers.values) {
-            state.onEach { state -> player.setState(state) }.launchIn(this)
-            player.messages.onEach { message ->
-              when (message) {
-                StartGame -> startGameJob = this@DynamicTask.launch { startGame() }
-                CancelGameStart -> startGameJob?.cancelAndJoin()
-                else -> {}
+          for (player in players.values) {
+            launch {
+              state.collect(player::setState)
+            }
+            launch {
+              player.messages.collect { message ->
+                when (message) {
+                  StartGame -> startGameJob = scope.launch { startGame() }
+                  CancelGameStart -> startGameJob?.cancelAndJoin()
+                  else -> {}
+                }
               }
-            }.launchIn(this)
-            player.active.onEach { playerActive ->
-              mutex.withLock {
-                if (!playerActive) players.update { it - player.id }
+            }
+            launch {
+              player.active.collect { active ->
+                if (!active) this@Lobby.players.update { it - player.id }
               }
-            }.launchIn(this)
+            }
           }
         }
       }
@@ -51,20 +57,15 @@ class Lobby(
   }
 
   suspend fun connect(socket: SocketConnection) {
-    val session = sessionFor(socket)
-    listener.runWhile {
-      session.connect(socket)
-    }
+    players.updateAndGet { players ->
+      if (!players.containsKey(socket.id)) {
+        players + (socket.id to Session(socket.id, socket.name))
+      } else players
+    }.getValue(socket.id).connect(socket)
   }
 
   fun setChampion(id: String) {
     champion.value = id
-  }
-
-  private suspend fun sessionFor(socket: SocketConnection) = mutex.withLock {
-    val session = players.value[socket.id] ?: Session(socket.id, socket.name)
-    players.update { it + (session.id to session) }
-    session
   }
 
   private suspend fun startGame() {

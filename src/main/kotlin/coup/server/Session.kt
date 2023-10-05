@@ -18,10 +18,10 @@ class Session<State : Any>(
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<Sendable>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
-  private val activeConnections = MutableStateFlow(listOf<WebSocketSession>())
+  private val connections = MutableStateFlow(0)
 
   val messages get() = incomingMessages.asSharedFlow()
-  val active get() = activeConnections.map { it.isNotEmpty() }
+  val active get() = connections.map { it > 0 }
 
   suspend fun <T> prompt(prompt: Prompt<T>): T {
     val response = CompletableDeferred<String>()
@@ -75,13 +75,13 @@ class Session<State : Any>(
         }
       }.launchIn(this)
     }
-    activeConnections.update { it + connection }
     try {
+      connections.update { it + 1 }
       for (frame in connection.incoming) {
         receiveFrame(frame)
       }
     } finally {
-      activeConnections.update { it - connection }
+      connections.update { it - 1 }
       listeningJob.cancelAndJoin()
     }
   }
