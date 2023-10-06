@@ -14,11 +14,12 @@ class LobbyController(private val createLobby: () -> Lobby) {
 
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
     if (newLobby) {
-      val lobby = newLobby()
+      val lobby = createLobby()
+      lobbies[lobby] = newId
       socket.send(lobby)
       lobby.connect(socket)
     } else if (id == null) {
-      val lobby = lobby(defaultLobby) ?: newLobby()
+      val lobby = lobby(defaultLobby) ?: createLobby()
       lobbies[lobby] = defaultLobby
       socket.send(lobby)
       lobby.connect(socket)
@@ -31,8 +32,6 @@ class LobbyController(private val createLobby: () -> Lobby) {
   private suspend fun SocketConnection.send(lobby: Lobby) {
     lobbies[lobby]?.let { id -> send(NewLobby(id)) }
   }
-
-  private fun newLobby() = createLobby().also { lobbies[it] = newId }
 
   private fun lobby(id: String): Lobby? = try {
     lobbies.filterValues { it == id }.keys.firstOrNull()
