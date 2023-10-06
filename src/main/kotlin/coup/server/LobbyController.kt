@@ -8,7 +8,7 @@ import kotlin.ConcurrentModificationException
 
 class LobbyController(private val createLobby: () -> Lobby) {
   private val lobbies = WeakHashMap<Lobby, String>()
-  private val defaultLobby = newId
+  private val defaultId = newId
 
   private class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
 
@@ -19,8 +19,8 @@ class LobbyController(private val createLobby: () -> Lobby) {
       socket.send(lobby)
       lobby.connect(socket)
     } else if (id == null) {
-      val lobby = lobby(defaultLobby) ?: createLobby()
-      lobbies[lobby] = defaultLobby
+      val lobby = lobby(defaultId) ?: createLobby()
+      lobbies[lobby] = defaultId
       socket.send(lobby)
       lobby.connect(socket)
     } else {
