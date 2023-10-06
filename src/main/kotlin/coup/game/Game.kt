@@ -1,6 +1,8 @@
 package coup.game
 
 import coup.game.GameEvent.*
+import coup.game.Player.Agent.ActionResponse
+import coup.game.Player.Agent.BlockResponse
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
 

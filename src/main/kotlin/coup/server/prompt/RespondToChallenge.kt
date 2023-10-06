@@ -1,8 +1,8 @@
 package coup.server.prompt
 
-import coup.game.ChallengeResponse
 import coup.game.Influence
 import coup.game.Player
+import coup.game.Player.Agent.ChallengeResponse
 import kotlinx.serialization.Serializable
 
 class RespondToChallenge(

@@ -2,12 +2,13 @@ package coup.server
 
 import coup.game.*
 import coup.game.Player
+import coup.game.Player.Agent.*
 import coup.server.prompt.*
 
 abstract class SocketPlayer : Player.Agent {
   abstract suspend fun <T> prompt(prompt: Prompt<T>): T
 
-  override suspend fun chooseAction(options: List<Player.Agent.ActionOption>): Player.Agent.ActionChoice =
+  override suspend fun chooseAction(options: List<ActionOption>): ActionChoice =
     prompt(TakeTurn(options))
 
   override suspend fun respondToAction(player: Player, action: Action): ActionResponse {

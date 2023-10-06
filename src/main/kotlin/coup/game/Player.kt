@@ -7,6 +7,19 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
     data class ActionOption(val actionType: Action.Type, val validTargets: List<Player>? = null)
     data class ActionChoice(val actionType: Action.Type, val target: Player?)
 
+    sealed interface ActionResponse {
+      data object Allow : ActionResponse
+      data class Challenge(val challenger: Player) : ActionResponse
+      data class Block(val blocker: Player, val influence: Influence) : ActionResponse
+    }
+
+    sealed interface BlockResponse {
+      data object Allow : BlockResponse
+      data class Challenge(val challenger: Player) : BlockResponse
+    }
+
+    data class ChallengeResponse(val influence: Influence)
+
     suspend fun chooseAction(options: List<ActionOption>): ActionChoice
     suspend fun respondToAction(player: Player, action: Action): ActionResponse
     suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse
@@ -15,7 +28,7 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
     suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence>
   }
 
-  class PlayerError(message: String): Exception(message)
+  class PlayerError(message: String) : Exception(message)
 
   private data class State(val isk: Int, val heldInfluences: List<Influence>, val revealedInfluences: List<Influence>)
 
@@ -96,13 +109,13 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
   }
 
   suspend fun respondToAction(action: Action) =
-    if (action.incontestable) ActionResponse.Allow else
+    if (action.incontestable) Agent.ActionResponse.Allow else
       agent.respondToAction(this, action)
 
-  suspend fun respondToBlock(blocker: Player, influence: Influence): BlockResponse =
+  suspend fun respondToBlock(blocker: Player, influence: Influence): Agent.BlockResponse =
     agent.respondToBlock(this, blocker, influence)
 
-  suspend fun respondToChallenge(claim: Influence, challenger: Player): ChallengeResponse {
+  suspend fun respondToChallenge(claim: Influence, challenger: Player): Agent.ChallengeResponse {
     val response = agent.respondToChallenge(this, claim, challenger)
     val influence = response.influence
     if (influence != claim) {

@@ -1,8 +1,8 @@
 package coup.server.prompt
 
-import coup.game.BlockResponse
 import coup.game.Influence
 import coup.game.Player
+import coup.game.Player.Agent.BlockResponse
 import kotlinx.serialization.Serializable
 
 class RespondToBlock(

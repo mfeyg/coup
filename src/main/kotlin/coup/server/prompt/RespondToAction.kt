@@ -1,9 +1,9 @@
 package coup.server.prompt
 
 import coup.game.Action
-import coup.game.ActionResponse
 import coup.game.Influence
 import coup.game.Player
+import coup.game.Player.Agent.ActionResponse
 import coup.server.prompt.Prompt.Companion.ValidationError
 import kotlinx.serialization.Serializable
 import coup.game.Action.Type as ActionType
