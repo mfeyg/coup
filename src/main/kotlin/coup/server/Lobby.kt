@@ -51,40 +51,44 @@ class Lobby(
       startingIn
     )
   }
-  private val scope = CoroutineScope(Dispatchers.Default)
+  private var scope: CoroutineScope? = null
 
-  init {
-    var startGameJob: Job? = null
-    scope.launch {
-      players.collectLatest { players ->
-        if (players.isEmpty()) {
-          delay(5.minutes)
-          scope.cancel()
-        }
-        coroutineScope {
-          for (player in players.values) {
-            launch {
-              state.collect(player.session::setState)
+  private fun init() {
+    scope = scope?.takeIf { it.isActive }
+      ?: CoroutineScope(Dispatchers.Default).also { scope ->
+        var startGameJob: Job? = null
+        scope.launch {
+          players.collectLatest { players ->
+            if (players.isEmpty()) {
+              delay(5.minutes)
+              scope.cancel()
             }
-            launch {
-              player.session.messages.collect { message ->
-                when (message) {
-                  StartGame -> startGameJob = scope.launch { startGame() }
-                  CancelGameStart -> startGameJob?.cancelAndJoin()
-                  else -> {}
+            coroutineScope {
+              for (player in players.values) {
+                launch {
+                  state.collect(player.session::setState)
+                }
+                launch {
+                  player.session.messages.collect { message ->
+                    when (message) {
+                      StartGame -> startGameJob = scope.launch { startGame() }
+                      CancelGameStart -> startGameJob?.cancelAndJoin()
+                      else -> {}
+                    }
+                  }
                 }
               }
             }
           }
         }
       }
-    }
   }
 
   suspend fun connect(socket: SocketConnection) {
     val (session, _) = players.updateAndGet { it + socket }
       .getValue(socket.id)
     try {
+      init()
       session.connect(socket)
     } finally {
       players.update { it - socket }
