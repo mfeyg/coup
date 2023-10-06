@@ -12,26 +12,25 @@ class LobbyController(private val createLobby: () -> Lobby) {
   private class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
 
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
+    val lobby: Lobby
     if (newLobby) {
-      val lobby = createLobby()
+      lobby = createLobby()
       lobbyIds[lobby] = newId
-      socket.redirect(lobby)
-      return
+      socket.send(lobby)
     } else if (id == null) {
-      val lobby = lobby(defaultId) ?: createLobby()
+      lobby = lobby(defaultId) ?: createLobby()
       lobbyIds[lobby] = defaultId
-      socket.redirect(lobby)
-      return
+      socket.send(lobby)
     } else {
-      val lobby = lobby(id) ?: throw LobbyNotFound(id)
-      lobby.connect(socket)
+      lobby = lobby(id) ?: throw LobbyNotFound(id)
     }
+    lobby.connect(socket)
   }
 
-  private suspend fun SocketConnection.redirect(lobby: Lobby) {
+  private suspend fun SocketConnection.send(lobby: Lobby) {
     @Serializable
     data class LobbyId(val id: String) : Sendable
-    lobbyIds[lobby]?.let { id -> send(LobbyId(id)) }
+    send(LobbyId(lobbyIds[lobby] ?: return))
   }
 
   private fun lobby(id: String): Lobby? = try {
