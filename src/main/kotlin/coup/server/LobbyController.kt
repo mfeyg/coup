@@ -8,8 +8,9 @@ import kotlin.ConcurrentModificationException
 
 class LobbyController(private val createLobby: () -> Lobby) {
   private val defaultLobby = NewLobby(newId)
+  private val _defaultLobby = createLobby()
   private val lobbies = WeakHashMap<Lobby, String>()
-    .apply { put(createLobby(), defaultLobby.id) }
+    .apply { put(_defaultLobby, defaultLobby.id) }
 
   class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
 
