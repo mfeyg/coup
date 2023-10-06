@@ -1,6 +1,5 @@
 package coup.game
 
-import coup.game.Permission.Companion.allow
 import kotlinx.coroutines.flow.*
 
 class Player(val name: String, val playerNumber: Int, private val agent: Agent) {
@@ -97,7 +96,7 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
   }
 
   suspend fun respondToAction(action: Action) =
-    if (action.incontestable) allow() else
+    if (action.incontestable) ActionResponse.Allow else
       agent.respondToAction(this, action)
 
   suspend fun respondToBlock(blocker: Player, influence: Influence): BlockResponse =
