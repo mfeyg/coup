@@ -1,18 +1,14 @@
 package coup.game
 
-interface Permission {
-  val allowed: Boolean
+sealed interface ActionResponse {
+  data object Allow : ActionResponse
+  data class Challenge(val challenger: Player) : ActionResponse
+  data class Block(val blocker: Player, val influence: Influence) : ActionResponse
 }
 
-sealed class ActionResponse(override val allowed: Boolean = false) : Permission {
-  data object Allow : ActionResponse(allowed = true)
-  data class Challenge(val challenger: Player) : ActionResponse()
-  data class Block(val blocker: Player, val influence: Influence) : ActionResponse()
-}
-
-sealed class BlockResponse(override val allowed: Boolean = false) : Permission {
-  data object Allow : BlockResponse(allowed = true)
-  data class Challenge(val challenger: Player) : BlockResponse()
+sealed interface BlockResponse {
+  data object Allow : BlockResponse
+  data class Challenge(val challenger: Player) : BlockResponse
 }
 
 data class ChallengeResponse(val influence: Influence)

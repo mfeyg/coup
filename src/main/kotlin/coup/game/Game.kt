@@ -1,6 +1,5 @@
 package coup.game
 
-import coup.game.ActionResponse.Allow
 import coup.game.GameEvent.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
@@ -53,14 +52,12 @@ class Game(
     if (!action.incontestable) {
       emit(ActionAttempted(action))
     }
-    when (val response = respond(others) { respondToAction(action) }) {
-      Allow, null -> perform(action)
+    when (val response = respondToAction(others, action)) {
+      ActionResponse.Allow -> perform(action)
       is ActionResponse.Block -> {
         val (blocker, blockingInfluence) = response
         emit(BlockAttempted(action, blocker, blockingInfluence))
-        val responseToBlock = respond(activePlayers - blocker) {
-          respondToBlock(blocker, blockingInfluence)
-        }
+        val responseToBlock = respondToBlock(activePlayers - blocker, blocker, blockingInfluence)
         if (responseToBlock is BlockResponse.Challenge) {
           val challenger = responseToBlock.challenger
           emit(BlockChallenged(action, blocker, blockingInfluence, challenger))
@@ -100,9 +97,19 @@ class Game(
     action.perform(deck)
   }
 
-  private suspend fun <ResponseT : Permission> respond(
+  private suspend fun respondToAction(
     players: Iterable<Player>,
-    respond: suspend Player.() -> ResponseT,
-  ): ResponseT? =
-    players.map { player -> flow { emit(respond(player)) } }.merge().firstOrNull { !it.allowed }
+    action: Action,
+  ): ActionResponse =
+    players.map { player -> flow { emit(player.respondToAction(action)) } }.merge()
+      .firstOrNull { it != ActionResponse.Allow }
+      ?: ActionResponse.Allow
+
+  private suspend fun respondToBlock(
+    players: Iterable<Player>,
+    blocker: Player, blockingInfluence: Influence
+  ): BlockResponse =
+    players.map { player -> flow { emit(player.respondToBlock(blocker, blockingInfluence)) } }.merge()
+      .firstOrNull { it != BlockResponse.Allow }
+      ?: BlockResponse.Allow
 }
