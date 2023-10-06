@@ -3,7 +3,6 @@
 <link rel="stylesheet" href="game.css">
 <link rel="stylesheet" href="player.css">
 <link rel="stylesheet" href="playerIsk.css">
-<link rel="stylesheet" href="turnIndicator.css">
 
 <script type="importmap">
   {
@@ -21,7 +20,6 @@
   import { Socket } from "./socket.js"
   import { Prompt } from "./prompt.js"
   import { Player } from "./player.js"
-  import { TurnIndicator } from "./turnIndicator.js"
 
   const socket = new Socket("/game")
   const thisPlayer = computed(() => socket.state.value?.player)
@@ -39,7 +37,7 @@
     return html`<div class="loading-indicator">Loading...</div>`
   }
 
-  function Players({players, thisPlayer, currentTurn}) {
+  function Players({ players, thisPlayer, currentTurn }) {
     if (!players) return null;
     return html`<div class="players"> ${players.map(player => {
       let current = false
@@ -52,7 +50,16 @@
     })}</div>`;
   }
 
-  function WinnerIndicator({winner, thisPlayer, players}) {
+  function TurnIndicator({ thisPlayer, activePlayer }) {
+    if (!activePlayer) return null;
+    if (activePlayer.number === thisPlayer?.number) {
+      return html`<div class="turn-indicator">It's your turn</div>`
+    } else {
+      return html`<div class="turn-indicator">It's ${activePlayer.name}'s turn</div>`
+    }
+  }
+
+  function WinnerIndicator({ winner, thisPlayer, players }) {
     if (winner == null) return null
     let message
     if (winner == thisPlayer?.number) {
