@@ -22,7 +22,7 @@
   const startingIn = computed(() => socket.state.value?.startingIn)
 
   socket.onError("LobbyNotFound", () => location.assign("/lobby.html"))
-  socket.on("LobbyId", ({ id }) => history.replaceState({id}, "", "/lobby.html?id=" + id))
+  socket.on("LobbyId", ({ id }) => history.replaceState({ id }, "", "/lobby.html?id=" + id))
 
   function goToGame(gameId) {
     const lobbyId = new URLSearchParams(location.search).get("id")
