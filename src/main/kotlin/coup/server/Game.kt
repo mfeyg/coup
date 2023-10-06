@@ -8,7 +8,7 @@ import coup.server.ConnectionController.SocketConnection
 import coup.server.prompt.Prompt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.hours
 
 class Game private constructor(
   private val baseGame: Game,
@@ -49,7 +49,7 @@ class Game private constructor(
       launch {
         connectionCount.collectLatest { connections ->
           if (connections == 0) {
-            delay(5.minutes)
+            delay(1.hours)
             scope.cancel()
           }
         }
