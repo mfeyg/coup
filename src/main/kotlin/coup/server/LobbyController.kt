@@ -29,8 +29,8 @@ class LobbyController(private val createLobby: () -> Lobby) {
 
   private suspend fun SocketConnection.send(lobby: Lobby) {
     @Serializable
-    data class LobbyId(val id: String) : Sendable
-    send(LobbyId(lobbyIds[lobby] ?: return))
+    data class GoToLobby(val id: String) : Sendable
+    send(GoToLobby(lobbyIds[lobby] ?: return))
   }
 
   private fun lobby(id: String): Lobby? = try {
