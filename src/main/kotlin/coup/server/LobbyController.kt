@@ -25,11 +25,11 @@ class LobbyController(private val createLobby: () -> Lobby) {
     lobby(id).connect(socket)
   }
 
-  private fun lobby(lobbyId: String): Lobby = try {
-    lobbies.entries.find { (_, id) -> id == lobbyId }?.let { (lobby, _) -> lobby }
-      ?: throw LobbyNotFound(lobbyId)
+  private fun lobby(id: String): Lobby = try {
+    lobbies.filterValues { it == id }.keys.firstOrNull()
+      ?: throw LobbyNotFound(id)
   } catch (e: ConcurrentModificationException) {
-    lobby(lobbyId)
+    lobby(id)
   }
 
   private fun newLobby(): NewLobby {
