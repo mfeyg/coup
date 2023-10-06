@@ -5,15 +5,18 @@ import kotlinx.coroutines.flow.*
 
 class Player(val name: String, val playerNumber: Int, private val agent: Agent) {
   interface Agent {
-    data class ActionChoice(val actionType: Action.Type, val validTargets: List<Player>? = null)
+    data class ActionOption(val actionType: Action.Type, val validTargets: List<Player>? = null)
+    data class ActionChoice(val actionType: Action.Type, val target: Player?)
 
-    suspend fun chooseAction(player: Player, choices: List<ActionChoice>): Action
+    suspend fun chooseAction(options: List<ActionOption>): ActionChoice
     suspend fun respondToAction(player: Player, action: Action): ActionResponse
     suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse
     suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse
     suspend fun surrenderInfluence(player: Player): Influence
     suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence>
   }
+
+  class PlayerError(message: String): Exception(message)
 
   private data class State(val isk: Int, val heldInfluences: List<Influence>, val revealedInfluences: List<Influence>)
 
@@ -80,10 +83,17 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
     val availableActions =
       if (isk >= 10) listOf(Action.Type.Coup)
       else Action.Type.entries.filter { action -> action.cost <= isk }
-    return agent.chooseAction(this, availableActions.map { type ->
-      if (type.hasTarget) Agent.ActionChoice(type, validTargets)
-      else Agent.ActionChoice(type)
+    val (actionType, target) = agent.chooseAction(availableActions.map { type ->
+      if (type.hasTarget) Agent.ActionOption(type, validTargets)
+      else Agent.ActionOption(type)
     })
+    if (actionType !in availableActions) {
+      throw PlayerError("Invalid action $actionType")
+    }
+    if (target != null && target !in validTargets) {
+      throw PlayerError("Invalid target $target")
+    }
+    return Action.create(actionType, this, target)
   }
 
   suspend fun respondToAction(action: Action) =

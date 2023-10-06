@@ -25,7 +25,7 @@ abstract class Prompt<T> {
   protected inline fun <reified RequestT, reified ResponseT> config(
     request: RequestT,
     noinline readResponse: (ResponseT) -> T,
-    noinline validate: (T) -> Unit,
+    noinline validate: (T) -> Unit = {},
   ) = config(
     Json.encodeToString(request),
     { readResponse(Json.decodeFromString(it)) },

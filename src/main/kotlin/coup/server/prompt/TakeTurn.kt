@@ -5,9 +5,8 @@ import coup.game.Player
 import kotlinx.serialization.Serializable
 
 class TakeTurn(
-  private val player: Player,
-  choices: List<Player.Agent.ActionChoice>
-) : Prompt<Action>() {
+  options: List<Player.Agent.ActionOption>
+) : Prompt<Player.Agent.ActionChoice>() {
 
   @Serializable
   private data class Request(val options: List<Option>)
@@ -32,22 +31,15 @@ class TakeTurn(
     constructor(player: Player) : this(player.name, player.playerNumber)
   }
 
-  private val request = Request(choices.map { choice ->
-    Option(
-      choice.actionType,
-      choice.validTargets?.map(::Target)
-    )
-  })
-
   override val config = config(
-    request = request,
+    request = Request(options.map { (actionType, validTargets) ->
+      Option(actionType, validTargets?.map(::Target))
+    }),
     readResponse = { (actionType, target): Response ->
-      Action.create(
+      Player.Agent.ActionChoice(
         actionType,
-        player,
-        choices.find { it.actionType == actionType }?.validTargets?.find { it.playerNumber == target })
+        options.find { it.actionType == actionType }?.validTargets?.find { it.playerNumber == target })
     },
-    validate = { action -> require { choices.any { it.actionType == action.type } } }
   )
 
 }
