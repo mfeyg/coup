@@ -35,6 +35,10 @@ class Lobby(
   }
   private var scope: CoroutineScope? = null
 
+  init {
+    init()
+  }
+
   private fun init() {
     scope = scope?.takeIf { it.isActive }
       ?: CoroutineScope(Dispatchers.Default).also { scope ->

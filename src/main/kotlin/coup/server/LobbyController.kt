@@ -17,12 +17,12 @@ class LobbyController(private val createLobby: () -> Lobby) {
       val lobby = createLobby()
       lobbyIds[lobby] = newId
       socket.send(lobby)
-      lobby.connect(socket)
+      return
     } else if (id == null) {
       val lobby = lobby(defaultId) ?: createLobby()
       lobbyIds[lobby] = defaultId
       socket.send(lobby)
-      lobby.connect(socket)
+      return
     } else {
       val lobby = lobby(id) ?: throw LobbyNotFound(id)
       lobby.connect(socket)
