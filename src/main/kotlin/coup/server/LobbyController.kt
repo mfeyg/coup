@@ -22,14 +22,14 @@ class LobbyController(private val createLobby: () -> Lobby) {
       socket.send(defaultLobby)
       return
     }
-    val lobby = findLobby(id) ?: throw LobbyNotFound(id)
-    lobby.connect(socket)
+    lobby(id).connect(socket)
   }
 
-  private fun findLobby(lobbyId: String): Lobby? = try {
+  private fun lobby(lobbyId: String): Lobby = try {
     lobbies.entries.find { (_, id) -> id == lobbyId }?.let { (lobby, _) -> lobby }
+      ?: throw LobbyNotFound(lobbyId)
   } catch (e: ConcurrentModificationException) {
-    findLobby(lobbyId)
+    lobby(lobbyId)
   }
 
   private fun newLobby(): NewLobby {
