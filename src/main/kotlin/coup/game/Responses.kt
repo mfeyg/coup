@@ -1,15 +1,7 @@
 package coup.game
 
-sealed interface Permission {
+interface Permission {
   val allowed: Boolean
-
-  companion object {
-    inline fun <reified T : Permission> allow(): T = when (T::class) {
-      ActionResponse::class, ActionResponse.Allow::class -> ActionResponse.Allow as T
-      BlockResponse::class, BlockResponse.Allow::class -> BlockResponse.Allow as T
-      else -> throw UnsupportedOperationException()
-    }
-  }
 }
 
 sealed class ActionResponse(override val allowed: Boolean = false) : Permission {

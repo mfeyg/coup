@@ -2,7 +2,6 @@ package coup.game
 
 import coup.game.ActionResponse.Allow
 import coup.game.GameEvent.*
-import coup.game.Permission.Companion.allow
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
 
@@ -55,7 +54,7 @@ class Game(
       emit(ActionAttempted(action))
     }
     when (val response = respond(others) { respondToAction(action) }) {
-      Allow -> perform(action)
+      Allow, null -> perform(action)
       is ActionResponse.Block -> {
         val (blocker, blockingInfluence) = response
         emit(BlockAttempted(action, blocker, blockingInfluence))
@@ -101,9 +100,9 @@ class Game(
     action.perform(deck)
   }
 
-  private suspend inline fun <reified ResponseT : Permission> respond(
+  private suspend fun <ResponseT : Permission> respond(
     players: Iterable<Player>,
-    noinline respond: suspend Player.() -> ResponseT,
-  ): ResponseT =
-    players.map { player -> flow { emit(respond(player)) } }.merge().firstOrNull { !it.allowed } ?: allow()
+    respond: suspend Player.() -> ResponseT,
+  ): ResponseT? =
+    players.map { player -> flow { emit(respond(player)) } }.merge().firstOrNull { !it.allowed }
 }
