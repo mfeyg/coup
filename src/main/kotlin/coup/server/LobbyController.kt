@@ -7,7 +7,7 @@ import java.util.*
 import kotlin.ConcurrentModificationException
 
 class LobbyController(private val createLobby: () -> Lobby) {
-  private val lobbies = WeakHashMap<Lobby, String>()
+  private val lobbyIds = WeakHashMap<Lobby, String>()
   private val defaultId = newId
 
   private class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
@@ -15,12 +15,12 @@ class LobbyController(private val createLobby: () -> Lobby) {
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
     if (newLobby) {
       val lobby = createLobby()
-      lobbies[lobby] = newId
+      lobbyIds[lobby] = newId
       socket.send(lobby)
       lobby.connect(socket)
     } else if (id == null) {
       val lobby = lobby(defaultId) ?: createLobby()
-      lobbies[lobby] = defaultId
+      lobbyIds[lobby] = defaultId
       socket.send(lobby)
       lobby.connect(socket)
     } else {
@@ -30,11 +30,11 @@ class LobbyController(private val createLobby: () -> Lobby) {
   }
 
   private suspend fun SocketConnection.send(lobby: Lobby) {
-    lobbies[lobby]?.let { id -> send(NewLobby(id)) }
+    lobbyIds[lobby]?.let { id -> send(NewLobby(id)) }
   }
 
   private fun lobby(id: String): Lobby? = try {
-    lobbies.filterValues { it == id }.keys.firstOrNull()
+    lobbyIds.filterValues { it == id }.keys.firstOrNull()
   } catch (e: ConcurrentModificationException) {
     lobby(id)
   }
