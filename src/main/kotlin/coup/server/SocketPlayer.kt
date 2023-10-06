@@ -6,9 +6,9 @@ import coup.server.prompt.*
 
 abstract class SocketPlayer : Player.Agent {
   abstract suspend fun <T> prompt(prompt: Prompt<T>): T
-  override suspend fun takeTurn(player: Player, validTargets: List<Player>): Action {
-    return prompt(TakeTurn(player, validTargets))
-  }
+
+  override suspend fun chooseAction(player: Player, choices: List<Player.Agent.ActionChoice>) =
+    prompt(TakeTurn(player, choices))
 
   override suspend fun respondToAction(player: Player, action: Action): ActionResponse {
     return prompt(RespondToAction(player, action))

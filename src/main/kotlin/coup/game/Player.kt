@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.*
 
 class Player(val name: String, val playerNumber: Int, private val agent: Agent) {
   interface Agent {
-    suspend fun takeTurn(player: Player, validTargets: List<Player>): Action
+    data class ActionChoice(val actionType: Action.Type, val validTargets: List<Player>? = null)
+
+    suspend fun chooseAction(player: Player, choices: List<ActionChoice>): Action
     suspend fun respondToAction(player: Player, action: Action): ActionResponse
     suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse
     suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse
@@ -74,7 +76,15 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
     state.update { it.copy(heldInfluences = heldInfluences) }
   }
 
-  suspend fun takeTurn(validTargets: List<Player>): Action = agent.takeTurn(this, validTargets)
+  suspend fun takeTurn(validTargets: List<Player>): Action {
+    val availableActions =
+      if (isk >= 10) listOf(Action.Type.Coup)
+      else Action.Type.entries.filter { action -> action.cost <= isk }
+    return agent.chooseAction(this, availableActions.map { type ->
+      if (type.hasTarget) Agent.ActionChoice(type, validTargets)
+      else Agent.ActionChoice(type)
+    })
+  }
 
   suspend fun respondToAction(action: Action) =
     if (action.incontestable) allow() else

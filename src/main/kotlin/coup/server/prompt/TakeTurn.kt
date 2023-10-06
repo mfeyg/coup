@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 class TakeTurn(
   private val player: Player,
-  private val targets: List<Player>
+  choices: List<Player.Agent.ActionChoice>
 ) : Prompt<Action>() {
 
   @Serializable
@@ -28,26 +28,26 @@ class TakeTurn(
   private data class Target(
     val name: String,
     val number: Int,
-  )
+  ) {
+    constructor(player: Player) : this(player.name, player.playerNumber)
+  }
 
-  private val availableActions =
-    if (player.isk >= 10) listOf(Action.Type.Coup)
-    else Action.Type.entries.filter { action -> action.cost <= player.isk }
-
-  private val request = Request(availableActions.map { action ->
+  private val request = Request(choices.map { choice ->
     Option(
-      action,
-      if (action.hasTarget) {
-        targets.map { Target(it.name, it.playerNumber) }
-      } else null)
+      choice.actionType,
+      choice.validTargets?.map(::Target)
+    )
   })
 
   override val config = config(
     request = request,
     readResponse = { (actionType, target): Response ->
-      Action.create(actionType, player, targets.find { it.playerNumber == target })
+      Action.create(
+        actionType,
+        player,
+        choices.find { it.actionType == actionType }?.validTargets?.find { it.playerNumber == target })
     },
-    validate = { require { it.type in availableActions } }
+    validate = { action -> require { choices.any { it.actionType == action.type } } }
   )
 
 }
