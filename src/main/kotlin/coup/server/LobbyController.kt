@@ -30,8 +30,8 @@ class LobbyController(private val createLobby: () -> Lobby) {
 
   private suspend fun SocketConnection.redirect(lobby: Lobby) {
     @Serializable
-    data class NewLobby(val id: String) : Sendable
-    lobbyIds[lobby]?.let { id -> send(NewLobby(id)) }
+    data class LobbyId(val id: String) : Sendable
+    lobbyIds[lobby]?.let { id -> send(LobbyId(id)) }
   }
 
   private fun lobby(id: String): Lobby? = try {
