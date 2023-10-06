@@ -32,10 +32,6 @@ class LobbyController(private val createLobby: () -> Lobby) {
     lobby(id)
   }
 
-  private fun newLobby(): NewLobby {
-    val lobby = createLobby()
-    val id = newId
-    lobbies[lobby] = id
-    return NewLobby(id)
-  }
+  private fun newLobby() =
+    NewLobby(newId).also { lobbies[createLobby()] = it.id }
 }
