@@ -12,31 +12,13 @@ import kotlin.time.Duration.Companion.seconds
 class Lobby(
   private val createGame: suspend Lobby.(Iterable<Session<*>>) -> String
 ) {
-  private data class Player(val session: Session<LobbyState>, val connectionCount: Int = 1) {
-    val name by session::name
-    val id by session::id
-    val inc get() = Player(session, connectionCount + 1)
-    val dec get() = Player(session, connectionCount - 1)
-  }
 
-  private fun newPlayer(connection: SocketConnection) = Player(Session(connection.id, connection.name))
+  private fun newSession(connection: SocketConnection) =
+    Session<LobbyState>(connection.id, connection.name)
 
-  private operator fun Map<String, Player>.plus(connection: SocketConnection): Map<String, Player> {
-    val id by connection::id
-    return plus(id to (get(id)?.inc ?: newPlayer(connection)))
-  }
+  private val players =
+    MutableStateFlow(CountingMap(SocketConnection::id, ::newSession))
 
-  private operator fun Map<String, Player>.minus(connection: SocketConnection): Map<String, Player> {
-    val id by connection::id
-    val current = get(id) ?: return this
-    return if (current.connectionCount == 1) {
-      this - id
-    } else {
-      this + (id to current.dec)
-    }
-  }
-
-  private val players = MutableStateFlow(mapOf<String, Player>())
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
   private val state = combine(players, champion, startingIn) { players, champion, startingIn ->
@@ -66,10 +48,10 @@ class Lobby(
             coroutineScope {
               for (player in players.values) {
                 launch {
-                  state.collect(player.session::setState)
+                  state.collect(player::setState)
                 }
                 launch {
-                  player.session.messages.collect { message ->
+                  player.messages.collect { message ->
                     when (message) {
                       StartGame -> startGameJob = scope.launch { startGame() }
                       CancelGameStart -> startGameJob?.cancelAndJoin()
@@ -85,8 +67,8 @@ class Lobby(
   }
 
   suspend fun connect(socket: SocketConnection) {
-    val (session, _) = players.updateAndGet { it + socket }
-      .getValue(socket.id)
+    val session = players.updateAndGet { it + socket }
+      .getValue(socket)
     try {
       init()
       session.connect(socket)
@@ -118,7 +100,7 @@ class Lobby(
     if (champion != -1) {
       players = players.subList(champion, players.size) + players.subList(0, champion)
     }
-    val game = createGame(players.map { it.session })
-    players.forEach { player -> player.session.event(GameStarted(game)) }
+    val game = createGame(players)
+    players.forEach { player -> player.event(GameStarted(game)) }
   }
 }
