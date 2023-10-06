@@ -3,16 +3,14 @@ package coup.server
 import coup.server.ConnectionController.SocketConnection
 import coup.server.Sendable.Companion.send
 import coup.server.message.NewLobby
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.util.*
+import kotlin.ConcurrentModificationException
 
 class LobbyController(private val createLobby: () -> Lobby) {
   private val defaultLobby = createLobby()
   private val defaultLobbyId = newId
   private val lobbies = WeakHashMap<Lobby, String>()
     .apply { put(defaultLobby, defaultLobbyId) }
-  private val mutex = Mutex()
 
   class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
 
@@ -28,14 +26,16 @@ class LobbyController(private val createLobby: () -> Lobby) {
     lobby.connect(socket)
   }
 
-  private suspend fun findLobby(lobbyId: String) = mutex.withLock {
+  private fun findLobby(lobbyId: String): Lobby? = try {
     lobbies.entries.find { (_, id) -> id == lobbyId }?.let { (lobby, _) -> lobby }
+  } catch (e: ConcurrentModificationException) {
+    findLobby(lobbyId)
   }
 
-  private suspend fun newLobby() = mutex.withLock {
+  private fun newLobby(): String {
     val lobby = createLobby()
     val id = newId
     lobbies[lobby] = id
-    id
+    return id
   }
 }
