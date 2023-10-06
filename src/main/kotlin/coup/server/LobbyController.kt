@@ -2,9 +2,8 @@ package coup.server
 
 import coup.server.ConnectionController.SocketConnection
 import coup.server.Sendable.Companion.send
-import coup.server.message.NewLobby
+import kotlinx.serialization.Serializable
 import java.util.*
-import kotlin.ConcurrentModificationException
 
 class LobbyController(private val createLobby: () -> Lobby) {
   private val lobbyIds = WeakHashMap<Lobby, String>()
@@ -16,12 +15,12 @@ class LobbyController(private val createLobby: () -> Lobby) {
     if (newLobby) {
       val lobby = createLobby()
       lobbyIds[lobby] = newId
-      socket.send(lobby)
+      socket.redirect(lobby)
       return
     } else if (id == null) {
       val lobby = lobby(defaultId) ?: createLobby()
       lobbyIds[lobby] = defaultId
-      socket.send(lobby)
+      socket.redirect(lobby)
       return
     } else {
       val lobby = lobby(id) ?: throw LobbyNotFound(id)
@@ -29,7 +28,9 @@ class LobbyController(private val createLobby: () -> Lobby) {
     }
   }
 
-  private suspend fun SocketConnection.send(lobby: Lobby) {
+  private suspend fun SocketConnection.redirect(lobby: Lobby) {
+    @Serializable
+    data class NewLobby(val id: String) : Sendable
     lobbyIds[lobby]?.let { id -> send(NewLobby(id)) }
   }
 
