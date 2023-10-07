@@ -5,17 +5,13 @@ val kotlin_version: String by project
 val logback_version: String by project
 
 plugins {
-  kotlin("jvm") version "1.9.0"
-  id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0"
-  id("io.ktor.plugin") version "2.3.4"
+  kotlin("jvm") version "1.9.10"
+  id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10"
+  id("io.ktor.plugin") version "2.3.5"
 }
 
 group = "coup"
 version = "0.0.1"
-
-kotlin {
-  jvmToolchain(18)
-}
 
 ktor {
   docker {
@@ -50,7 +46,6 @@ dependencies {
   implementation("io.ktor:ktor-server-netty-jvm")
   implementation("ch.qos.logback:logback-classic:$logback_version")
   testImplementation("io.ktor:ktor-server-tests-jvm")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlin_version")
-  testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
 
