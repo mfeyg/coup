@@ -5,6 +5,7 @@ import coup.game.Player.Agent.ActionResponse
 import coup.game.Player.Agent.BlockResponse
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class Game(
   private val players: List<Player>,
@@ -54,12 +55,14 @@ class Game(
     if (!action.incontestable) {
       emit(ActionAttempted(action))
     }
-    when (val response = respondToAction(others, action)) {
+    when (val response = respond(ActionResponse.Allow, others) { respondToAction(action) }) {
       ActionResponse.Allow -> perform(action)
       is ActionResponse.Block -> {
         val (blocker, blockingInfluence) = response
         emit(BlockAttempted(action, blocker, blockingInfluence))
-        val responseToBlock = respondToBlock(activePlayers - blocker, blocker, blockingInfluence)
+        val responseToBlock = respond(BlockResponse.Allow, activePlayers - blocker) {
+          respondToBlock(blocker, blockingInfluence)
+        }
         if (responseToBlock is BlockResponse.Challenge) {
           val challenger = responseToBlock.challenger
           emit(BlockChallenged(action, blocker, blockingInfluence, challenger))
@@ -99,19 +102,15 @@ class Game(
     action.perform(deck)
   }
 
-  private suspend fun respondToAction(
+  private suspend fun <ResponseT> respond(
+    allow: ResponseT,
     players: Iterable<Player>,
-    action: Action,
-  ): ActionResponse =
-    players.map { player -> flow { emit(player.respondToAction(action)) } }.merge()
-      .firstOrNull { it != ActionResponse.Allow }
-      ?: ActionResponse.Allow
-
-  private suspend fun respondToBlock(
-    players: Iterable<Player>,
-    blocker: Player, blockingInfluence: Influence
-  ): BlockResponse =
-    players.map { player -> flow { emit(player.respondToBlock(blocker, blockingInfluence)) } }.merge()
-      .firstOrNull { it != BlockResponse.Allow }
-      ?: BlockResponse.Allow
+    respond: suspend Player.() -> ResponseT
+  ): ResponseT {
+    return channelFlow {
+      for (player in players) launch {
+        send(player.respond())
+      }
+    }.firstOrNull { it != allow } ?: allow
+  }
 }
