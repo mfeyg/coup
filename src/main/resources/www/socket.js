@@ -55,7 +55,7 @@ export class Socket {
   }
 
   send(messageType, content) {
-    const frame = content ? messageType + JSON.stringify(content) : messageType
+    const frame = messageType + (content ? JSON.stringify(content) : "")
     this.ws.send(frame)
   }
 
