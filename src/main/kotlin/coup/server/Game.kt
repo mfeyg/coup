@@ -5,7 +5,6 @@ import coup.game.Game
 import coup.game.Player
 import coup.game.Ruleset
 import coup.server.ConnectionController.SocketConnection
-import coup.server.prompt.Prompt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
@@ -62,10 +61,7 @@ class Game private constructor(
 
       val sessions = playerSessions.map { it.newSession<GameState>() }
       val players: List<Player> = playerSessions.mapIndexed { index, it ->
-        Player(it.name, index, object : SocketPlayer() {
-          override val ruleset: Ruleset = ruleset
-          override suspend fun <T> prompt(prompt: Prompt<T>) = sessions[index].prompt(prompt)
-        }, ruleset)
+        Player(it.name, index, SocketPlayer(ruleset, sessions[index]), ruleset)
       }
       val baseGame = Game(ruleset, Board.setUp(players))
       val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
