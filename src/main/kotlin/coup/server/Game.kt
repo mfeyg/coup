@@ -2,8 +2,8 @@ package coup.server
 
 import coup.game.Board
 import coup.game.Game
-import coup.game.GameEvent
 import coup.game.Player
+import coup.game.Ruleset
 import coup.server.ConnectionController.SocketConnection
 import coup.server.prompt.Prompt
 import kotlinx.coroutines.*
@@ -24,11 +24,6 @@ class Game private constructor(
 
   init {
     scope.launch {
-      baseGame.events.onEach { event ->
-        this@Game.playerSessions.forEach { session ->
-          session.event(Event(event))
-        }
-      }.launchIn(this)
       combine(playerUpdates, baseGame.currentPlayer, baseGame.winner) { _, _, _ ->
         this@Game.playerSessions.forEachIndexed { index, player ->
           player.setState(gameState(index))
@@ -41,7 +36,6 @@ class Game private constructor(
               combine(playerUpdates, baseGame.currentPlayer, baseGame.winner) { _, _, _ ->
                 observer.setState(gameState())
               }.launchIn(this)
-              baseGame.events.onEach { event -> observer.event(Event(event)) }
             }
           }
         }
@@ -54,23 +48,26 @@ class Game private constructor(
           }
         }
       }
-      baseGame.events.filterIsInstance<GameEvent.GameOver>()
-        .onEach { (winner) -> lobby.setChampion(playerSessions[winner].id) }
-        .launchIn(this)
       baseGame.start()
+      baseGame.winner.value?.let { winner -> lobby.setChampion(playerSessions[winner.playerNumber].id) }
     }
   }
 
   companion object {
-    suspend fun new(playerSessions: Iterable<Session<*>>, lobby: Lobby): coup.server.Game {
+    suspend fun new(
+      playerSessions: Iterable<Session<*>>,
+      lobby: Lobby,
+      ruleset: Ruleset = Ruleset()
+    ): coup.server.Game {
 
       val sessions = playerSessions.map { it.newSession<GameState>() }
       val players: List<Player> = playerSessions.mapIndexed { index, it ->
         Player(it.name, index, object : SocketPlayer() {
+          override val ruleset: Ruleset = ruleset
           override suspend fun <T> prompt(prompt: Prompt<T>) = sessions[index].prompt(prompt)
-        })
+        }, ruleset)
       }
-      val baseGame = Game(Board.setUp(players))
+      val baseGame = Game(ruleset, Board.setUp(players))
       val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
       return Game(baseGame, players, sessions, playerColors, lobby)
     }

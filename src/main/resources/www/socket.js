@@ -12,7 +12,6 @@ export class Socket {
     this.path = path
     this.handlers = new Map()
     this.errorHandlers = new Map()
-    this.eventHandlers = new Map()
     this.state = signal(null)
     this.on("State", state => this.state.value = state)
     this.on("Id", ({ id }) => localStorage.setItem("id", id))
@@ -24,9 +23,6 @@ export class Socket {
     })
     this.on("Error", (error) => {
       this.errorHandlers.get(error.type)?.(error)
-    })
-    this.on("Event", event => {
-      this.eventHandlers.get(event.type)?.(event.payload)
     })
     window.addEventListener("load", () => this.connect())
   }
@@ -65,9 +61,5 @@ export class Socket {
 
   onError(type, handler) {
     this.errorHandlers.set(type, handler)
-  }
-
-  onEvent(type, handler) {
-    this.eventHandlers.set(type, handler)
   }
 }

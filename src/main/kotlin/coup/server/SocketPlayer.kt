@@ -6,13 +6,14 @@ import coup.game.Player.Agent.*
 import coup.server.prompt.*
 
 abstract class SocketPlayer : Player.Agent {
+  abstract val ruleset: Ruleset
   abstract suspend fun <T> prompt(prompt: Prompt<T>): T
 
-  override suspend fun chooseAction(options: List<ActionOption>): ActionChoice =
-    prompt(TakeTurn(options))
+  override suspend fun chooseAction(options: List<Ruleset.ActionBuilder>, targets: List<Player>): Action =
+    prompt(TakeTurn(options, targets))
 
   override suspend fun respondToAction(player: Player, action: Action): ActionResponse {
-    return prompt(RespondToAction(player, action))
+    return prompt(RespondToAction(ruleset, player, action))
   }
 
   override suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse {

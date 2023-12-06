@@ -2,11 +2,13 @@ package coup.game
 
 import kotlinx.coroutines.flow.*
 
-class Player(val name: String, val playerNumber: Int, private val agent: Agent) {
+class Player(
+  val name: String,
+  val playerNumber: Int,
+  private val agent: Agent,
+  private val ruleset: Ruleset
+) {
   interface Agent {
-    data class ActionOption(val actionType: Action.Type, val validTargets: List<Player>? = null)
-    data class ActionChoice(val actionType: Action.Type, val target: Player?)
-
     sealed interface ActionResponse {
       data object Allow : ActionResponse
       data class Challenge(val challenger: Player) : ActionResponse
@@ -20,15 +22,13 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
 
     data class ChallengeResponse(val influence: Influence)
 
-    suspend fun chooseAction(options: List<ActionOption>): ActionChoice
+    suspend fun chooseAction(options: List<Ruleset.ActionBuilder>, targets: List<Player>): Action
     suspend fun respondToAction(player: Player, action: Action): ActionResponse
     suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse
     suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse
     suspend fun surrenderInfluence(player: Player): Influence
     suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence>
   }
-
-  class PlayerError(message: String) : Exception(message)
 
   private data class State(val isk: Int, val heldInfluences: List<Influence>, val revealedInfluences: List<Influence>)
 
@@ -44,6 +44,8 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
   fun gainIsk(amount: Int) {
     state.update { it.copy(isk = it.isk + amount) }
   }
+
+  fun pay(cost: Int) = loseIsk(cost)
 
   fun loseIsk(amount: Int) {
     state.update { it.copy(isk = it.isk - amount) }
@@ -92,24 +94,14 @@ class Player(val name: String, val playerNumber: Int, private val agent: Agent) 
   }
 
   suspend fun takeTurn(validTargets: List<Player>): Action {
-    val availableActions =
-      if (isk >= 10) listOf(Action.Type.Coup)
-      else Action.Type.entries.filter { action -> action.cost <= isk }
-    val (actionType, target) = agent.chooseAction(availableActions.map { type ->
-      if (type.hasTarget) Agent.ActionOption(type, validTargets)
-      else Agent.ActionOption(type)
-    })
-    if (actionType !in availableActions) {
-      throw PlayerError("Invalid action $actionType")
-    }
-    if (target != null && target !in validTargets) {
-      throw PlayerError("Invalid target $target")
-    }
-    return Action.create(actionType, this, target)
+    val availableActions = ruleset.availableActions(this)
+    return agent.chooseAction(availableActions, validTargets)
   }
 
   suspend fun respondToAction(action: Action) =
-    if (action.incontestable) Agent.ActionResponse.Allow else
+    if (!(ruleset.canChallenge(this, action) || ruleset.canAttemptBlock(this, action)))
+      Agent.ActionResponse.Allow
+    else
       agent.respondToAction(this, action)
 
   suspend fun respondToBlock(blocker: Player, influence: Influence): Agent.BlockResponse =

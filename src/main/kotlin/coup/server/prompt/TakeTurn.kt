@@ -2,25 +2,28 @@ package coup.server.prompt
 
 import coup.game.Action
 import coup.game.Player
+import coup.game.Ruleset
+import coup.server.prompt.ActionType.Companion.actionType
 import kotlinx.serialization.Serializable
 
 class TakeTurn(
-  options: List<Player.Agent.ActionOption>
-) : Prompt<Player.Agent.ActionChoice>() {
+  options: List<Ruleset.ActionBuilder>,
+  targets: List<Player>
+) : Prompt<Action>() {
 
   @Serializable
   private data class Request(val options: List<Option>)
 
   @Serializable
   private data class Response(
-    val actionType: Action.Type,
+    val actionType: ActionType,
     val target: Int? = null
   )
 
   @Serializable
   private data class Option(
-    val actionType: Action.Type,
-    val targets: List<Target>?
+    val actionType: ActionType,
+    val targets: List<Target>,
   )
 
   @Serializable
@@ -32,13 +35,19 @@ class TakeTurn(
   }
 
   override val config = config(
-    request = Request(options.map { (actionType, validTargets) ->
-      Option(actionType, validTargets?.map(::Target))
+    request = Request(options.map { actionBuilder ->
+      Option(actionBuilder.actionType, if (actionBuilder.targetRequired) targets.map(::Target) else listOf())
     }),
     readResponse = { (actionType, target): Response ->
-      Player.Agent.ActionChoice(
-        actionType,
-        options.find { it.actionType == actionType }?.validTargets?.find { it.playerNumber == target })
+      val action =
+        options.find { it.actionType == actionType }
+          ?: throw IllegalArgumentException("Action $actionType is not valid.")
+      if (action.targetRequired) {
+        val targetNumber = target ?: throw IllegalArgumentException("Action $actionType requires a target")
+        action.target = targets.find { it.playerNumber == targetNumber }
+          ?: throw IllegalArgumentException("Target $targetNumber not found")
+      }
+      action.build()
     },
   )
 
