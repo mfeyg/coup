@@ -2,12 +2,12 @@ package coup.server.prompt
 
 import coup.server.ServerError
 import coup.server.newId
-import io.ktor.websocket.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 abstract class Prompt<T> {
   val id = newId
+  val request get() = config.request
   protected abstract val config: Config<T>
   fun parse(response: String) = config.parse(response)
 
@@ -18,8 +18,6 @@ abstract class Prompt<T> {
     fun require(requirement: String? = null, check: () -> Boolean) {
       if (!check()) throw ValidationError(requirement)
     }
-
-    suspend fun WebSocketSession.send(prompt: Prompt<*>) = send(Frame.Text(prompt.config.request))
   }
 
   protected inline fun <reified RequestT, reified ResponseT> config(

@@ -3,18 +3,19 @@ package coup.server
 import coup.server.Sendable.Companion.send
 import coup.server.message.Message
 import coup.server.prompt.Prompt
-import coup.server.prompt.Prompt.Companion.send
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /** Represents a user's session. */
 class Session<State : Any>(
   val id: String,
   var name: String,
 ) {
-  private val activePrompts = MutableStateFlow(mapOf<String, Pair<Prompt<*>, CompletableDeferred<String>>>())
+  private val activePrompts = MutableStateFlow(mapOf<String, Pair<String, CompletableDeferred<String>>>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<Sendable>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
@@ -24,11 +25,31 @@ class Session<State : Any>(
   suspend fun <T> prompt(prompt: Prompt<T>): T {
     val response = CompletableDeferred<String>()
     activePrompts.update {
-      it + (prompt.id to (prompt to response))
+      it + (prompt.id to (prompt.request to response))
     }
     val responseValue = response.await()
     activePrompts.update { it - prompt.id }
     return prompt.parse(responseValue)
+  }
+
+  suspend inline fun <T, reified RequestT, reified ResponseT> prompt(
+    promptType: String,
+    request: RequestT,
+    noinline readResponse: (ResponseT) -> T
+  ) =
+    prompt(promptType, Json.encodeToString(request)) { response ->
+      readResponse(Json.decodeFromString(response))
+    }
+
+  suspend fun <T> prompt(promptType: String, request: String, readResponse: (String) -> T): T {
+    val response = CompletableDeferred<String>()
+    val id = newId
+    activePrompts.update {
+      it + (id to ("$promptType[$id]$request" to response))
+    }
+    val responseValue = response.await()
+    activePrompts.update { it - id }
+    return readResponse(responseValue)
   }
 
   suspend fun event(event: Sendable) {
@@ -68,7 +89,7 @@ class Session<State : Any>(
       activePrompts.onEach { prompts ->
         (prompts - sentPrompts).forEach { (id, value) ->
           val (prompt, _) = value
-          connection.send(prompt)
+          connection.send(Frame.Text(prompt))
           sentPrompts += id
         }
       }.launchIn(this)
