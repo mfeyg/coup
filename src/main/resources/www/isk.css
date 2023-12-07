@@ -1,8 +1,8 @@
-.player-isk::after {
+.isk::after {
     content: " ISK";
 }
 
-.player-isk-difference {
+.isk-difference {
     vertical-align: super;
     font-size: 0.5rem;
     display: inline-block;
@@ -12,16 +12,16 @@
     bottom: 0.5rem;
 }
 
-.player-isk-increase {
+.isk-increase {
     color: greenyellow;
 }
-.player-isk-increase::before {
+.isk-increase::before {
     content: "+";
 }
 
-.player-isk-decrease {
+.isk-decrease {
     color: orangered;
 }
-.player-isk-decrease::before {
+.isk-decrease::before {
     content: "-";
 }

@@ -1,11 +1,11 @@
 import { html } from "htm/preact"
-import { PlayerIsk } from "./playerIsk.js"
+import { Isk } from "./isk.js"
 
 export function Player({ player, current, active }) {
     return html`
     <div class="player ${active ? "player-turn" : ""}">
       <div class="player-name">${current ? html`<strong>You</strong>` : player.name}</div>
-      <${PlayerIsk} amount=${player.isk} />
+      <${Isk} amount=${player.isk} />
       <div class="player-influences">
         <${Influences} influences=${player.heldInfluences} hidden />
         <${Influences} influences=${player.revealedInfluences} />

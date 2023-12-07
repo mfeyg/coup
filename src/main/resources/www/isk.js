@@ -4,13 +4,13 @@ import { useState } from "preact/hooks"
 function Difference({difference}) {
     if (!difference) return null;
     if (difference > 0) {
-        return html`<div class="player-isk-difference player-isk-increase">${difference}</div>`
+        return html`<div class="isk-difference isk-increase">${difference}</div>`
     } else {
-        return html`<div class="player-isk-difference player-isk-decrease">${-difference}</div>`
+        return html`<div class="isk-difference isk-decrease">${-difference}</div>`
     }
 }
 
-export function PlayerIsk({amount}) {
+export function Isk({amount}) {
     const [previousAmount, setPreviousAmount] = useState(null)
     const [difference, setDifference] = useState(0)
     if (previousAmount != null && amount != previousAmount) {
@@ -18,5 +18,5 @@ export function PlayerIsk({amount}) {
         setTimeout(() => setDifference(0), 1000);
     }
     setPreviousAmount(amount);
-    return html`<div class="player-isk">${amount}<${Difference} difference=${difference} /></div>`
+    return html`<div class="isk">${amount}<${Difference} difference=${difference} /></div>`
 }
