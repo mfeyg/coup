@@ -5,6 +5,7 @@ import coup.game.Player
 import coup.game.Player.Agent.*
 import coup.server.prompt.*
 import coup.server.prompt.RespondToAction.respondToAction
+import coup.server.prompt.RespondToBlock.respondToBlock
 
 class SocketPlayer(private val ruleset: Ruleset, private val session: Session<*>) : Player.Agent {
 
@@ -14,9 +15,8 @@ class SocketPlayer(private val ruleset: Ruleset, private val session: Session<*>
   override suspend fun respondToAction(player: Player, action: Action): ActionResponse =
     session.respondToAction(player, action, ruleset)
 
-  override suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse {
-    return session.prompt(RespondToBlock(player, blocker, influence))
-  }
+  override suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse =
+    session.respondToBlock(player, blocker, influence)
 
   override suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse {
     return session.prompt(RespondToChallenge(claim, challenger, player.heldInfluences))

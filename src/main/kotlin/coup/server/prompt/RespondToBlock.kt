@@ -3,13 +3,10 @@ package coup.server.prompt
 import coup.game.Influence
 import coup.game.Player
 import coup.game.Player.Agent.BlockResponse
+import coup.server.Session
 import kotlinx.serialization.Serializable
 
-class RespondToBlock(
-  private val player: Player,
-  blocker: Player,
-  blockingInfluence: Influence
-) : Prompt<BlockResponse>() {
+object RespondToBlock {
 
   @Serializable
   private data class Request(
@@ -24,19 +21,14 @@ class RespondToBlock(
     Allow, Challenge
   }
 
-  private val request = Request(
-    blocker = blocker.playerNumber,
-    blockingInfluence = blockingInfluence,
-  )
-
-  override val config = config(
-    request = request,
-    readResponse = ::read,
-    validate = {}
-  )
-
-  private fun read(response: Response) = when (response.response) {
-    ResponseType.Allow -> BlockResponse.Allow
-    ResponseType.Challenge -> BlockResponse.Challenge(player)
-  }
+  suspend fun Session<*>.respondToBlock(player: Player, blocker: Player, blockingInfluence: Influence): BlockResponse =
+    prompt(
+      "RespondToBlock",
+      Request(blocker.playerNumber, blockingInfluence)
+    ) { (response): Response ->
+      when (response) {
+        ResponseType.Allow -> BlockResponse.Allow
+        ResponseType.Challenge -> BlockResponse.Challenge(player)
+      }
+    }
 }
