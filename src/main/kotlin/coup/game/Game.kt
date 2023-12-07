@@ -26,8 +26,7 @@ class Game(
   suspend fun start() {
     while (true) {
       if (activePlayers.size < 2) {
-        val winner = activePlayers.first()
-        _winner.value = winner
+        _winner.value = activePlayers.first()
         break
       }
       takeTurn()
