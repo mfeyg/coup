@@ -19,7 +19,7 @@ class Player(
 
     data class ChallengeResponse(val influence: Influence)
 
-    suspend fun chooseAction(options: List<Ruleset.ActionBuilder>, targets: List<Player>): Action
+    suspend fun chooseAction(player: Player, targets: List<Player>, ruleset: Ruleset): Action
     suspend fun respondToAction(player: Player, action: Action): ActionResponse
     suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse
     suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse
@@ -91,8 +91,7 @@ class Player(
   }
 
   suspend fun takeTurn(validTargets: List<Player>): Action {
-    val availableActions = ruleset.availableActions(this)
-    return agent.chooseAction(availableActions, validTargets)
+    return agent.chooseAction(this, validTargets, ruleset)
   }
 
   suspend fun respondToAction(action: Action) =
