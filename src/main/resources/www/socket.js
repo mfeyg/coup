@@ -7,7 +7,7 @@ function readMessage(data) {
 
 const socketProtocol = location.protocol === "https:" ? "wss:" : "ws:"
 
-export class Socket {
+class Socket {
   constructor(path) {
     this.path = path
     this.handlers = new Map()
@@ -62,4 +62,8 @@ export class Socket {
   onError(type, handler) {
     this.errorHandlers.set(type, handler)
   }
+}
+
+export function newSocket(path) {
+  return new Socket(path)
 }

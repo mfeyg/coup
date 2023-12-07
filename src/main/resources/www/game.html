@@ -18,11 +18,11 @@
 <script type="module">
   import { html, render } from "htm/preact"
   import { signal, computed } from "signals"
-  import { Socket } from "./socket.js"
+  import { newSocket } from "./socket.js"
   import { Prompt } from "./prompt.js"
   import { Player } from "./player.js"
 
-  const socket = new Socket("/game")
+  const socket = newSocket("/game")
   const thisPlayer = computed(() => socket.state.value?.player)
   const players = computed(() => socket.state.value?.players)
   const currentTurn = computed(() => socket.state.value?.currentTurn)
