@@ -15,10 +15,7 @@ class Player(
       data class Block(val blocker: Player, val influence: Influence) : ActionResponse
     }
 
-    sealed interface BlockResponse {
-      data object Allow : BlockResponse
-      data class Challenge(val challenger: Player) : BlockResponse
-    }
+    enum class BlockResponse { Allow, Challenge }
 
     data class ChallengeResponse(val influence: Influence)
 

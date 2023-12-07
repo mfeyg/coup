@@ -48,15 +48,12 @@ class Game(
   private suspend fun takeTurn(player: Player = currentPlayer.value) {
     val others = activePlayers - player
     val action = player.takeTurn(others)
-    when (val response = respond(ActionResponse.Allow, others) { respondToAction(action) }) {
+    when (val response = respondToAction(others, action)) {
       ActionResponse.Allow -> perform(action)
       is ActionResponse.Block -> {
         val (blocker, blockingInfluence) = response
-        val responseToBlock = respond(BlockResponse.Allow, activePlayers - blocker) {
-          respondToBlock(blocker, blockingInfluence)
-        }
-        if (responseToBlock is BlockResponse.Challenge) {
-          val challenger = responseToBlock.challenger
+        val challenger = respondToBlock( activePlayers - blocker, blocker, blockingInfluence)
+        if (challenger != null) {
           val challengeResponse = blocker.respondToChallenge(blockingInfluence, challenger)
           if (challengeResponse.influence == blockingInfluence) {
             blocker.swapOut(blockingInfluence, deck)
@@ -83,15 +80,24 @@ class Game(
     action.perform(board)
   }
 
-  private suspend fun <ResponseT> respond(
-    allow: ResponseT,
+  private suspend fun respondToAction(
     players: Iterable<Player>,
-    respond: suspend Player.() -> ResponseT
-  ): ResponseT {
-    return channelFlow {
-      for (player in players) launch {
-        send(player.respond())
+    action: Action
+  ) = channelFlow {
+    for (player in players) launch {
+      send(player.respondToAction(action))
+    }
+  }.firstOrNull { it != ActionResponse.Allow } ?: ActionResponse.Allow
+
+  private suspend fun respondToBlock(
+    players: Iterable<Player>,
+    blocker: Player,
+    blockingInfluence: Influence,
+  ) = channelFlow {
+    for (player in players) launch {
+      if (player.respondToBlock(blocker, blockingInfluence) == BlockResponse.Challenge) {
+        send(player)
       }
-    }.firstOrNull { it != allow } ?: allow
-  }
+    }
+  }.firstOrNull()
 }

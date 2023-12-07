@@ -16,7 +16,7 @@ class SocketPlayer(private val ruleset: Ruleset, private val session: Session<*>
     session.respondToAction(player, action, ruleset)
 
   override suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse =
-    session.respondToBlock(player, blocker, influence)
+    session.respondToBlock(blocker, influence)
 
   override suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse {
     return session.prompt(RespondToChallenge(claim, challenger, player.heldInfluences))
