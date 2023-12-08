@@ -1,12 +1,18 @@
 package coup.server.prompt
 
 import coup.game.Influence
+import coup.game.Player
+import coup.server.Prompt
+import coup.server.Prompt.Companion.prompt
 import kotlinx.serialization.Serializable
 
-class Exchange(
-  private val heldInfluences: List<Influence>,
-  private val drawnInfluences: List<Influence>,
-) : Prompt<List<Influence>>() {
+object Exchange {
+  suspend fun Prompt.exchange(player: Player, drawnInfluences: List<Influence>) =
+    prompt("Exchange", Request(drawnInfluences)) { (returnedInfluences): Response ->
+      require(returnedInfluences.size == drawnInfluences.size) { "Must return ${drawnInfluences.size} influences" }
+      require(returnedInfluences sublist drawnInfluences + player.heldInfluences)
+      returnedInfluences
+    }
 
   @Serializable
   private data class Request(val drawnInfluences: List<Influence>)
@@ -14,19 +20,10 @@ class Exchange(
   @Serializable
   private data class Response(val returnedInfluences: List<Influence>)
 
-  override val config = config(
-    request = Request(drawnInfluences),
-    readResponse = { response: Response -> response.returnedInfluences },
-    validate = { returnedInfluences ->
-      require { returnedInfluences.size == drawnInfluences.size }
-      require { returnedInfluences isSublistOf (heldInfluences + drawnInfluences) }
-    }
-  )
-
-  private infix fun List<Influence>.isSublistOf(list: List<Influence>): Boolean {
+  private infix fun <T> List<T>.sublist(list: List<T>): Boolean {
     val sizes = list.groupBy { it }
-    return groupBy { it }.all { (influence, influences) ->
-      influences.size <= (sizes[influence]?.size ?: return false)
+    return groupBy { it }.all { (item, items) ->
+      items.size <= (sizes[item]?.size ?: return false)
     }
   }
 }

@@ -4,6 +4,7 @@ import coup.game.*
 import coup.game.Player
 import coup.game.Player.Agent.*
 import coup.server.prompt.*
+import coup.server.prompt.Exchange.exchange
 import coup.server.prompt.RespondToAction.respondToAction
 import coup.server.prompt.RespondToBlock.respondToBlock
 import coup.server.prompt.SurrenderInfluence.surrenderInfluence
@@ -26,7 +27,6 @@ class SocketPlayer(private val ruleset: Ruleset, private val session: Session<*>
 
   override suspend fun surrenderInfluence(player: Player) = session.surrenderInfluence(player)
 
-  override suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence> {
-    return session.prompt(Exchange(heldInfluences = player.heldInfluences, drawnInfluences = drawnInfluences))
-  }
+  override suspend fun exchange(player: Player, drawnInfluences: List<Influence>) =
+    session.exchange(player, drawnInfluences)
 }
