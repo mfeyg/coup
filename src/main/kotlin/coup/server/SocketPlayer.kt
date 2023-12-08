@@ -6,6 +6,7 @@ import coup.game.Player.Agent.*
 import coup.server.prompt.*
 import coup.server.prompt.RespondToAction.respondToAction
 import coup.server.prompt.RespondToBlock.respondToBlock
+import coup.server.prompt.SurrenderInfluence.surrenderInfluence
 import coup.server.prompt.TakeTurn.takeTurn
 
 class SocketPlayer(private val ruleset: Ruleset, private val session: Session<*>) : Player.Agent {
@@ -23,9 +24,7 @@ class SocketPlayer(private val ruleset: Ruleset, private val session: Session<*>
     return session.prompt(RespondToChallenge(claim, challenger, player.heldInfluences))
   }
 
-  override suspend fun surrenderInfluence(player: Player): Influence {
-    return session.prompt(SurrenderInfluence(player.heldInfluences))
-  }
+  override suspend fun surrenderInfluence(player: Player) = session.surrenderInfluence(player)
 
   override suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence> {
     return session.prompt(Exchange(heldInfluences = player.heldInfluences, drawnInfluences = drawnInfluences))

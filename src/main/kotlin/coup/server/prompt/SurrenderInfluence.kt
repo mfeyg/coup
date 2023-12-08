@@ -1,16 +1,18 @@
 package coup.server.prompt
 
 import coup.game.Influence
+import coup.game.Player
+import coup.server.Prompt
+import coup.server.Prompt.Companion.prompt
 import kotlinx.serialization.Serializable
 
-class SurrenderInfluence(private val heldInfluences: List<Influence>) : Prompt<Influence>() {
-
+object SurrenderInfluence {
   @Serializable
   private data class Response(val influence: Influence)
 
-  override val config = config(
-    readResponse = { response: Response -> response.influence },
-    validate = { require { it in heldInfluences } }
-  )
-
+  suspend fun Prompt.surrenderInfluence(player: Player): Influence =
+    prompt("SurrenderInfluence") { (influence): Response ->
+      require(influence in player.heldInfluences)
+      influence
+    }
 }
