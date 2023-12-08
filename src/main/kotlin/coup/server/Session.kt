@@ -2,19 +2,16 @@ package coup.server
 
 import coup.server.Sendable.Companion.send
 import coup.server.message.Message
-import coup.server.prompt.Prompt
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 /** Represents a user's session. */
 class Session<State : Any>(
   val id: String,
   var name: String,
-) {
+) : Prompt {
   private val activePrompts = MutableStateFlow(mapOf<String, Pair<String, CompletableDeferred<String>>>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<Sendable>(replay = UNLIMITED)
@@ -22,7 +19,7 @@ class Session<State : Any>(
 
   val messages get() = incomingMessages.asSharedFlow()
 
-  suspend fun <T> prompt(prompt: Prompt<T>): T {
+  suspend fun <T> prompt(prompt: coup.server.prompt.Prompt<T>): T {
     val response = CompletableDeferred<String>()
     activePrompts.update {
       it + (prompt.id to (prompt.request to response))
@@ -32,16 +29,7 @@ class Session<State : Any>(
     return prompt.parse(responseValue)
   }
 
-  suspend inline fun <T, reified RequestT, reified ResponseT> prompt(
-    promptType: String,
-    request: RequestT,
-    noinline readResponse: (ResponseT) -> T
-  ) =
-    prompt(promptType, Json.encodeToString(request)) { response ->
-      readResponse(Json.decodeFromString(response))
-    }
-
-  suspend fun <T> prompt(promptType: String, request: String, readResponse: (String) -> T): T {
+  override suspend fun <T> prompt(promptType: String, request: String, readResponse: (String) -> T): T {
     val response = CompletableDeferred<String>()
     val id = newId
     activePrompts.update {

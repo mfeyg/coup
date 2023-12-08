@@ -3,6 +3,7 @@ package coup.server.prompt
 import coup.game.Influence
 import coup.game.Player
 import coup.game.Player.Agent.BlockResponse
+import coup.server.Prompt.Companion.prompt
 import coup.server.Session
 import kotlinx.serialization.Serializable
 
