@@ -21,7 +21,7 @@ class Player(
 
     data class ChallengeResponse(val influence: Influence)
 
-    suspend fun chooseAction(player: Player, targets: List<Player>, ruleset: Ruleset): Action
+    suspend fun chooseAction(player: Player, targets: List<Player>): Action
     suspend fun respondToAction(player: Player, action: Action): ActionResponse
     suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse
     suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse
@@ -92,9 +92,7 @@ class Player(
     state.update { it.copy(heldInfluences = heldInfluences) }
   }
 
-  suspend fun takeTurn(validTargets: List<Player>): Action {
-    return agent.chooseAction(this, validTargets, ruleset)
-  }
+  suspend fun takeTurn(validTargets: List<Player>) = agent.chooseAction(this, validTargets)
 
   suspend fun respondToAction(action: Action) =
     if (!(ruleset.canChallenge(this, action) || ruleset.canAttemptBlock(this, action)))
