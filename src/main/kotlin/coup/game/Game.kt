@@ -17,10 +17,9 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
   private suspend fun Action.perform() = perform(board)
 
   private val _currentPlayer = MutableStateFlow(players.first())
-
   val currentPlayer = _currentPlayer.asStateFlow()
-  private val _winner = MutableStateFlow<Player?>(null)
 
+  private val _winner = MutableStateFlow<Player?>(null)
   val winner = _winner.asStateFlow()
 
   private val activePlayers get() = players.filter { it.isActive }
@@ -46,16 +45,17 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
       .first()
   }
 
-  private suspend fun takeTurn(player: Player = currentPlayer.value) {
-    val others = activePlayers - player
-    val action = player.takeTurn(others)
-    when (val response = actionResponse(action)) {
+  private suspend fun takeTurn() {
+    val player = currentPlayer.value
+    val action = player.chooseAction(validTargets = activePlayers - player)
+
+    when (val response = response(action)) {
       is ActionResponse.Allow -> action.perform()
 
       is ActionResponse.Block -> {
         val (block) = response
         val (blocker, blockingInfluence) = block
-        val challenger = blockChallenger(block)
+        val challenger = challenger(block)
         if (challenger != null) {
           val (revealedInfluence) = blocker.respondToChallenge(blockingInfluence, challenger)
           if (revealedInfluence == blockingInfluence) {
@@ -80,7 +80,7 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
     }
   }
 
-  private suspend fun actionResponse(action: Action): ActionResponse {
+  private suspend fun response(action: Action): ActionResponse {
     val responders = activePlayers - action.player
     return channelFlow {
       for (responder in responders) launch {
@@ -89,7 +89,7 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
     }.firstOrNull { it != ActionResponse.Allow } ?: ActionResponse.Allow
   }
 
-  private suspend fun blockChallenger(block: Block): Player? {
+  private suspend fun challenger(block: Block): Player? {
     val responders = activePlayers - block.blocker
     return channelFlow {
       for (responder in responders) launch {

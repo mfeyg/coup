@@ -94,7 +94,7 @@ class Player(
     state.update { it.copy(heldInfluences = heldInfluences) }
   }
 
-  suspend fun takeTurn(validTargets: List<Player>) = agent.chooseAction(this, validTargets)
+  suspend fun chooseAction(validTargets: List<Player>) = agent.chooseAction(this, validTargets)
 
   suspend fun respondToAction(action: Action) =
     if (!(ruleset.canChallenge(this, action) || ruleset.canAttemptBlock(this, action)))
