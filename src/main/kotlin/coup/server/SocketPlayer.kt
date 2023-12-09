@@ -6,13 +6,14 @@ import coup.game.Player.Agent.*
 import coup.game.actions.Action
 import coup.game.rules.Ruleset
 import coup.server.prompt.Exchange.exchange
+import coup.server.prompt.Promptable
 import coup.server.prompt.RespondToAction.respondToAction
 import coup.server.prompt.RespondToBlock.respondToBlock
 import coup.server.prompt.RespondToChallenge.respondToChallenge
 import coup.server.prompt.SurrenderInfluence.surrenderInfluence
 import coup.server.prompt.TakeTurn.takeTurn
 
-class SocketPlayer(private val ruleset: Ruleset, private val session: Session<*>) : Player.Agent {
+class SocketPlayer(private val ruleset: Ruleset, private val session: Promptable) : Player.Agent {
 
   override suspend fun chooseAction(player: Player, targets: List<Player>) =
     session.takeTurn(player, targets, ruleset)

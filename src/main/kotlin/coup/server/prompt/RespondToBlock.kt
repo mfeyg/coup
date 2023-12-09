@@ -4,7 +4,6 @@ import coup.game.Influence
 import coup.game.Player
 import coup.game.Player.Agent.BlockResponse
 import coup.server.prompt.Promptable.Companion.prompt
-import coup.server.Session
 import kotlinx.serialization.Serializable
 
 object RespondToBlock {
@@ -22,7 +21,7 @@ object RespondToBlock {
     Allow, Challenge
   }
 
-  suspend fun Session<*>.respondToBlock(blocker: Player, blockingInfluence: Influence): BlockResponse =
+  suspend fun Promptable.respondToBlock(blocker: Player, blockingInfluence: Influence): BlockResponse =
     prompt(
       "RespondToBlock",
       Request(blocker.playerNumber, blockingInfluence)

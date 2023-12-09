@@ -5,7 +5,6 @@ import coup.game.actions.ActionBuilder
 import coup.game.Player
 import coup.game.rules.Ruleset
 import coup.server.prompt.Promptable.Companion.prompt
-import coup.server.Session
 import coup.server.prompt.ActionType.Companion.actionType
 import kotlinx.serialization.Serializable
 
@@ -39,7 +38,7 @@ object TakeTurn {
     val target: Int? = null
   )
 
-  suspend fun Session<*>.takeTurn(player: Player, targets: List<Player>, ruleset: Ruleset): Action {
+  suspend fun Promptable.takeTurn(player: Player, targets: List<Player>, ruleset: Ruleset): Action {
     val actionsAvailable = ruleset.availableActions(player).associateBy { it.actionType }
     val targetsIndexed = targets.associateBy { it.playerNumber }
     return prompt(
