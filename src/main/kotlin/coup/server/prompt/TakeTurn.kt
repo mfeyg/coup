@@ -1,6 +1,7 @@
 package coup.server.prompt
 
 import coup.game.Action
+import coup.game.ActionBuilder
 import coup.game.Player
 import coup.game.Ruleset
 import coup.server.prompt.Promptable.Companion.prompt
@@ -18,7 +19,7 @@ object TakeTurn {
     val actionType: ActionType,
     val targets: List<Target>,
   ) {
-    constructor(actionBuilder: Ruleset.ActionBuilder, targets: Iterable<Player>) : this(
+    constructor(actionBuilder: ActionBuilder, targets: Iterable<Player>) : this(
       actionType = actionBuilder.actionType,
       targets = if (actionBuilder.targetRequired) targets.map(::Target) else listOf()
     )

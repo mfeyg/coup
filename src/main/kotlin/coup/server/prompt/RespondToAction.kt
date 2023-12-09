@@ -1,13 +1,13 @@
 package coup.server.prompt
 
 import coup.game.Action
+import coup.game.ActionType.Companion.type
 import coup.game.Influence
 import coup.game.Player
 import coup.game.Player.Agent.ActionResponse
 import coup.game.Ruleset
-import coup.game.Ruleset.Companion.type
-import coup.server.prompt.Promptable.Companion.prompt
 import coup.server.Session
+import coup.server.prompt.Promptable.Companion.prompt
 import coup.server.prompt.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable
 
