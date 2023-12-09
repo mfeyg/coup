@@ -9,8 +9,11 @@ import kotlinx.serialization.Serializable
 object Exchange {
   suspend fun Prompt.exchange(player: Player, drawnInfluences: List<Influence>) =
     prompt("Exchange", Request(drawnInfluences)) { (returnedInfluences): Response ->
-      require(returnedInfluences.size == drawnInfluences.size) { "Must return ${drawnInfluences.size} influences" }
-      require(returnedInfluences sublist drawnInfluences + player.heldInfluences)
+      require(returnedInfluences.size == drawnInfluences.size) { "Must return ${drawnInfluences.size} influences." }
+      val allInfluences = (player.heldInfluences + drawnInfluences).toMutableList()
+      returnedInfluences.forEach { influence ->
+        require(allInfluences.remove(influence)) { "Not enough ${influence}s." }
+      }
       returnedInfluences
     }
 
@@ -19,11 +22,4 @@ object Exchange {
 
   @Serializable
   private data class Response(val returnedInfluences: List<Influence>)
-
-  private infix fun <T> List<T>.sublist(list: List<T>): Boolean {
-    val sizes = list.groupBy { it }
-    return groupBy { it }.all { (item, items) ->
-      items.size <= (sizes[item]?.size ?: return false)
-    }
-  }
 }
