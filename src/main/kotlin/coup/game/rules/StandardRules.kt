@@ -7,7 +7,7 @@ import coup.game.actions.ActionBuilder
 import coup.game.actions.ActionType
 import coup.game.actions.ActionType.*
 
-class StandardRuleset : Ruleset {
+class StandardRules : Ruleset {
 
   private val allActions = listOf(
     Income,

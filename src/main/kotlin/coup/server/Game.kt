@@ -3,7 +3,7 @@ package coup.server
 import coup.game.*
 import coup.game.Game
 import coup.game.rules.Ruleset
-import coup.game.rules.StandardRuleset
+import coup.game.rules.StandardRules
 import coup.server.ConnectionController.SocketConnection
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -56,7 +56,7 @@ class Game private constructor(
     suspend fun new(
       playerSessions: Iterable<Session<*>>,
       lobby: Lobby,
-      ruleset: Ruleset = StandardRuleset()
+      ruleset: Ruleset = StandardRules()
     ): coup.server.Game {
 
       val sessions = playerSessions.map { it.newSession<GameState>() }
