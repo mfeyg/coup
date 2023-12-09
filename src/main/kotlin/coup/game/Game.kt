@@ -49,16 +49,16 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
   private suspend fun takeTurn(player: Player = currentPlayer.value) {
     val others = activePlayers - player
     val action = player.takeTurn(others)
-    when (val response = attemptAction(action, others)) {
+    when (val response = actionResponse(action)) {
       is ActionResponse.Allow -> action.perform()
 
       is ActionResponse.Block -> {
-        val block = response.block
+        val (block) = response
         val (blocker, blockingInfluence) = block
-        val challenger = attemptBlock(block, activePlayers - blocker)
+        val challenger = blockChallenger(block)
         if (challenger != null) {
-          val challengeResponse = blocker.respondToChallenge(blockingInfluence, challenger)
-          if (challengeResponse.influence == blockingInfluence) {
+          val (revealedInfluence) = blocker.respondToChallenge(blockingInfluence, challenger)
+          if (revealedInfluence == blockingInfluence) {
             blocker.swapOut(blockingInfluence, deck)
             challenger.loseInfluence()
           } else {
@@ -69,9 +69,10 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
 
       is ActionResponse.Challenge -> {
         val (challenger) = response
-        val (influence) = player.respondToChallenge(ruleset.requiredInfluence(action)!!, challenger)
-        if (influence == ruleset.requiredInfluence(action)) {
-          player.swapOut(influence, deck)
+        val requiredInfluence = ruleset.requiredInfluence(action)!!
+        val (revealedInfluence) = player.respondToChallenge(requiredInfluence, challenger)
+        if (revealedInfluence == requiredInfluence) {
+          player.swapOut(revealedInfluence, deck)
           challenger.loseInfluence()
           action.perform()
         }
@@ -79,23 +80,23 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
     }
   }
 
-  private suspend fun attemptAction(
-    action: Action,
-    responders: Iterable<Player>
-  ) = channelFlow {
-    for (responder in responders) launch {
-      send(responder.respondToAction(action))
-    }
-  }.firstOrNull { it != ActionResponse.Allow } ?: ActionResponse.Allow
-
-  private suspend fun attemptBlock(
-    block: Block,
-    responders: Iterable<Player>,
-  ) = channelFlow {
-    for (responder in responders) launch {
-      if (responder.respondToBlock(block) == BlockResponse.Challenge) {
-        send(responder)
+  private suspend fun actionResponse(action: Action): ActionResponse {
+    val responders = activePlayers - action.player
+    return channelFlow {
+      for (responder in responders) launch {
+        send(responder.respondToAction(action))
       }
-    }
-  }.firstOrNull()
+    }.firstOrNull { it != ActionResponse.Allow } ?: ActionResponse.Allow
+  }
+
+  private suspend fun blockChallenger(block: Block): Player? {
+    val responders = activePlayers - block.blocker
+    return channelFlow {
+      for (responder in responders) launch {
+        if (responder.respondToBlock(block) == BlockResponse.Challenge) {
+          send(responder)
+        }
+      }
+    }.firstOrNull()
+  }
 }
