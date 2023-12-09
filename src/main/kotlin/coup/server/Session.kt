@@ -2,6 +2,7 @@ package coup.server
 
 import coup.server.Sendable.Companion.send
 import coup.server.message.Message
+import coup.server.prompt.Promptable
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.*
 class Session<State : Any>(
   val id: String,
   var name: String,
-) : Prompt {
+) : Promptable {
   private val activePrompts = MutableStateFlow(mapOf<String, Pair<String, CompletableDeferred<String>>>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<Sendable>(replay = UNLIMITED)

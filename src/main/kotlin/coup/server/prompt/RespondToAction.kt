@@ -6,7 +6,7 @@ import coup.game.Player
 import coup.game.Player.Agent.ActionResponse
 import coup.game.Ruleset
 import coup.game.Ruleset.Companion.type
-import coup.server.Prompt.Companion.prompt
+import coup.server.prompt.Promptable.Companion.prompt
 import coup.server.Session
 import coup.server.prompt.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable

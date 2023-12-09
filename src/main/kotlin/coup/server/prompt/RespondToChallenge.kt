@@ -3,12 +3,11 @@ package coup.server.prompt
 import coup.game.Influence
 import coup.game.Player
 import coup.game.Player.Agent.ChallengeResponse
-import coup.server.Prompt
-import coup.server.Prompt.Companion.prompt
+import coup.server.prompt.Promptable.Companion.prompt
 import kotlinx.serialization.Serializable
 
 object RespondToChallenge {
-  suspend fun Prompt.respondToChallenge(
+  suspend fun Promptable.respondToChallenge(
     player: Player,
     challenger: Player,
     claimedInfluence: Influence

@@ -3,7 +3,7 @@ package coup.server.prompt
 import coup.game.Action
 import coup.game.Player
 import coup.game.Ruleset
-import coup.server.Prompt.Companion.prompt
+import coup.server.prompt.Promptable.Companion.prompt
 import coup.server.Session
 import coup.server.prompt.ActionType.Companion.actionType
 import kotlinx.serialization.Serializable
