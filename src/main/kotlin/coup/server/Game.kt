@@ -23,7 +23,7 @@ class Game private constructor(
 
   init {
     scope.launch {
-      combine(playerUpdates, baseGame.currentPlayer, baseGame.winner) { _, _, _ ->
+      combine(playerUpdates, baseGame.currentPlayer) { _, _ ->
         this@Game.playerSessions.forEachIndexed { index, player ->
           player.setState(gameState(index))
         }
@@ -32,7 +32,7 @@ class Game private constructor(
         observers.collectLatest { observers ->
           coroutineScope {
             observers.values.forEach { observer ->
-              combine(playerUpdates, baseGame.currentPlayer, baseGame.winner) { _, _, _ ->
+              combine(playerUpdates, baseGame.currentPlayer) { _, _ ->
                 observer.setState(gameState())
               }.launchIn(this)
             }
@@ -48,7 +48,7 @@ class Game private constructor(
         }
       }
       baseGame.start()
-      baseGame.winner.value?.let { winner -> lobby.setChampion(playerSessions[winner.playerNumber].id) }
+      baseGame.winner?.let { winner -> lobby.setChampion(playerSessions[winner.playerNumber].id) }
     }
   }
 
@@ -111,7 +111,7 @@ class Game private constructor(
           opponent.revealedInfluences,
         )
       },
-      baseGame.currentPlayer.value.playerNumber.takeIf { baseGame.winner.value == null },
-      baseGame.winner.value?.playerNumber,
+      baseGame.currentPlayer.value.playerNumber.takeIf { baseGame.winner == null },
+      baseGame.winner?.playerNumber,
     )
 }

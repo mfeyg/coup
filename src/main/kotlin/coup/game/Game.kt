@@ -19,15 +19,13 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
   private val _currentPlayer = MutableStateFlow(players.first())
   val currentPlayer = _currentPlayer.asStateFlow()
 
-  private val _winner = MutableStateFlow<Player?>(null)
-  val winner = _winner.asStateFlow()
+  val winner: Player? get() = activePlayers.singleOrNull()
 
   private val activePlayers get() = players.filter { it.isActive }
 
   suspend fun start() {
     while (true) {
-      if (activePlayers.size < 2) {
-        _winner.value = activePlayers.first()
+      if (winner != null) {
         break
       }
       takeTurn()
