@@ -1,7 +1,8 @@
-package coup.game
+package coup.game.rules
 
 import coup.game.action.Action.*
 import coup.game.Influence.*
+import coup.game.Player
 import coup.game.action.Action
 import coup.game.action.ActionBuilder
 import coup.game.action.ActionType

@@ -5,7 +5,7 @@ import coup.game.action.ActionType.Companion.type
 import coup.game.Influence
 import coup.game.Player
 import coup.game.Player.Agent.ActionResponse
-import coup.game.Ruleset
+import coup.game.rules.Ruleset
 import coup.server.Session
 import coup.server.prompt.Promptable.Companion.prompt
 import coup.server.prompt.RespondToAction.Response.Type.*

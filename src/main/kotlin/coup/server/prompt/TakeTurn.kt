@@ -3,7 +3,7 @@ package coup.server.prompt
 import coup.game.action.Action
 import coup.game.action.ActionBuilder
 import coup.game.Player
-import coup.game.Ruleset
+import coup.game.rules.Ruleset
 import coup.server.prompt.Promptable.Companion.prompt
 import coup.server.Session
 import coup.server.prompt.ActionType.Companion.actionType

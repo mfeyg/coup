@@ -1,7 +1,7 @@
 package coup.game.action
 
 import coup.game.Player
-import coup.game.Ruleset
+import coup.game.rules.Ruleset
 
 class ActionBuilder(
   private val ruleset: Ruleset,
