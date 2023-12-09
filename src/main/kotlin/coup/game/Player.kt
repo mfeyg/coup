@@ -14,7 +14,9 @@ class Player(
     sealed interface ActionResponse {
       data object Allow : ActionResponse
       data class Challenge(val challenger: Player) : ActionResponse
-      data class Block(val blocker: Player, val influence: Influence) : ActionResponse
+      data class Block(val block: coup.game.Block) : ActionResponse {
+        constructor(blocker: Player, influence: Influence) : this(coup.game.Block(blocker, influence))
+      }
     }
 
     enum class BlockResponse { Allow, Challenge }
@@ -100,8 +102,8 @@ class Player(
     else
       agent.respondToAction(this, action)
 
-  suspend fun respondToBlock(blocker: Player, influence: Influence): Agent.BlockResponse =
-    agent.respondToBlock(this, Block(blocker, influence))
+  suspend fun respondToBlock(block: Block): Agent.BlockResponse =
+    agent.respondToBlock(this, block)
 
   suspend fun respondToChallenge(claim: Influence, challenger: Player): Agent.ChallengeResponse {
     val response = agent.respondToChallenge(this, claim, challenger)

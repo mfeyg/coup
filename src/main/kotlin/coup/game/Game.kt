@@ -53,8 +53,9 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
       is ActionResponse.Allow -> action.perform()
 
       is ActionResponse.Block -> {
-        val (blocker, blockingInfluence) = response
-        val challenger = attemptBlock(blocker, blockingInfluence, activePlayers - blocker)
+        val block = response.block
+        val (blocker, blockingInfluence) = block
+        val challenger = attemptBlock(block, activePlayers - blocker)
         if (challenger != null) {
           val challengeResponse = blocker.respondToChallenge(blockingInfluence, challenger)
           if (challengeResponse.influence == blockingInfluence) {
@@ -88,12 +89,11 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
   }.firstOrNull { it != ActionResponse.Allow } ?: ActionResponse.Allow
 
   private suspend fun attemptBlock(
-    blocker: Player,
-    blockingInfluence: Influence,
+    block: Block,
     responders: Iterable<Player>,
   ) = channelFlow {
     for (responder in responders) launch {
-      if (responder.respondToBlock(blocker, blockingInfluence) == BlockResponse.Challenge) {
+      if (responder.respondToBlock(block) == BlockResponse.Challenge) {
         send(responder)
       }
     }
