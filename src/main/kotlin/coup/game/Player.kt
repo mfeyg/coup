@@ -23,7 +23,7 @@ class Player(
 
     suspend fun chooseAction(player: Player, targets: List<Player>): Action
     suspend fun respondToAction(player: Player, action: Action): ActionResponse
-    suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse
+    suspend fun respondToBlock(player: Player, block: Block): BlockResponse
     suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse
     suspend fun surrenderInfluence(player: Player): Influence
     suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence>
@@ -101,7 +101,7 @@ class Player(
       agent.respondToAction(this, action)
 
   suspend fun respondToBlock(blocker: Player, influence: Influence): Agent.BlockResponse =
-    agent.respondToBlock(this, blocker, influence)
+    agent.respondToBlock(this, Block(blocker, influence))
 
   suspend fun respondToChallenge(claim: Influence, challenger: Player): Agent.ChallengeResponse {
     val response = agent.respondToChallenge(this, claim, challenger)

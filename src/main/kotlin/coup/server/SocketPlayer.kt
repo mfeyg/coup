@@ -21,8 +21,8 @@ class SocketPlayer(private val ruleset: Ruleset, private val session: Promptable
   override suspend fun respondToAction(player: Player, action: Action): ActionResponse =
     session.respondToAction(player, action, ruleset)
 
-  override suspend fun respondToBlock(player: Player, blocker: Player, influence: Influence): BlockResponse =
-    session.respondToBlock(blocker, influence)
+  override suspend fun respondToBlock(player: Player, block: Block): BlockResponse =
+    session.respondToBlock(block)
 
   override suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player) =
     session.respondToChallenge(player, challenger, claim)
