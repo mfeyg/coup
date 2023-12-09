@@ -2,7 +2,7 @@ package coup.game
 
 import coup.game.Player.Agent.ActionResponse
 import coup.game.Player.Agent.BlockResponse
-import coup.game.action.Action
+import coup.game.actions.Action
 import coup.game.rules.Ruleset
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

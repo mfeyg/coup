@@ -1,7 +1,7 @@
 package coup.server.prompt
 
-import coup.game.action.Action
-import coup.game.action.ActionType.Companion.type
+import coup.game.actions.Action
+import coup.game.actions.ActionType.Companion.type
 import coup.game.Influence
 import coup.game.Player
 import coup.game.Player.Agent.ActionResponse

@@ -1,11 +1,11 @@
 package coup.game.rules
 
-import coup.game.action.Action.*
+import coup.game.actions.Action.*
 import coup.game.Influence.*
 import coup.game.Player
-import coup.game.action.Action
-import coup.game.action.ActionBuilder
-import coup.game.action.ActionType
+import coup.game.actions.Action
+import coup.game.actions.ActionBuilder
+import coup.game.actions.ActionType
 
 class StandardRuleset : Ruleset {
 

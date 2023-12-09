@@ -1,4 +1,4 @@
-package coup.game.action
+package coup.game.actions
 
 import coup.game.Board
 import coup.game.Player
