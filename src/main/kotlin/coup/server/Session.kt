@@ -19,16 +19,6 @@ class Session<State : Any>(
 
   val messages get() = incomingMessages.asSharedFlow()
 
-  suspend fun <T> prompt(prompt: coup.server.prompt.Prompt<T>): T {
-    val response = CompletableDeferred<String>()
-    activePrompts.update {
-      it + (prompt.id to (prompt.request to response))
-    }
-    val responseValue = response.await()
-    activePrompts.update { it - prompt.id }
-    return prompt.parse(responseValue)
-  }
-
   override suspend fun <T> prompt(promptType: String, request: String, readResponse: (String) -> T): T {
     val response = CompletableDeferred<String>()
     val id = newId
