@@ -15,20 +15,7 @@ class Deck(private var cards: List<Influence>) {
     cards = cards + listOf(influence)
   }
 
-  companion object {
-    fun standard() =
-      Deck(sequence {
-        for (influence in sequenceOf(
-          Influence.Duke,
-          Influence.Captain,
-          Influence.Assassin,
-          Influence.Ambassador,
-          Influence.Contessa
-        )) {
-          repeat(3) {
-            yield(influence)
-          }
-        }
-      }.shuffled().toList())
-  }
+  constructor(cards: List<Influence>, repeat: Int) : this(
+    sequence { cards.forEach { card -> repeat(repeat) { yield(card) } } }.toList()
+  )
 }

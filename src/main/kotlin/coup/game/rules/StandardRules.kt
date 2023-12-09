@@ -1,5 +1,7 @@
 package coup.game.rules
 
+import coup.game.Board
+import coup.game.Deck
 import coup.game.Influence.*
 import coup.game.Player
 import coup.game.actions.Action
@@ -9,7 +11,15 @@ import coup.game.actions.ActionType.*
 
 class StandardRules : Ruleset {
 
-  private val allActions = listOf(
+  private val influences = listOf(
+    Duke,
+    Captain,
+    Assassin,
+    Ambassador,
+    Contessa,
+  )
+
+  private val actions = listOf(
     Income,
     ForeignAid,
     Tax,
@@ -19,6 +29,24 @@ class StandardRules : Ruleset {
     Coup,
   )
 
+  override fun setUpBoard(players: List<Player>): Board {
+
+    val deck = Deck(influences, 3)
+    deck.shuffle()
+
+    for (player in players) {
+      repeat(2) {
+        player.drawFrom(deck)
+      }
+      player.gainIsk(3)
+    }
+
+    // burn a card
+    deck.draw()
+
+    return Board(deck, players)
+  }
+
   override fun cost(actionType: ActionType) = when (actionType) {
     Assassinate -> 3
     Coup -> 7
@@ -27,7 +55,7 @@ class StandardRules : Ruleset {
 
   override fun availableActions(player: Player) =
     if (player.isk >= 10) listOf(ActionBuilder(this, player, Coup))
-    else allActions.filter { action -> cost(action) <= player.isk }
+    else actions.filter { action -> cost(action) <= player.isk }
       .map { ActionBuilder(this, player, it) }
 
   override fun requiredInfluence(actionType: ActionType) = when (actionType) {

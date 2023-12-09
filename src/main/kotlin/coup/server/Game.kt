@@ -63,7 +63,7 @@ class Game private constructor(
       val players: List<Player> = playerSessions.mapIndexed { index, it ->
         Player(it.name, index, SocketPlayer(ruleset, sessions[index]), ruleset)
       }
-      val baseGame = Game(ruleset, Board.setUp(players))
+      val baseGame = Game(ruleset, ruleset.setUpBoard(players))
       val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
       return Game(baseGame, players, sessions, playerColors, lobby)
     }

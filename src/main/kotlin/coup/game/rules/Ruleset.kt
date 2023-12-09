@@ -1,5 +1,6 @@
 package coup.game.rules
 
+import coup.game.Board
 import coup.game.Influence
 import coup.game.Player
 import coup.game.actions.ActionType.Companion.type
@@ -9,6 +10,7 @@ import coup.game.actions.ActionType
 
 interface Ruleset {
 
+  fun setUpBoard(players: List<Player>): Board
   fun cost(actionType: ActionType): Int
   fun availableActions(player: Player): List<ActionBuilder>
   fun requiredInfluence(actionType: ActionType): Influence?
