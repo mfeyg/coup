@@ -18,4 +18,5 @@ interface Ruleset {
 
   fun requiredInfluence(action: Action) = requiredInfluence(action.type)
   fun blockingInfluences(action: Action) = blockingInfluences(action.type)
+
 }
