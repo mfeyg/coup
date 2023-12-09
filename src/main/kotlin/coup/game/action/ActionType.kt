@@ -1,4 +1,4 @@
-package coup.game
+package coup.game.action
 
 enum class ActionType {
   Income, ForeignAid, Tax, Steal, Exchange, Assassinate, Coup;

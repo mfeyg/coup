@@ -3,6 +3,7 @@ package coup.server
 import coup.game.*
 import coup.game.Player
 import coup.game.Player.Agent.*
+import coup.game.action.Action
 import coup.server.prompt.Exchange.exchange
 import coup.server.prompt.RespondToAction.respondToAction
 import coup.server.prompt.RespondToBlock.respondToBlock

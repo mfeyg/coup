@@ -1,5 +1,6 @@
 package coup.game
 
+import coup.game.action.Action
 import kotlinx.coroutines.flow.*
 
 class Player(

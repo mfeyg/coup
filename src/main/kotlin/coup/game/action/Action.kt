@@ -1,9 +1,10 @@
-package coup.game
+package coup.game.action
 
+import coup.game.Board
+import coup.game.Player
 import kotlin.math.min
 
 sealed class Action(val player: Player, val cost: Int = 0) {
-
 
   abstract suspend fun perform(board: Board)
 

@@ -1,6 +1,9 @@
 package coup.game
 
-import coup.game.ActionType.Companion.type
+import coup.game.action.ActionType.Companion.type
+import coup.game.action.Action
+import coup.game.action.ActionBuilder
+import coup.game.action.ActionType
 
 interface Ruleset {
 

@@ -1,7 +1,10 @@
 package coup.game
 
-import coup.game.Action.*
+import coup.game.action.Action.*
 import coup.game.Influence.*
+import coup.game.action.Action
+import coup.game.action.ActionBuilder
+import coup.game.action.ActionType
 
 class StandardRuleset : Ruleset {
 
