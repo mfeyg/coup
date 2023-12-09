@@ -1,6 +1,6 @@
 package coup.game
 
-data class Board(val players: List<Player>, val deck: Deck) {
+data class Board(val deck: Deck, val players: List<Player>) {
   companion object {
     fun setUp(players: List<Player>, deck: Deck = Deck.standard()): Board {
       for (player in players) {
@@ -10,7 +10,7 @@ data class Board(val players: List<Player>, val deck: Deck) {
         player.gainIsk(3)
       }
       deck.draw()
-      return Board(players, deck)
+      return Board(deck, players)
     }
   }
 }

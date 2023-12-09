@@ -15,7 +15,7 @@ class Game(
 
   constructor(ruleset: Ruleset, board: Board) : this(board.players, board.deck, ruleset)
 
-  private val board = Board(players, deck)
+  private val board = Board(deck, players)
 
   private val _currentPlayer = MutableStateFlow(players.first())
   val currentPlayer = _currentPlayer.asStateFlow()
