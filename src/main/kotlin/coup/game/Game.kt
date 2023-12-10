@@ -11,41 +11,36 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
 
   private val board = ruleset.setUpBoard(players)
 
-  private val players get() = board.players
+  private val players get() = board.activePlayers
   private val deck get() = board.deck
 
   private suspend fun Action.perform() = perform(board)
 
-  private val _currentPlayer = MutableStateFlow(players.first())
-  val currentPlayer = _currentPlayer.asStateFlow()
+  private val playerOrder = sequence { while (true) yieldAll(players) }
 
-  val winner: Player? get() = activePlayers.singleOrNull()
-
-  private val activePlayers get() = players.filter { it.isActive }
-
-  suspend fun start() {
-    while (true) {
-      if (winner != null) {
-        break
+  private fun nextPlayer(afterPlayer: Player? = null): Player {
+    var mustHaveSeen = afterPlayer
+    return playerOrder.first { player ->
+      if (player == mustHaveSeen) {
+        mustHaveSeen = null
+        return@first false
       }
-      takeTurn()
-      nextPlayer()
+      mustHaveSeen == null && player.isActive
     }
   }
 
-  private val turnOrder = sequence { while (true) yieldAll(players) }
+  private val _currentPlayer = MutableStateFlow(nextPlayer())
+  val currentPlayer = _currentPlayer.asStateFlow()
 
-  private fun nextPlayer() {
-    _currentPlayer.value = turnOrder
-      .dropWhile { it != currentPlayer.value }
-      .drop(1)
-      .dropWhile { !it.isActive }
-      .first()
+  val winner: Player? get() = players.singleOrNull()
+
+  suspend fun start() {
+    while (winner == null) takeTurn()
   }
 
   private suspend fun takeTurn() {
     val player = currentPlayer.value
-    val action = player.chooseAction(validTargets = activePlayers - player)
+    val action = player.chooseAction(validTargets = players - player)
 
     when (val response = response(action)) {
       is ActionResponse.Allow -> action.perform()
@@ -76,10 +71,12 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
         }
       }
     }
+
+    _currentPlayer.value = nextPlayer(player)
   }
 
   private suspend fun response(action: Action): ActionResponse {
-    val responders = activePlayers - action.player
+    val responders = players - action.player
     return channelFlow {
       for (responder in responders) launch {
         send(responder.respondToAction(action))
@@ -88,7 +85,7 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
   }
 
   private suspend fun challenger(block: Block): Player? {
-    val responders = activePlayers - block.blocker
+    val responders = players - block.blocker
     return channelFlow {
       for (responder in responders) launch {
         if (responder.respondToBlock(block) == BlockResponse.Challenge) {
