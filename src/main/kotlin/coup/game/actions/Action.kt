@@ -4,7 +4,7 @@ import coup.game.Deck
 import coup.game.Player
 import kotlin.math.min
 
-sealed class Action(val player: Player, val cost: Int = 0) {
+sealed class Action(val player: Player) {
 
   abstract suspend fun perform()
 
@@ -21,8 +21,10 @@ sealed class Action(val player: Player, val cost: Int = 0) {
   }
 
   class Steal(player: Player, override val target: Player) : Action(player) {
+    private val stealAmount = 2
+
     override suspend fun perform() {
-      val amount = min(target.isk, 2)
+      val amount = min(target.isk, stealAmount)
       target.loseIsk(amount)
       player.gainIsk(amount)
     }
@@ -32,24 +34,25 @@ sealed class Action(val player: Player, val cost: Int = 0) {
     override suspend fun perform() = player.exchangeWith(deck)
   }
 
-  class Assassinate(player: Player, override val target: Player, cost: Int) : Action(player, cost) {
+  class Assassinate(player: Player, override val target: Player, private val cost: Int) : Action(player) {
     override suspend fun perform() {
       player.pay(cost)
       target.loseInfluence()
     }
   }
 
-  class Coup(player: Player, override val target: Player, cost: Int) : Action(player, cost) {
+  class Coup(player: Player, override val target: Player, private val cost: Int) : Action(player) {
     override suspend fun perform() {
       player.pay(cost)
       target.loseInfluence()
     }
   }
 
-  open val target: Player? get() = when (this) {
-    is Assassinate -> target
-    is Coup -> target
-    is Steal -> target
-    else -> null
-  }
+  open val target: Player?
+    get() = when (this) {
+      is Assassinate -> target
+      is Coup -> target
+      is Steal -> target
+      else -> null
+    }
 }
