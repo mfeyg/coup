@@ -15,8 +15,8 @@ import coup.server.prompt.TakeTurn.takeTurn
 
 class SocketPlayer(private val ruleset: Ruleset, private val session: Promptable) : Player.Agent {
 
-  override suspend fun chooseAction(player: Player, targets: List<Player>) =
-    session.takeTurn(player, targets, ruleset)
+  override suspend fun chooseAction(player: Player, board: Board) =
+    session.takeTurn(player, board, ruleset)
 
   override suspend fun respondToAction(player: Player, action: Action): ActionResponse =
     session.respondToAction(player, action, ruleset)

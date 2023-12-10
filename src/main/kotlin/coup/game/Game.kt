@@ -14,8 +14,6 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
   private val players get() = board.activePlayers
   private val deck get() = board.deck
 
-  private suspend fun Action.perform() = perform(board)
-
   private val playerOrder = sequence { while (true) yieldAll(players) }
 
   private fun nextPlayer(afterPlayer: Player? = null): Player {
@@ -40,7 +38,7 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
 
   private suspend fun takeTurn() {
     val player = currentPlayer.value
-    val action = player.chooseAction(validTargets = players - player)
+    val action = player.chooseAction(board)
 
     when (val response = response(action)) {
       is ActionResponse.Allow -> action.perform()

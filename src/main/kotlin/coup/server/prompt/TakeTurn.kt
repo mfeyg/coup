@@ -1,5 +1,6 @@
 package coup.server.prompt
 
+import coup.game.Board
 import coup.game.actions.Action
 import coup.game.actions.ActionBuilder
 import coup.game.Player
@@ -38,17 +39,17 @@ object TakeTurn {
     val target: Int? = null
   )
 
-  suspend fun Promptable.takeTurn(player: Player, targets: List<Player>, ruleset: Ruleset): Action {
-    val actionsAvailable = ruleset.availableActions(player).associateBy { it.actionType }
-    val targetsIndexed = targets.associateBy { it.playerNumber }
+  suspend fun Promptable.takeTurn(player: Player, board: Board, ruleset: Ruleset): Action {
+    val actionsAvailable = ruleset.availableActions(player, board).associateBy { it.actionType }
+    val targets = (board.activePlayers - player).associateBy { it.playerNumber }
     return prompt(
       "TakeTurn",
-      Request(actionsAvailable.values.map { Option(it, targetsIndexed.values) })
+      Request(actionsAvailable.values.map { Option(it, targets.values) })
     ) { (actionType, target): Response ->
       val action = actionsAvailable[actionType] ?: throw IllegalArgumentException("$actionType is not a valid action.")
       if (action.targetRequired) {
         val targetNumber = target ?: throw IllegalArgumentException("Action $actionType requires a target")
-        action.target = targetsIndexed[targetNumber]
+        action.target = targets[targetNumber]
           ?: throw IllegalArgumentException("Invalid target $targetNumber")
       }
       action.build()

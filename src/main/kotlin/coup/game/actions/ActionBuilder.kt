@@ -1,11 +1,13 @@
 package coup.game.actions
 
+import coup.game.Board
 import coup.game.Player
 import coup.game.rules.Ruleset
 
 class ActionBuilder(
   private val ruleset: Ruleset,
   val player: Player,
+  private val board: Board,
   val type: ActionType
 ) {
 
@@ -27,7 +29,7 @@ class ActionBuilder(
       ActionType.ForeignAid -> Action.ForeignAid(player)
       ActionType.Tax -> Action.Tax(player)
       ActionType.Steal -> Action.Steal(player, target!!)
-      ActionType.Exchange -> Action.Exchange(player)
+      ActionType.Exchange -> Action.Exchange(player, board.deck)
       ActionType.Assassinate -> Action.Assassinate(
         player,
         target!!,

@@ -12,7 +12,7 @@ interface Ruleset {
 
   fun setUpBoard(players: List<Player>): Board
   fun cost(actionType: ActionType): Int
-  fun availableActions(player: Player): List<ActionBuilder>
+  fun availableActions(player: Player, board: Board): List<ActionBuilder>
   fun requiredInfluence(actionType: ActionType): Influence?
   fun blockingInfluences(actionType: ActionType): Set<Influence>
   fun canChallenge(player: Player, action: Action): Boolean
