@@ -5,9 +5,8 @@ import coup.game.Deck
 import coup.game.Influence.*
 import coup.game.Player
 import coup.game.actions.Action
+import coup.game.actions.Action.Type.*
 import coup.game.actions.ActionBuilder
-import coup.game.actions.ActionType
-import coup.game.actions.ActionType.*
 
 class StandardRules : Ruleset {
 
@@ -47,7 +46,7 @@ class StandardRules : Ruleset {
     return Board(deck, players)
   }
 
-  override fun cost(actionType: ActionType) = when (actionType) {
+  override fun cost(actionType: Action.Type) = when (actionType) {
     Assassinate -> 3
     Coup -> 7
     else -> 0
@@ -58,7 +57,7 @@ class StandardRules : Ruleset {
     else actions.filter { action -> cost(action) <= player.isk }
       .map { ActionBuilder(this, player, board, it) }
 
-  override fun requiredInfluence(actionType: ActionType) = when (actionType) {
+  override fun requiredInfluence(actionType: Action.Type) = when (actionType) {
     Tax -> Duke
     Steal -> Captain
     Exchange -> Ambassador
@@ -66,7 +65,7 @@ class StandardRules : Ruleset {
     else -> null
   }
 
-  override fun blockingInfluences(actionType: ActionType) = when (actionType) {
+  override fun blockingInfluences(actionType: Action.Type) = when (actionType) {
     ForeignAid -> setOf(Duke)
     Steal -> setOf(Captain, Ambassador)
     Assassinate -> setOf(Contessa)

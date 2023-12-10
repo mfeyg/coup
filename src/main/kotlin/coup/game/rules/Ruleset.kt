@@ -3,18 +3,17 @@ package coup.game.rules
 import coup.game.Board
 import coup.game.Influence
 import coup.game.Player
-import coup.game.actions.ActionType.Companion.type
+import coup.game.actions.Action.Type.Companion.type
 import coup.game.actions.Action
 import coup.game.actions.ActionBuilder
-import coup.game.actions.ActionType
 
 interface Ruleset {
 
   fun setUpBoard(players: List<Player>): Board
-  fun cost(actionType: ActionType): Int
+  fun cost(actionType: Action.Type): Int
   fun availableActions(player: Player, board: Board): List<ActionBuilder>
-  fun requiredInfluence(actionType: ActionType): Influence?
-  fun blockingInfluences(actionType: ActionType): Set<Influence>
+  fun requiredInfluence(actionType: Action.Type): Influence?
+  fun blockingInfluences(actionType: Action.Type): Set<Influence>
   fun canChallenge(player: Player, action: Action): Boolean
   fun canAttemptBlock(player: Player, action: Action): Boolean
 

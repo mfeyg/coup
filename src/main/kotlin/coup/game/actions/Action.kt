@@ -55,4 +55,21 @@ sealed class Action(val player: Player) {
       is Steal -> target
       else -> null
     }
+
+  enum class Type {
+    Income, ForeignAid, Tax, Steal, Exchange, Assassinate, Coup;
+
+    companion object {
+      val Action.type: Type
+        get() = when (this) {
+          is Action.Assassinate -> Assassinate
+          is Action.Coup -> Coup
+          is Action.Exchange -> Exchange
+          is Action.ForeignAid -> ForeignAid
+          is Action.Income -> Income
+          is Action.Steal -> Steal
+          is Action.Tax -> Tax
+        }
+    }
+  }
 }

@@ -1,5 +1,6 @@
 package coup.server.prompt
 
+import coup.game.actions.Action
 import coup.game.actions.ActionBuilder
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -12,14 +13,14 @@ enum class ActionType {
   ForeignAid, Tax, Steal, Exchange, Assassinate, Coup;
 
   companion object {
-    operator fun invoke(actionType: coup.game.actions.ActionType) = when (actionType) {
-      coup.game.actions.ActionType.Income -> Income
-      coup.game.actions.ActionType.ForeignAid -> ForeignAid
-      coup.game.actions.ActionType.Tax -> Tax
-      coup.game.actions.ActionType.Steal -> Steal
-      coup.game.actions.ActionType.Exchange -> Exchange
-      coup.game.actions.ActionType.Assassinate -> Assassinate
-      coup.game.actions.ActionType.Coup -> Coup
+    operator fun invoke(actionType: Action.Type) = when (actionType) {
+      Action.Type.Income -> Income
+      Action.Type.ForeignAid -> ForeignAid
+      Action.Type.Tax -> Tax
+      Action.Type.Steal -> Steal
+      Action.Type.Exchange -> Exchange
+      Action.Type.Assassinate -> Assassinate
+      Action.Type.Coup -> Coup
     }
 
     val ActionBuilder.actionType
