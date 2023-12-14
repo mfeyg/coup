@@ -3,7 +3,7 @@ import { Isk } from "./isk.js"
 
 export function Player({ player, current, active }) {
     return html`
-    <div class="player ${active ? "player-turn" : ""}">
+    <div class="player ${active ? "player-turn" : ""} ${current ? "player-you": ""}">
       <div class="player-name">${current ? html`<strong>You</strong>` : player.name}</div>
       <${Isk} amount=${player.isk} />
       <div class="player-influences">

@@ -9,7 +9,15 @@
 }
 
 .player.player-turn {
-    box-shadow: 0 0 8px 4px royalblue;
+    box-shadow: 0 0 4px 2px #FC0;
+}
+
+.player.player-you {
+    box-shadow: 0 0 8px 4px #000;
+}
+
+.player.player-you.player-turn {
+    box-shadow: 0 0 8px 4px #FC0;
 }
 
 .player-isk {
