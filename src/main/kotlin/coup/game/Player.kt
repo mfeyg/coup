@@ -127,9 +127,10 @@ class Player(
           val outer = this
           forEach { responder ->
             launch {
-              if (responder.challengeBlock(block))
+              if (responder.challengeBlock(block)) {
                 response.complete(responder)
-              outer.cancel()
+                outer.cancel()
+              }
             }
           }
         }
