@@ -11,7 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
 
-class Game private constructor(
+class GameServer private constructor(
   private val baseGame: Game,
   private val players: List<Player>,
   private val playerSessions: List<Session<GameState>>,
@@ -26,7 +26,7 @@ class Game private constructor(
   init {
     scope.launch {
       updates.onEach {
-        this@Game.playerSessions.forEachIndexed { index, player ->
+        this@GameServer.playerSessions.forEachIndexed { index, player ->
           player.setState(gameState(index))
         }
       }.launchIn(this)
@@ -61,7 +61,7 @@ class Game private constructor(
       playerSessions: Iterable<Session<*>>,
       lobby: Lobby,
       ruleset: Ruleset = StandardRules()
-    ): coup.server.Game {
+    ): GameServer {
 
       val sessions = playerSessions.take(ruleset.maxPlayers).map { it.newSession<GameState>() }
       val players: List<Player> = sessions.mapIndexed { sessionIndex, session ->
@@ -89,7 +89,7 @@ class Game private constructor(
       }
       val baseGame = Game(ruleset, players)
       val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
-      return Game(baseGame, players, sessions, playerColors, lobby)
+      return GameServer(baseGame, players, sessions, playerColors, lobby)
     }
   }
 

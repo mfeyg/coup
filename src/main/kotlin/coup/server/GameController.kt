@@ -4,7 +4,7 @@ import coup.server.ConnectionController.SocketConnection
 import java.util.WeakHashMap
 
 class GameController {
-  private val games = WeakHashMap<Game, String>()
+  private val games = WeakHashMap<GameServer, String>()
 
   class GameNotFound : ServerError()
 
@@ -13,16 +13,16 @@ class GameController {
     game.connect(connection)
   }
 
-  private fun game(gameId: String): Game? = try {
+  private fun game(gameId: String): GameServer? = try {
     games.entries.find { (_, id) -> id == gameId }?.let { (game, _) -> game }
   } catch (e: ConcurrentModificationException) {
     game(gameId)
   }
 
   suspend fun newGame(players: Iterable<Session<*>>, lobby: Lobby): String {
-    val game = Game.new(players, lobby)
+    val gameServer = GameServer.new(players, lobby)
     val gameId = newId
-    games[game] = gameId
+    games[gameServer] = gameId
     return gameId
   }
 }
