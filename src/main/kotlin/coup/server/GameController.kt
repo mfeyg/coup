@@ -20,7 +20,7 @@ class GameController {
   }
 
   suspend fun newGame(players: Iterable<Session<*>>, lobby: Lobby): String {
-    val gameServer = GameServer.new(players, lobby)
+    val gameServer = GameServer(players, lobby)
     val gameId = newId
     games[gameServer] = gameId
     return gameId

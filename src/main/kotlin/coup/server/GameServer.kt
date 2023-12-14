@@ -57,7 +57,7 @@ class GameServer private constructor(
   }
 
   companion object {
-    suspend fun new(
+    suspend operator fun invoke(
       playerSessions: Iterable<Session<*>>,
       lobby: Lobby,
       ruleset: Ruleset = StandardRules()
