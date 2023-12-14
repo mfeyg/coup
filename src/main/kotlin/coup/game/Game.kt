@@ -12,14 +12,14 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
   private val activePlayers get() = board.activePlayers
   private val deck get() = board.deck
 
-  private val turn = MutableStateFlow(Turn(players))
+  private val currentTurn = MutableStateFlow(Turn(players))
 
-  private fun nextTurn() = with(turn) { value = value.next() }
+  private fun nextTurn() = with(currentTurn) { value = value.next() }
 
-  val currentPlayer: Player get() = turn.value.currentPlayer
+  val currentPlayer: Player get() = currentTurn.value.currentPlayer
   val winner: Player? get() = activePlayers.singleOrNull()
 
-  val updates = turn.map {}
+  val updates = currentTurn.map {}
 
   suspend fun play() {
     while (winner == null) takeTurn()
