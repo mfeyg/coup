@@ -41,7 +41,7 @@ class Player(
 
   suspend fun loseInfluence(): Influence? {
     if (heldInfluences.isEmpty()) return null
-    val influence = prompt.chooseInfluenceToSurrender()
+    val influence = if (heldInfluences.size == 1) heldInfluences[0] else prompt.chooseInfluenceToSurrender()
     return influence.also { loseInfluence(it) }
   }
 
