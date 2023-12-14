@@ -27,7 +27,7 @@
   const players = computed(() => socket.state.value?.players)
   const currentTurn = computed(() => socket.state.value?.currentTurn)
   const winner = computed(() => socket.state.value?.winner)
-  const prompt = signal(null)
+  const prompt = computed(() => socket.prompts.value?.[0])
 
   function lobbyPath() {
     const lobbyId = new URLSearchParams(location.search).get("lobbyId")
@@ -85,13 +85,13 @@
       close=${() => prompt.value = null}/>
   </main>`
 
-  const promptTypes = [
-    "TakeTurn", "RespondToAction", "RespondToChallenge",
-    "RespondToBlock", "SurrenderInfluence", "Exchange",
-  ]
-  promptTypes.forEach(type =>
-    socket.on(type, (message, respond) => prompt.value = { type, message, respond })
-  )
+  // const promptTypes = [
+  //   "TakeTurn", "RespondToAction", "RespondToChallenge",
+  //   "RespondToBlock", "SurrenderInfluence", "Exchange",
+  // ]
+  // promptTypes.forEach(type =>
+  //   socket.on(type, (message, respond) => prompt.value = { type, message, respond })
+  // )
 
   socket.onError("GameNotFound", () => location.assign(lobbyPath()))
 

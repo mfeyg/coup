@@ -7,6 +7,9 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 /** Represents a user's session. */
 class Session<State : Any>(
@@ -20,14 +23,24 @@ class Session<State : Any>(
 
   val messages get() = incomingMessages.asSharedFlow()
 
-  override suspend fun <T> prompt(promptType: String, request: String, readResponse: (String) -> T): T {
+  @Serializable
+  private data class Prompt<T>(val type: String, val id: String, val prompt: T)
+
+  override suspend fun <T, RequestT, ResponseT> prompt(
+    promptType: String,
+    request: RequestT,
+    requestSerializer: KSerializer<RequestT>,
+    responseSerializer: KSerializer<ResponseT>,
+    readResponse: (ResponseT) -> T
+  ): T {
     val response = CompletableDeferred<String>()
     val id = newId
     try {
+      val prompt = Json.encodeToString(Prompt.serializer(requestSerializer), Prompt(promptType, id, request))
       activePrompts.update {
-        it + (id to ("$promptType[$id]$request" to response))
+        it + (id to (prompt to response))
       }
-      return readResponse(response.await())
+      return readResponse(Json.decodeFromString(responseSerializer, response.await()))
     } finally {
       activePrompts.update { it - id }
     }
@@ -66,13 +79,8 @@ class Session<State : Any>(
     val listeningJob = launch {
       state.onEach { it?.let { connection.send(StateUpdate(it)) } }.launchIn(this)
       events.onEach { connection.send(it) }.launchIn(this)
-      val sentPrompts = mutableSetOf<String>()
       activePrompts.onEach { prompts ->
-        (prompts - sentPrompts).forEach { (id, value) ->
-          val (prompt, _) = value
-          connection.send(Frame.Text(prompt))
-          sentPrompts += id
-        }
+        connection.send("Prompts[" + prompts.values.joinToString(",") { it.first } + "]")
       }.launchIn(this)
     }
     for (frame in connection.incoming) {
