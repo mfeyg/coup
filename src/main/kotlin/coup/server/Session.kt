@@ -23,12 +23,14 @@ class Session<State : Any>(
   override suspend fun <T> prompt(promptType: String, request: String, readResponse: (String) -> T): T {
     val response = CompletableDeferred<String>()
     val id = newId
-    activePrompts.update {
-      it + (id to ("$promptType[$id]$request" to response))
+    try {
+      activePrompts.update {
+        it + (id to ("$promptType[$id]$request" to response))
+      }
+      return readResponse(response.await())
+    } finally {
+      activePrompts.update { it - id }
     }
-    val responseValue = response.await()
-    activePrompts.update { it - id }
-    return readResponse(responseValue)
   }
 
   suspend fun event(event: Sendable) {
