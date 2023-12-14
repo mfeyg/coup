@@ -28,7 +28,13 @@ class StandardRules : Ruleset {
     Coup,
   )
 
+  override val maxPlayers = 6
+
   override fun setUpBoard(players: List<Player>): Board {
+
+    if (players.size > maxPlayers) {
+      throw IllegalArgumentException("Too many players!")
+    }
 
     val deck = Deck(influences, 3)
     deck.shuffle()

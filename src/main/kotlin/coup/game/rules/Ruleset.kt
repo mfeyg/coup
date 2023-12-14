@@ -9,6 +9,7 @@ import coup.game.actions.ActionBuilder
 
 interface Ruleset {
 
+  val maxPlayers: Int
   fun setUpBoard(players: List<Player>): Board
   fun cost(actionType: Action.Type): Int
   fun availableActions(player: Player, board: Board): List<ActionBuilder>

@@ -18,14 +18,14 @@ class Game private constructor(
   private val playerColors: List<String>,
   private val lobby: Lobby,
 ) {
-  private val playerUpdates = combine(this.players.map { it.updates }) { it.toList() }
+  private val updates = combine(players.map { it.updates } + baseGame.updates) {}
   private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
   private val scope = CoroutineScope(Dispatchers.Default)
   private val connectionCount = MutableStateFlow(0)
 
   init {
     scope.launch {
-      combine(playerUpdates, baseGame.updates) { _, _ ->
+      updates.onEach {
         this@Game.playerSessions.forEachIndexed { index, player ->
           player.setState(gameState(index))
         }
@@ -34,7 +34,7 @@ class Game private constructor(
         observers.collectLatest { observers ->
           coroutineScope {
             observers.values.forEach { observer ->
-              combine(playerUpdates, baseGame.updates) { _, _ ->
+              updates.onEach {
                 observer.setState(gameState())
               }.launchIn(this)
             }
@@ -63,7 +63,7 @@ class Game private constructor(
       ruleset: Ruleset = StandardRules()
     ): coup.server.Game {
 
-      val sessions = playerSessions.map { it.newSession<GameState>() }
+      val sessions = playerSessions.take(ruleset.maxPlayers).map { it.newSession<GameState>() }
       val players: List<Player> = sessions.mapIndexed { sessionIndex, session ->
         Player(session.name, sessionIndex, ruleset) { player ->
           object : Agent {
