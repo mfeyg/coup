@@ -4,12 +4,17 @@ import coup.server.Sendable.Companion.send
 import coup.server.message.Message
 import coup.server.prompt.Promptable
 import io.ktor.websocket.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.util.logging.Level
+import java.util.logging.Logger
 
 /** Represents a user's session. */
 class Session<State : Any>(
@@ -33,16 +38,20 @@ class Session<State : Any>(
     responseSerializer: KSerializer<ResponseT>,
     readResponse: (ResponseT) -> T
   ): T {
-    val response = CompletableDeferred<String>()
-    val id = newId
-    try {
+    while (true) {
+      val response = CompletableDeferred<String>()
+      val id = newId
       val prompt = Json.encodeToString(Prompt.serializer(requestSerializer), Prompt(promptType, id, request))
       activePrompts.update {
         it + (id to (prompt to response))
       }
-      return readResponse(Json.decodeFromString(responseSerializer, response.await()))
-    } finally {
-      activePrompts.update { it - id }
+      try {
+        return readResponse(Json.decodeFromString(responseSerializer, response.await()))
+      } catch (e: IllegalArgumentException) {
+        Logger.getGlobal().log(Level.WARNING, e) { "Failed to read response" }
+      } finally {
+        activePrompts.update { it - id }
+      }
     }
   }
 
