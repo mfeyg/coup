@@ -1,7 +1,7 @@
 package coup.game
 
 class Turn(private val players: List<Player>) {
-  val currentPlayer: Player get() = players.first()
+  val currentPlayer = players.first()
 
   fun next(): Turn {
     val players = players.toMutableList()
