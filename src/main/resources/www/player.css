@@ -42,5 +42,6 @@
 
 .player-influence.player-influence-revealed {
     border-color: lightgrey;
+    background-color: #eee;
     color: black;
 }
