@@ -82,16 +82,8 @@
     <${Prompt} prompt=${prompt.value}
       player=${thisPlayer.value}
       opponents=${players.value}
-      close=${() => prompt.value = null}/>
+    />
   </main>`
-
-  // const promptTypes = [
-  //   "TakeTurn", "RespondToAction", "RespondToChallenge",
-  //   "RespondToBlock", "SurrenderInfluence", "Exchange",
-  // ]
-  // promptTypes.forEach(type =>
-  //   socket.on(type, (message, respond) => prompt.value = { type, message, respond })
-  // )
 
   socket.onError("GameNotFound", () => location.assign(lobbyPath()))
 

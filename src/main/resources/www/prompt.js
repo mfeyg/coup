@@ -55,13 +55,13 @@ function ResponsePrompt({ blockingInfluences, claimedInfluence, onSelect }) {
     `
   }
   function AllowButton() {
-    return html`<button onclick=${() => onSelect({ response: "Allow" })}>Allow</button>`
+    return html`<button onclick=${() => onSelect({ reaction: "Allow" })}>Allow</button>`
   }
   function BlockButton() {
     return blockingInfluences && html`<button onclick=${() => setBlocking(true)}>Block</button>`
   }
   function ChallengeButon() {
-    return claimedInfluence && html`<button onclick=${() => onSelect({ response: "Challenge" })}>Challenge claim of ${claimedInfluence}</button>`
+    return claimedInfluence && html`<button onclick=${() => onSelect({ reaction: "Challenge" })}>Challenge claim of ${claimedInfluence}</button>`
   }
   return html`
     <p>How will you respond?</p>
@@ -103,11 +103,10 @@ function actionDescription(actor, actionType, target) {
   }
 }
 
-export function Prompt({ prompt, player, opponents, close }) {
+export function Prompt({ prompt, player, opponents }) {
   const { type, message } = prompt ?? {}
   const respond = (response) => {
     prompt.respond(response)
-    close()
   }
   let dialog
 

@@ -16,7 +16,7 @@ class RespondToBlock(private val promptable: Promptable) {
   }
 
   @Serializable
-  private data class Response(val response: ResponseType)
+  private data class Response(val reaction: ResponseType)
 
   enum class ResponseType {
     Allow, Challenge

@@ -34,14 +34,15 @@ class Socket {
       const [type, message] = readMessage(msg.data)
       if (type === "Prompts") {
         this.prompts.value = message.map(({type, id, prompt}) => ({type, message: prompt, respond: (msg => this.send(`[${id}]`, msg))}))
+      } else {
+        const handler = this.handlers.get(type)
+        if (!handler) {
+          console.error(`No handler for type ${type}`)
+          return
+        }
+        const respond = msg => this.send("", msg)
+        handler(message, respond)
       }
-      const handler = this.handlers.get(type)
-      if (!handler) {
-        console.error(`No handler for type ${type}`)
-        return
-      }
-      const respond = msg => this.send("", msg)
-      handler(message, respond)
     }
     this.ws.onclose = () => this.reconnect()
   }
