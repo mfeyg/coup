@@ -115,7 +115,7 @@ class GameServer private constructor(
 
   private fun gameState(playerNumber: Int? = null) =
     GameState(
-      playerNumber?.let { players[it] }?.let { player ->
+      player = playerNumber?.let { players[it] }?.let { player ->
         GameState.Player(
           player.name,
           playerColors[player.playerNumber],
@@ -125,7 +125,7 @@ class GameServer private constructor(
           player.revealedInfluences,
         )
       },
-      players.map { opponent ->
+      players = players.map { opponent ->
         GameState.Opponent(
           opponent.name,
           playerColors[opponent.playerNumber],
@@ -135,7 +135,7 @@ class GameServer private constructor(
           opponent.revealedInfluences,
         )
       },
-      baseGame.currentPlayer.playerNumber.takeIf { baseGame.winner == null },
-      baseGame.winner?.playerNumber,
+      currentTurn = baseGame.currentPlayer.playerNumber.takeIf { baseGame.winner == null },
+      winner = baseGame.winner?.playerNumber,
     )
 }
