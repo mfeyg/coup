@@ -1,54 +1,42 @@
 package coup.game
 
-import coup.game.Player.Agent.ActionResponse
-import coup.game.Player.Agent.BlockResponse
-import coup.game.actions.Action
+import coup.game.Player.Companion.challenger
+import coup.game.Player.Companion.reaction
 import coup.game.rules.Ruleset
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 class Game(private val ruleset: Ruleset, players: List<Player>) {
 
   private val board = ruleset.setUpBoard(players)
 
-  private val players get() = board.activePlayers
+  private val activePlayers get() = board.activePlayers
   private val deck get() = board.deck
 
-  private val playerOrder = sequence { while (true) yieldAll(players) }
+  private val turn = MutableStateFlow(Turn(players))
 
-  private fun nextPlayer(afterPlayer: Player? = null): Player {
-    var mustHaveSeen = afterPlayer
-    return playerOrder.first { player ->
-      if (player == mustHaveSeen) {
-        mustHaveSeen = null
-        return@first false
-      }
-      mustHaveSeen == null && player.isActive
-    }
-  }
+  private fun nextTurn() = with(turn) { value = value.next() }
 
-  private val _currentPlayer = MutableStateFlow(nextPlayer())
-  val currentPlayer = _currentPlayer.asStateFlow()
+  val currentPlayer: Player get() = turn.value.currentPlayer
+  val winner: Player? get() = activePlayers.singleOrNull()
 
-  val winner: Player? get() = players.singleOrNull()
+  val updates = turn.map {}
 
-  suspend fun start() {
+  suspend fun play() {
     while (winner == null) takeTurn()
   }
 
   private suspend fun takeTurn() {
-    val player = currentPlayer.value
+    val player = currentPlayer
     val action = player.chooseAction(board)
 
-    when (val response = response(action)) {
-      is ActionResponse.Allow -> action.perform()
+    when (val response = activePlayers.reaction(action)) {
+      is Reaction.Allow -> action.perform()
 
-      is ActionResponse.Block -> {
-        val (block) = response
-        val (blocker, blockingInfluence) = block
-        val challenger = challenger(block)
+      is Reaction.Block -> {
+        val (blocker, blockingInfluence) = response
+        val challenger = activePlayers.challenger(response)
         if (challenger != null) {
-          val (revealedInfluence) = blocker.respondToChallenge(blockingInfluence, challenger)
+          val revealedInfluence = blocker.respondToChallenge(blockingInfluence, challenger)
           if (revealedInfluence == blockingInfluence) {
             blocker.swapOut(blockingInfluence, deck)
             challenger.loseInfluence()
@@ -58,10 +46,10 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
         }
       }
 
-      is ActionResponse.Challenge -> {
+      is Reaction.Challenge -> {
         val (challenger) = response
         val requiredInfluence = ruleset.requiredInfluence(action)!!
-        val (revealedInfluence) = player.respondToChallenge(requiredInfluence, challenger)
+        val revealedInfluence = player.respondToChallenge(requiredInfluence, challenger)
         if (revealedInfluence == requiredInfluence) {
           player.swapOut(revealedInfluence, deck)
           challenger.loseInfluence()
@@ -70,26 +58,6 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
       }
     }
 
-    _currentPlayer.value = nextPlayer(player)
-  }
-
-  private suspend fun response(action: Action): ActionResponse {
-    val responders = players - action.player
-    return channelFlow {
-      for (responder in responders) launch {
-        send(responder.respondToAction(action))
-      }
-    }.firstOrNull { it != ActionResponse.Allow } ?: ActionResponse.Allow
-  }
-
-  private suspend fun challenger(block: Block): Player? {
-    val responders = players - block.blocker
-    return channelFlow {
-      for (responder in responders) launch {
-        if (responder.respondToBlock(block) == BlockResponse.Challenge) {
-          send(responder)
-        }
-      }
-    }.firstOrNull()
+    nextTurn()
   }
 }

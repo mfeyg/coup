@@ -4,13 +4,14 @@ import coup.game.actions.Action
 import coup.game.actions.Action.Type.Companion.type
 import coup.game.Influence
 import coup.game.Player
-import coup.game.Player.Agent.ActionResponse
+import coup.game.Reaction
 import coup.game.rules.Ruleset
 import coup.server.prompt.Promptable.Companion.prompt
 import coup.server.prompt.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable
 
-object RespondToAction {
+class RespondToAction(private val player: Player, private val promptable: Promptable, private val ruleset: Ruleset)
+  {
 
   @Serializable
   private data class Request(
@@ -35,7 +36,7 @@ object RespondToAction {
 
   @Serializable
   private data class Response(
-    val type: Type,
+    val reaction: Type,
     val influence: Influence? = null
   ) {
     enum class Type {
@@ -43,23 +44,24 @@ object RespondToAction {
     }
   }
 
-  suspend fun Promptable.respondToAction(player: Player, action: Action, ruleset: Ruleset): ActionResponse =
-    prompt(
+  suspend fun respondToAction(action: Action): Reaction =
+    promptable.prompt(
       "RespondToAction",
       Request(player, action, ruleset)
     ) { response: Response ->
-      when (response.type) {
-        Allow -> ActionResponse.Allow
+      when (response.reaction) {
+        Allow -> Reaction.Allow
+
         Block -> {
           val influence = requireNotNull(response.influence) { "Influence required to block." }
           require(ruleset.canAttemptBlock(player, action)) { "$player cannot block $action." }
           require(influence in ruleset.blockingInfluences(action)) { "$influence cannot block $action." }
-          ActionResponse.Block(player, influence)
+          Reaction.Block(player, influence)
         }
 
         Challenge -> {
           require(ruleset.canChallenge(player, action)) { "$player cannot challenge $action" }
-          ActionResponse.Challenge(player)
+          Reaction.Challenge(player)
         }
       }
     }

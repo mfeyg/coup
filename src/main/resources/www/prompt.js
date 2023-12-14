@@ -51,7 +51,7 @@ function ResponsePrompt({ blockingInfluences, claimedInfluence, onSelect }) {
     return html`
       <p>Choose an influence to block as:</p>
       ${blockingInfluences.map(influence => html`
-        <button onclick=${() => onSelect({ response: "Block", influence })}>${influence}</button>`)}
+        <button onclick=${() => onSelect({ reaction: "Block", influence })}>${influence}</button>`)}
     `
   }
   function AllowButton() {

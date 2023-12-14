@@ -5,11 +5,11 @@ import coup.game.Player
 import coup.server.prompt.Promptable.Companion.prompt
 import kotlinx.serialization.Serializable
 
-object Exchange {
-  suspend fun Promptable.exchange(player: Player, drawnInfluences: List<Influence>) =
-    prompt("Exchange", Request(drawnInfluences)) { (returnedInfluences): Response ->
-      require(returnedInfluences.size == drawnInfluences.size) { "Must return ${drawnInfluences.size} influences." }
-      val allInfluences = (player.heldInfluences + drawnInfluences).toMutableList()
+class ExchangeWithDeck(private val player: Player, private val promptable: Promptable) {
+  suspend fun returnCards(drawnCards: List<Influence>): List<Influence> =
+    promptable.prompt("Exchange", Request(drawnCards)) { (returnedInfluences): Response ->
+      require(returnedInfluences.size == drawnCards.size) { "Must return ${drawnCards.size} influences." }
+      val allInfluences = (player.heldInfluences + drawnCards).toMutableList()
       returnedInfluences.forEach { influence ->
         require(allInfluences.remove(influence)) { "Not enough ${influence}s." }
       }

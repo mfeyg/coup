@@ -1,15 +1,19 @@
 package coup.server.prompt
 
 import coup.game.Board
+import coup.game.Player
 import coup.game.actions.Action
 import coup.game.actions.ActionBuilder
-import coup.game.Player
 import coup.game.rules.Ruleset
-import coup.server.prompt.Promptable.Companion.prompt
 import coup.server.prompt.ActionType.Companion.actionType
+import coup.server.prompt.Promptable.Companion.prompt
 import kotlinx.serialization.Serializable
 
-object TakeTurn {
+class ChooseAction(
+  private val player: Player,
+  private val promptable: Promptable,
+  private val ruleset: Ruleset
+)  {
 
   @Serializable
   private data class Request(val options: List<Option>)
@@ -39,10 +43,10 @@ object TakeTurn {
     val target: Int? = null
   )
 
-  suspend fun Promptable.takeTurn(player: Player, board: Board, ruleset: Ruleset): Action {
+  suspend fun chooseAction(board: Board): Action {
     val actionsAvailable = ruleset.availableActions(player, board).associateBy { it.actionType }
     val targets = (board.activePlayers - player).associateBy { it.playerNumber }
-    return prompt(
+    return promptable.prompt(
       "TakeTurn",
       Request(actionsAvailable.values.map { Option(it, targets.values) })
     ) { (actionType, target): Response ->

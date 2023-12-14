@@ -1,40 +1,23 @@
 package coup.game
 
+import coup.game.Reaction.Block
 import coup.game.actions.Action
 import coup.game.rules.Ruleset
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 class Player(
   val name: String,
   val playerNumber: Int,
-  private val agent: Agent,
-  private val ruleset: Ruleset
+  private val ruleset: Ruleset,
+  agent: (Player) -> Agent,
 ) {
-  interface Agent {
-    sealed interface ActionResponse {
-      data object Allow : ActionResponse
-      data class Challenge(val challenger: Player) : ActionResponse
-      data class Block(val block: coup.game.Block) : ActionResponse {
-        constructor(blocker: Player, influence: Influence) : this(coup.game.Block(blocker, influence))
-      }
-    }
-
-    enum class BlockResponse { Allow, Challenge }
-
-    data class ChallengeResponse(val influence: Influence)
-
-    suspend fun chooseAction(player: Player, board: Board): Action
-    suspend fun respondToAction(player: Player, action: Action): ActionResponse
-    suspend fun respondToBlock(player: Player, block: Block): BlockResponse
-    suspend fun respondToChallenge(player: Player, claim: Influence, challenger: Player): ChallengeResponse
-    suspend fun surrenderInfluence(player: Player): Influence
-    suspend fun exchange(player: Player, drawnInfluences: List<Influence>): List<Influence>
-  }
+  private val prompt = agent(this)
 
   private data class State(val isk: Int, val heldInfluences: List<Influence>, val revealedInfluences: List<Influence>)
 
   private val state = MutableStateFlow(State(0, emptyList(), emptyList()))
-  val updates = state.map { this }
+  val updates = state.map {}
 
   val isk get() = state.value.isk
   val heldInfluences get() = state.value.heldInfluences
@@ -58,7 +41,7 @@ class Player(
 
   suspend fun loseInfluence(): Influence? {
     if (heldInfluences.isEmpty()) return null
-    val influence = agent.surrenderInfluence(this)
+    val influence = prompt.chooseInfluenceToSurrender()
     return influence.also { loseInfluence(it) }
   }
 
@@ -75,7 +58,7 @@ class Player(
 
   suspend fun exchangeWith(deck: Deck) {
     val influences = listOf(deck.draw(), deck.draw())
-    val toReturn = agent.exchange(this, influences)
+    val toReturn = prompt.chooseCardsToReturn(influences)
     val heldInfluences = (heldInfluences + influences).toMutableList()
     toReturn.forEach {
       heldInfluences -= it
@@ -94,25 +77,65 @@ class Player(
     state.update { it.copy(heldInfluences = heldInfluences) }
   }
 
-  suspend fun chooseAction(board: Board) = agent.chooseAction(this, board)
+  suspend fun chooseAction(board: Board) = prompt.chooseAction(board)
 
   suspend fun respondToAction(action: Action) =
     if (!(ruleset.canChallenge(this, action) || ruleset.canAttemptBlock(this, action)))
-      Agent.ActionResponse.Allow
+      Reaction.Allow
     else
-      agent.respondToAction(this, action)
+      prompt.chooseReaction(action)
 
-  suspend fun respondToBlock(block: Block): Agent.BlockResponse =
-    agent.respondToBlock(this, block)
+  suspend fun challengeBlock(block: Block) =
+    block.blocker != this && prompt.chooseWhetherToChallenge(block)
 
-  suspend fun respondToChallenge(claim: Influence, challenger: Player): Agent.ChallengeResponse {
-    val response = agent.respondToChallenge(this, claim, challenger)
-    val influence = response.influence
+  suspend fun respondToChallenge(claim: Influence, challenger: Player): Influence {
+    val influence = prompt.chooseInfluenceToReveal(claim, challenger)
     if (influence != claim) {
       loseInfluence(influence)
     }
-    return response
+    return influence
   }
 
-  override fun toString() = name
+  override fun toString() = "Player $playerNumber ($name)"
+
+  companion object {
+
+    suspend fun Collection<Player>.reaction(action: Action): Reaction {
+      val response = CompletableDeferred<Reaction>()
+      coroutineScope {
+        launch {
+          val outer = this
+          forEach { responder ->
+            launch {
+              val reaction = responder.respondToAction(action)
+              if (reaction != Reaction.Allow) {
+                response.complete(reaction)
+                outer.cancel()
+              }
+            }
+          }
+        }
+      }
+      response.complete(Reaction.Allow)
+      return response.await()
+    }
+
+    suspend fun Collection<Player>.challenger(block: Block): Player? {
+      val response = CompletableDeferred<Player?>()
+      coroutineScope {
+        launch {
+          val outer = this
+          forEach { responder ->
+            launch {
+              if (responder.challengeBlock(block))
+                response.complete(responder)
+              outer.cancel()
+            }
+          }
+        }
+      }
+      response.complete(null)
+      return response.await()
+    }
+  }
 }

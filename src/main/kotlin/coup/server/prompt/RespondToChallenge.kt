@@ -2,19 +2,17 @@ package coup.server.prompt
 
 import coup.game.Influence
 import coup.game.Player
-import coup.game.Player.Agent.ChallengeResponse
 import coup.server.prompt.Promptable.Companion.prompt
 import kotlinx.serialization.Serializable
 
-object RespondToChallenge {
-  suspend fun Promptable.respondToChallenge(
-    player: Player,
+class RespondToChallenge(private val player: Player, private val promptable: Promptable) {
+  suspend fun respondToChallenge(
+    claim: Influence,
     challenger: Player,
-    claimedInfluence: Influence
-  ): ChallengeResponse =
-    prompt("RespondToChallenge", Request(claimedInfluence, challenger.playerNumber)) { (influence): Response ->
+  ): Influence =
+    promptable.prompt("RespondToChallenge", Request(claim, challenger.playerNumber)) { (influence): Response ->
       require(influence in player.heldInfluences) { "$player does not have a $influence" }
-      ChallengeResponse(influence)
+      influence
     }
 
   @Serializable

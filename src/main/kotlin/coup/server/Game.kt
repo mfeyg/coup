@@ -2,9 +2,11 @@ package coup.server
 
 import coup.game.*
 import coup.game.Game
+import coup.game.actions.Action
 import coup.game.rules.Ruleset
 import coup.game.rules.StandardRules
 import coup.server.ConnectionController.SocketConnection
+import coup.server.prompt.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
@@ -23,7 +25,7 @@ class Game private constructor(
 
   init {
     scope.launch {
-      combine(playerUpdates, baseGame.currentPlayer) { _, _ ->
+      combine(playerUpdates, baseGame.updates) { _, _ ->
         this@Game.playerSessions.forEachIndexed { index, player ->
           player.setState(gameState(index))
         }
@@ -32,7 +34,7 @@ class Game private constructor(
         observers.collectLatest { observers ->
           coroutineScope {
             observers.values.forEach { observer ->
-              combine(playerUpdates, baseGame.currentPlayer) { _, _ ->
+              combine(playerUpdates, baseGame.updates) { _, _ ->
                 observer.setState(gameState())
               }.launchIn(this)
             }
@@ -47,8 +49,10 @@ class Game private constructor(
           }
         }
       }
-      baseGame.start()
-      baseGame.winner?.let { winner -> lobby.setChampion(playerSessions[winner.playerNumber].id) }
+      baseGame.play()
+      baseGame.winner?.let { winner ->
+        lobby.setChampion(playerSessions[winner.playerNumber].id)
+      }
     }
   }
 
@@ -60,8 +64,28 @@ class Game private constructor(
     ): coup.server.Game {
 
       val sessions = playerSessions.map { it.newSession<GameState>() }
-      val players: List<Player> = playerSessions.mapIndexed { index, it ->
-        Player(it.name, index, SocketPlayer(ruleset, sessions[index]), ruleset)
+      val players: List<Player> = sessions.mapIndexed { sessionIndex, session ->
+        Player(session.name, sessionIndex, ruleset) { player ->
+          object : Agent {
+            override suspend fun chooseAction(board: Board) =
+              ChooseAction(player, session, ruleset).chooseAction(board)
+
+            override suspend fun chooseCardsToReturn(drawnCards: List<Influence>) =
+              ExchangeWithDeck(player, session).returnCards(drawnCards)
+
+            override suspend fun chooseReaction(action: Action) =
+              RespondToAction(player, session, ruleset).respondToAction(action)
+
+            override suspend fun chooseInfluenceToReveal(claimedInfluence: Influence, challenger: Player) =
+              RespondToChallenge(player, session).respondToChallenge(claimedInfluence, challenger)
+
+            override suspend fun chooseWhetherToChallenge(block: Reaction.Block) =
+              RespondToBlock(session).challengeBlock(block)
+
+            override suspend fun chooseInfluenceToSurrender() =
+              SurrenderInfluence(player, session).surrenderInfluence()
+          }
+        }
       }
       val baseGame = Game(ruleset, players)
       val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
@@ -111,7 +135,7 @@ class Game private constructor(
           opponent.revealedInfluences,
         )
       },
-      baseGame.currentPlayer.value.playerNumber.takeIf { baseGame.winner == null },
+      baseGame.currentPlayer.playerNumber.takeIf { baseGame.winner == null },
       baseGame.winner?.playerNumber,
     )
 }

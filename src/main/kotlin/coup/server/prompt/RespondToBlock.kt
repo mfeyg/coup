@@ -1,12 +1,11 @@
 package coup.server.prompt
 
-import coup.game.Block
 import coup.game.Influence
-import coup.game.Player.Agent.BlockResponse
+import coup.game.Reaction.Block
 import coup.server.prompt.Promptable.Companion.prompt
 import kotlinx.serialization.Serializable
 
-object RespondToBlock {
+class RespondToBlock(private val promptable: Promptable) {
 
   @Serializable
   private data class Request(
@@ -23,14 +22,14 @@ object RespondToBlock {
     Allow, Challenge
   }
 
-  suspend fun Promptable.respondToBlock(block: Block): BlockResponse =
-    prompt(
+  suspend fun challengeBlock(block: Block): Boolean =
+    promptable.prompt(
       "RespondToBlock",
       Request(block)
     ) { (response): Response ->
       when (response) {
-        ResponseType.Allow -> BlockResponse.Allow
-        ResponseType.Challenge -> BlockResponse.Challenge
+        ResponseType.Allow -> false
+        ResponseType.Challenge -> true
       }
     }
 }
