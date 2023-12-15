@@ -13,11 +13,10 @@ class Lobby(
   private val createGame: suspend Lobby.(Iterable<Session<*>>) -> String
 ) {
 
-  private fun newSession(connection: SocketConnection) =
-    Session<LobbyState>(connection.id, connection.name)
+  private fun Session(connection: SocketConnection) = Session<LobbyState>(connection)
 
   private val players =
-    MutableStateFlow(CountingMap(SocketConnection::id, ::newSession))
+    MutableStateFlow(CountingMap(SocketConnection::id, ::Session))
 
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)

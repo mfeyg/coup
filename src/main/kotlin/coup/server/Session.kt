@@ -1,5 +1,6 @@
 package coup.server
 
+import coup.server.ConnectionController.SocketConnection
 import coup.server.message.Message
 import coup.server.prompt.Promptable
 import io.ktor.websocket.*
@@ -69,8 +70,6 @@ class Session<State>(
     state.value = newState
   }
 
-  inline fun <reified T> newSession(): Session<T> = Session(id, name, serializer())
-
   private suspend fun receiveFrame(frame: Frame) {
     val text = (frame as Frame.Text).readText()
     val promptResponsePattern = Regex("\\[(\\w+)](\\{.*})")
@@ -114,5 +113,9 @@ class Session<State>(
 
   companion object {
     inline operator fun <reified T> invoke(id: String, name: String): Session<T> = Session(id, name, serializer())
+
+    inline operator fun <reified T> invoke(session: Session<*>): Session<T> = Session(session.id, session.name)
+
+    inline operator fun <reified T> invoke(connection: SocketConnection) = Session<T>(connection.id, connection.name)
   }
 }

@@ -63,7 +63,7 @@ class GameServer private constructor(
       ruleset: Ruleset = StandardRules()
     ): GameServer {
 
-      val sessions = playerSessions.take(ruleset.maxPlayers).map { it.newSession<GameState>() }
+      val sessions = playerSessions.take(ruleset.maxPlayers).map { Session<GameState>(it) }
       val players: List<Player> = sessions.mapIndexed { sessionIndex, session ->
         Player(session.name, sessionIndex, ruleset) { player ->
           object : Agent {
