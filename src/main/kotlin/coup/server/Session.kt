@@ -1,6 +1,5 @@
 package coup.server
 
-import coup.server.Sendable.Companion.send
 import coup.server.message.Message
 import coup.server.prompt.Promptable
 import io.ktor.websocket.*
@@ -26,7 +25,7 @@ class Session<State>(
   private val activePrompts = MutableStateFlow(mapOf<String, String>())
   private val activeListeners = MutableStateFlow(mapOf<String, CompletableDeferred<String>>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
-  private val events = MutableSharedFlow<Sendable>(replay = UNLIMITED)
+  private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
   private val connectionCount = MutableStateFlow(0)
 
@@ -60,9 +59,11 @@ class Session<State>(
     }
   }
 
-  suspend fun event(event: Sendable) {
-    events.emit(event)
+  suspend fun <T> event(event: T, type: String, serializer: KSerializer<T>) {
+    events.emit(type + Json.encodeToString(serializer, event))
   }
+
+  suspend inline fun <reified T> event(event: T) = event(event, T::class.simpleName!!, serializer())
 
   fun setState(newState: State) {
     state.value = newState
