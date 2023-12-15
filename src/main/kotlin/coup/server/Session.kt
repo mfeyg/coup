@@ -23,7 +23,8 @@ class Session<State>(
   var name: String,
   private val stateSerializer: KSerializer<State>,
 ) : Promptable {
-  private val activePrompts = MutableStateFlow(mapOf<String, Pair<String, CompletableDeferred<String>>>())
+  private val activePrompts = MutableStateFlow(mapOf<String, String>())
+  private val activeListeners = MutableStateFlow(mapOf<String, CompletableDeferred<String>>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<Sendable>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
@@ -46,15 +47,15 @@ class Session<State>(
       val response = CompletableDeferred<String>()
       val id = newId
       val prompt = Json.encodeToString(Prompt.serializer(requestSerializer), Prompt(promptType, id, request))
-      activePrompts.update {
-        it + (id to (prompt to response))
-      }
+      activePrompts.update { it + (id to prompt) }
+      activeListeners.update { it + (id to response) }
       try {
         return readResponse(Json.decodeFromString(responseSerializer, response.await()))
       } catch (e: IllegalArgumentException) {
         Logger.getGlobal().log(Level.WARNING, e) { "Failed to read response" }
       } finally {
         activePrompts.update { it - id }
+        activeListeners.update { it - id }
       }
     }
   }
@@ -75,8 +76,7 @@ class Session<State>(
     when (val match = promptResponsePattern.matchEntire(text)) {
       is MatchResult -> {
         val (_, id, response) = match.groupValues
-        val deferred = activePrompts.value[id]?.second
-        deferred?.complete(response)
+        activeListeners.value[id]?.complete(response)
       }
 
       else -> {
@@ -99,7 +99,7 @@ class Session<State>(
         }.launchIn(this)
         events.onEach { connection.send(it) }.launchIn(this)
         activePrompts.onEach { prompts ->
-          connection.send("Prompts[" + prompts.values.joinToString(",") { it.first } + "]")
+          connection.send("Prompts[" + prompts.values.joinToString(",") + "]")
         }.launchIn(this)
       }
       for (frame in connection.incoming) {
