@@ -13,20 +13,24 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import java.util.logging.Level
 import java.util.logging.Logger
 
 /** Represents a user's session. */
-class Session<State : Any>(
+class Session<State>(
   val id: String,
   var name: String,
+  private val stateSerializer: KSerializer<State>,
 ) : Promptable {
   private val activePrompts = MutableStateFlow(mapOf<String, Pair<String, CompletableDeferred<String>>>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<Sendable>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
+  private val connectionCount = MutableStateFlow(0)
 
   val messages get() = incomingMessages.asSharedFlow()
+  val connections get() = connectionCount.asStateFlow()
 
   @Serializable
   private data class Prompt<T>(val type: String, val id: String, val prompt: T)
@@ -63,7 +67,7 @@ class Session<State : Any>(
     state.value = newState
   }
 
-  fun <T : Any> newSession(): Session<T> = Session(id, name)
+  inline fun <reified T> newSession(): Session<T> = Session(id, name, serializer())
 
   private suspend fun receiveFrame(frame: Frame) {
     val text = (frame as Frame.Text).readText()
@@ -85,16 +89,29 @@ class Session<State : Any>(
   }
 
   suspend fun connect(connection: WebSocketSession) = coroutineScope {
-    val listeningJob = launch {
-      state.onEach { it?.let { connection.send(StateUpdate(it)) } }.launchIn(this)
-      events.onEach { connection.send(it) }.launchIn(this)
-      activePrompts.onEach { prompts ->
-        connection.send("Prompts[" + prompts.values.joinToString(",") { it.first } + "]")
-      }.launchIn(this)
+    connectionCount.update { it + 1 }
+    try {
+      val listeningJob = launch {
+        state.onEach { state ->
+          state?.let {
+            connection.send("State" + Json.encodeToString(stateSerializer, state))
+          }
+        }.launchIn(this)
+        events.onEach { connection.send(it) }.launchIn(this)
+        activePrompts.onEach { prompts ->
+          connection.send("Prompts[" + prompts.values.joinToString(",") { it.first } + "]")
+        }.launchIn(this)
+      }
+      for (frame in connection.incoming) {
+        receiveFrame(frame)
+      }
+      listeningJob.cancelAndJoin()
+    } finally {
+      connectionCount.update { it - 1 }
     }
-    for (frame in connection.incoming) {
-      receiveFrame(frame)
-    }
-    listeningJob.cancelAndJoin()
+  }
+
+  companion object {
+    inline operator fun <reified T> invoke(id: String, name: String): Session<T> = Session(id, name, serializer())
   }
 }
