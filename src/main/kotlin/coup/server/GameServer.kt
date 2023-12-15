@@ -26,7 +26,7 @@ class GameServer private constructor(
   init {
     scope.launch {
       updates.onEach {
-        this@GameServer.playerSessions.forEachIndexed { index, player ->
+        playerSessions.forEachIndexed { index, player ->
           player.setState(gameState(index))
         }
       }.launchIn(this)
