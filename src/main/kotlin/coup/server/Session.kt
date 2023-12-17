@@ -14,8 +14,6 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
-import java.util.logging.Level
-import java.util.logging.Logger
 
 /** Represents a user's session. */
 class Session<State>(
@@ -24,7 +22,7 @@ class Session<State>(
   private val stateSerializer: KSerializer<State>,
 ) : Promptable {
   private val activePrompts = MutableStateFlow(mapOf<String, String>())
-  private val activeListeners = MutableStateFlow(mapOf<String, CompletableDeferred<String>>())
+  private val activeListeners = MutableStateFlow(mapOf<String, (String) -> Unit>())
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
@@ -43,20 +41,16 @@ class Session<State>(
     responseSerializer: KSerializer<ResponseT>,
     readResponse: (ResponseT) -> T
   ): T {
-    while (true) {
-      val response = CompletableDeferred<String>()
-      val id = newId
-      val prompt = Json.encodeToString(Prompt.serializer(requestSerializer), Prompt(promptType, id, request))
+    val response = CompletableDeferred<ResponseT>()
+    val id = newId
+    val prompt = Json.encodeToString(Prompt.serializer(requestSerializer), Prompt(promptType, id, request))
+    try {
       activePrompts.update { it + (id to prompt) }
-      activeListeners.update { it + (id to response) }
-      try {
-        return readResponse(Json.decodeFromString(responseSerializer, response.await()))
-      } catch (e: IllegalArgumentException) {
-        Logger.getGlobal().log(Level.WARNING, e) { "Failed to read response" }
-      } finally {
-        activePrompts.update { it - id }
-        activeListeners.update { it - id }
-      }
+      activeListeners.update { it + (id to { response.complete(Json.decodeFromString(responseSerializer, it)) }) }
+      return readResponse(response.await())
+    } finally {
+      activePrompts.update { it - id }
+      activeListeners.update { it - id }
     }
   }
 
@@ -76,7 +70,7 @@ class Session<State>(
     when (val match = promptResponsePattern.matchEntire(text)) {
       is MatchResult -> {
         val (_, id, response) = match.groupValues
-        activeListeners.value[id]?.complete(response)
+        activeListeners.value[id]?.invoke(response)
       }
 
       else -> {
