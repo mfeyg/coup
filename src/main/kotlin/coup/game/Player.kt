@@ -12,11 +12,15 @@ class Player(
   private val ruleset: Ruleset,
   agent: (Player) -> Agent,
 ) {
-  private val prompt = agent(this)
+  private val agent = agent(this)
 
-  private data class State(val isk: Int, val heldInfluences: List<Influence>, val revealedInfluences: List<Influence>)
+  private data class State(
+    val isk: Int = 0,
+    val heldInfluences: List<Influence> = emptyList(),
+    val revealedInfluences: List<Influence> = emptyList(),
+  )
 
-  private val state = MutableStateFlow(State(0, emptyList(), emptyList()))
+  private val state = MutableStateFlow(State())
   val updates = state.map {}
 
   val isk get() = state.value.isk
@@ -32,7 +36,10 @@ class Player(
   fun pay(cost: Int) = loseIsk(cost)
 
   fun loseIsk(amount: Int) {
-    state.update { it.copy(isk = it.isk - amount) }
+    state.update {
+      require(amount <= it.isk)
+      it.copy(isk = it.isk - amount)
+    }
   }
 
   private fun draw(vararg influences: Influence) {
@@ -41,12 +48,13 @@ class Player(
 
   suspend fun loseInfluence(): Influence? {
     if (heldInfluences.isEmpty()) return null
-    val influence = if (heldInfluences.size == 1) heldInfluences[0] else prompt.chooseInfluenceToSurrender()
+    val influence = if (heldInfluences.size == 1) heldInfluences[0] else agent.chooseInfluenceToSurrender()
     return influence.also { loseInfluence(it) }
   }
 
   private fun loseInfluence(influence: Influence) {
     state.update {
+      require(influence in it.heldInfluences)
       it.copy(
         revealedInfluences = it.revealedInfluences + influence,
         heldInfluences = it.heldInfluences - influence,
@@ -58,9 +66,10 @@ class Player(
 
   suspend fun exchangeWith(deck: Deck) {
     val influences = listOf(deck.draw(), deck.draw())
-    val toReturn = prompt.chooseCardsToReturn(influences)
+    val toReturn = agent.chooseCardsToReturn(influences)
     val heldInfluences = (heldInfluences + influences).toMutableList()
     toReturn.forEach {
+      check(it in heldInfluences)
       heldInfluences -= it
       deck.putBack(it)
     }
@@ -70,6 +79,7 @@ class Player(
 
   fun swapOut(influence: Influence, deck: Deck) {
     val heldInfluences = heldInfluences.toMutableList()
+    require(influence in heldInfluences)
     heldInfluences -= influence
     deck.putBack(influence)
     deck.shuffle()
@@ -77,19 +87,19 @@ class Player(
     state.update { it.copy(heldInfluences = heldInfluences) }
   }
 
-  suspend fun chooseAction(board: Board) = prompt.chooseAction(board)
+  suspend fun chooseAction(board: Board) = agent.chooseAction(board)
 
-  suspend fun respondToAction(action: Action) =
+  private suspend fun respondToAction(action: Action) =
     if (!(ruleset.canChallenge(this, action) || ruleset.canAttemptBlock(this, action)))
       Reaction.Allow
     else
-      prompt.chooseReaction(action)
+      agent.chooseReaction(action)
 
-  suspend fun challengeBlock(block: Block) =
-    block.blocker != this && prompt.chooseWhetherToChallenge(block)
+  private suspend fun challengesBlock(block: Block) =
+    block.blocker != this && agent.chooseWhetherToChallenge(block)
 
   suspend fun respondToChallenge(claim: Influence, challenger: Player): Influence {
-    val influence = prompt.chooseInfluenceToReveal(claim, challenger)
+    val influence = agent.chooseInfluenceToReveal(claim, challenger)
     if (influence != claim) {
       loseInfluence(influence)
     }
@@ -127,7 +137,7 @@ class Player(
           val outer = this
           forEach { responder ->
             launch {
-              if (responder.challengeBlock(block)) {
+              if (responder.challengesBlock(block)) {
                 response.complete(responder)
                 outer.cancel()
               }
