@@ -1,18 +1,29 @@
 package coup.game
 
-class Deck(cards: Iterable<Influence>) {
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 
-  private val cards = cards.toMutableList()
+class Deck(cards: List<Influence>) {
 
-  fun shuffle() = cards.shuffle()
+  private val cards = MutableStateFlow(cards)
 
-  fun draw() = cards.removeFirst()
+  fun shuffle() = cards.update { it.shuffled() }
+
+  fun draw(): Influence {
+    while (true) {
+      val deck = this.cards.value
+      val card = deck.first()
+      if (this.cards.compareAndSet(deck, deck.drop(1))) {
+        return card
+      }
+    }
+  }
 
   fun putBack(influence: Influence) {
-    cards.add(influence)
+    cards.update { it + influence }
   }
 
   constructor(cards: List<Influence>, repeat: Int) : this(
-    sequence { cards.forEach { card -> repeat(repeat) { yield(card) } } }.asIterable()
+    sequence { cards.forEach { card -> repeat(repeat) { yield(card) } } }.toList()
   )
 }
