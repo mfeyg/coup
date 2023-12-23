@@ -104,7 +104,7 @@ function actionDescription(actor, actionType, target) {
 }
 
 export function Prompt({ prompt, player, opponents }) {
-  const { type, message } = prompt ?? {}
+  const { type, prompt: message } = prompt ?? {}
   const respond = (response) => {
     prompt.respond(response)
   }

@@ -85,7 +85,7 @@
     />
   </main>`
 
-  socket.onError("GameNotFound", () => location.assign(lobbyPath()))
+  socket.on("GameNotFound", () => location.assign(lobbyPath()))
 
   render(html`<${Game}/>`, document.body)
 </script>

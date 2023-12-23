@@ -22,7 +22,7 @@
   const players = computed(() => socket.state.value?.players)
   const startingIn = computed(() => socket.state.value?.startingIn)
 
-  socket.onError("LobbyNotFound", () => location.assign("/lobby.html"))
+  socket.on("LobbyNotFound", () => location.assign("/lobby.html"))
   socket.on("GoToLobby", ({ id }) => history.replaceState({ id }, "", "/lobby.html?id=" + id))
 
   function goToGame(gameId) {

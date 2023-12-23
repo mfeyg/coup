@@ -1,15 +1,17 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
+import io.ktor.websocket.*
 import java.util.WeakHashMap
 
 class GameController {
   private val games = WeakHashMap<GameServer, String>()
 
-  class GameNotFound : ServerError()
-
   suspend fun connect(connection: SocketConnection, id: String) {
-    val game = game(id) ?: throw GameNotFound()
+    val game = game(id) ?: run {
+      connection.send(Frame.Text("GameNotFound"))
+      return
+    }
     game.connect(connection)
   }
 

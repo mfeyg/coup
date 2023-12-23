@@ -2,14 +2,13 @@ package coup.server
 
 import coup.server.ConnectionController.SocketConnection
 import coup.server.Sendable.Companion.send
+import io.ktor.websocket.*
 import kotlinx.serialization.Serializable
 import java.util.*
 
 class LobbyController(private val createLobby: () -> Lobby) {
   private val lobbyIds = WeakHashMap<Lobby, String>()
   private val defaultId = newId
-
-  private class LobbyNotFound(id: String) : ServerError("Lobby $id not found")
 
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
     val lobby: Lobby
@@ -22,7 +21,10 @@ class LobbyController(private val createLobby: () -> Lobby) {
       lobbyIds[lobby] = defaultId
       socket.send(lobby)
     } else {
-      lobby = lobby(id) ?: throw LobbyNotFound(id)
+      lobby = lobby(id) ?: run {
+        socket.send(Frame.Text("LobbyNotFound"))
+        return
+      }
     }
     lobby.connect(socket)
   }

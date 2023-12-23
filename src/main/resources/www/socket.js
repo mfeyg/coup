@@ -1,29 +1,30 @@
 import { signal } from "signals";
 
-function readMessage(data) {
-  const [_, type, payload] = data.match(/(\w+)(.*)/s)
-  return [type, payload && JSON.parse(payload)]
-}
-
 const socketProtocol = location.protocol === "https:" ? "wss:" : "ws:"
+
+function readMessage(message) {
+  let [_, type, content] = message.match(/^(\w+)(:?.*)$/)
+  if (content?.[0] == ':') content = content.substring(1)
+  if (content?.[0]?.match(/[[{]|\d/)) content = JSON.parse(content)
+  return [type, content]
+}
 
 class Socket {
   constructor(path) {
     this.path = path
     this.handlers = new Map()
-    this.errorHandlers = new Map()
     this.state = signal(null)
     this.prompts = signal([])
     this.on("State", state => this.state.value = state)
+    this.on("Prompts", prompts => this.prompts.value = 
+      prompts.map(({type, id, prompt}) => ({type, prompt, respond: (msg) => this.send(`[${id}]` + JSON.stringify(msg))}))
+    )
     this.on("Id", ({ id }) => localStorage.setItem("id", id))
-    this.on("GetId", (_, respond) => respond({ id: localStorage.getItem("id") }))
+    this.on("GetId", (_, respond) => respond(JSON.stringify({ id: localStorage.getItem("id") })))
     this.on("GetName", (_, respond) => {
       const name = localStorage.getItem('name')
-      name ? respond({ name }) :
+      name ? respond(JSON.stringify({ name })) :
         location.assign(`/name.html?redirect=` + encodeURIComponent(location.pathname + location.search))
-    })
-    this.on("Error", (error) => {
-      this.errorHandlers.get(error.type)?.(error)
     })
     window.addEventListener("load", () => this.connect())
   }
@@ -32,17 +33,12 @@ class Socket {
     this.ws = new WebSocket(`${socketProtocol}${location.host}${this.path}${location.search}`)
     this.ws.onmessage = (msg) => {
       const [type, message] = readMessage(msg.data)
-      if (type === "Prompts") {
-        this.prompts.value = message.map(({type, id, prompt}) => ({type, message: prompt, respond: (msg => this.send(`[${id}]`, msg))}))
-      } else {
-        const handler = this.handlers.get(type)
-        if (!handler) {
-          console.error(`No handler for type ${type}`)
-          return
-        }
-        const respond = msg => this.send("", msg)
-        handler(message, respond)
+      const handler = this.handlers.get(type)
+      if (!handler) {
+        console.error(`No handler for type ${type}`)
+        return
       }
+      handler(message, response => this.send(response))
     }
     this.ws.onclose = () => this.reconnect()
   }
@@ -55,17 +51,12 @@ class Socket {
     }, this.backoff)
   }
 
-  send(messageType, content) {
-    const frame = messageType + (content ? JSON.stringify(content) : "")
+  send(frame) {
     this.ws.send(frame)
   }
 
   on(type, handler) {
     this.handlers.set(type, handler)
-  }
-
-  onError(type, handler) {
-    this.errorHandlers.set(type, handler)
   }
 }
 

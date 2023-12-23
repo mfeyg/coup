@@ -54,11 +54,13 @@ class Session<State>(
     }
   }
 
-  suspend fun <T> event(event: T, type: String, serializer: KSerializer<T>) {
-    events.emit(type + Json.encodeToString(serializer, event))
-  }
+  suspend fun event(event: String) = events.emit(event)
 
-  suspend inline fun <reified T> event(event: T) = event(event, T::class.simpleName!!, serializer())
+  suspend fun <T> event(event: T, type: String, serializer: KSerializer<T>) =
+    event(type + ":" + Json.encodeToString(serializer, event))
+
+  suspend inline fun <reified T> event(event: T, type: String = T::class.simpleName!!) =
+    event(event, type, serializer())
 
   fun setState(newState: State) {
     state.value = newState

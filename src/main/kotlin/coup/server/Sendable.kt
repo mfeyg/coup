@@ -8,7 +8,7 @@ import kotlin.reflect.full.createType
 interface Sendable {
   fun toFrame(): Frame = Frame.Text(
     this::class.simpleName!!
-            + Json.encodeToString(serializer(this::class.createType()), this)
+            + ":" + Json.encodeToString(serializer(this::class.createType()), this)
   )
 
   companion object {
