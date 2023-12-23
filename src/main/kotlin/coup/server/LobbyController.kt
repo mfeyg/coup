@@ -35,7 +35,7 @@ class LobbyController(private val createLobby: () -> Lobby) {
   }
 
   private fun lobby(id: String): Lobby? = try {
-    lobbyIds.filterValues { it == id }.keys.firstOrNull()
+    lobbyIds.filterValues { it == id }.keys.firstOrNull()?.takeIf { it.isActive }
   } catch (e: ConcurrentModificationException) {
     lobby(id)
   }

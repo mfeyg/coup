@@ -33,6 +33,7 @@ class Lobby(
     )
   }
   private var scope: CoroutineScope? = null
+  val isActive: Boolean get() = scope?.isActive == true
 
   init {
     init()
