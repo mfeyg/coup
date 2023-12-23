@@ -1,14 +1,15 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
-import coup.server.Sendable.Companion.send
 import io.ktor.websocket.*
-import kotlinx.serialization.Serializable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.Default
 import java.util.*
 
 class LobbyController(private val createLobby: () -> Lobby) {
   private val lobbyIds = WeakHashMap<Lobby, String>()
   private val defaultId = newId
+  private val scope = CoroutineScope(Default)
 
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
     val lobby: Lobby
@@ -22,7 +23,7 @@ class LobbyController(private val createLobby: () -> Lobby) {
       socket.send(lobby)
     } else {
       lobby = lobby(id) ?: run {
-        socket.send(Frame.Text("LobbyNotFound"))
+        socket.send("LobbyNotFound")
         return
       }
     }
@@ -30,9 +31,7 @@ class LobbyController(private val createLobby: () -> Lobby) {
   }
 
   private suspend fun SocketConnection.send(lobby: Lobby) {
-    @Serializable
-    data class GoToLobby(val id: String) : Sendable
-    send(GoToLobby(lobbyIds[lobby] ?: return))
+    send("GoToLobby:" + (lobbyIds[lobby] ?: return))
   }
 
   private fun lobby(id: String): Lobby? = try {

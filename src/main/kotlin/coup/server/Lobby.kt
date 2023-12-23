@@ -15,12 +15,12 @@ class Lobby(
 
   private fun Session(connection: SocketConnection) = Session<LobbyState>(connection)
 
-  private val players =
+  private val sessions =
     MutableStateFlow(CountingMap(SocketConnection::id, ::Session))
 
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
-  private val state = combine(players, champion, startingIn) { players, champion, startingIn ->
+  private val state = combine(sessions, champion, startingIn) { players, champion, startingIn ->
     LobbyState(
       players.values.map { player ->
         LobbyState.Player(
@@ -43,7 +43,7 @@ class Lobby(
       ?: CoroutineScope(Dispatchers.Default).also { scope ->
         var startGameJob: Job? = null
         scope.launch {
-          players.collectLatest { players ->
+          sessions.collectLatest { players ->
             if (players.isEmpty()) {
               delay(5.minutes)
               scope.cancel()
@@ -70,13 +70,16 @@ class Lobby(
   }
 
   suspend fun connect(socket: SocketConnection) {
-    val session = players.updateAndGet { it + socket }
+    if (scope?.isActive != true) {
+      throw IllegalStateException("Lobby is closed")
+    }
+    val session = sessions.updateAndGet { it + socket }
       .getValue(socket)
     try {
       init()
       session.connect(socket)
     } finally {
-      players.update { it - socket }
+      sessions.update { it - socket }
     }
   }
 
@@ -97,7 +100,7 @@ class Lobby(
   }
 
   private suspend fun newGame() {
-    var players = this.players.value.values.toList()
+    var players = this.sessions.value.values.toList()
     val championId = champion.value
     val champion = players.indexOfFirst { it.id == championId }
     if (champion != -1) {

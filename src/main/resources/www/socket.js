@@ -5,7 +5,7 @@ const socketProtocol = location.protocol === "https:" ? "wss:" : "ws:"
 function readMessage(message) {
   let [_, type, content] = message.match(/^(\w+)(:?.*)$/)
   if (content?.[0] == ':') content = content.substring(1)
-  if (content?.[0]?.match(/[[{]|\d/)) content = JSON.parse(content)
+  if (content?.match(/^[[{]|^\d+$/)) content = JSON.parse(content)
   return [type, content]
 }
 
