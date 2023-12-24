@@ -1,7 +1,6 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
-import coup.server.message.Message
 import coup.server.prompt.Promptable
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
@@ -20,7 +19,7 @@ class Session<State>(
 ) : Promptable {
   private val activePrompts = MutableStateFlow(mapOf<String, String>())
   private val activeListeners = MutableStateFlow(mapOf<String, (String) -> Unit>())
-  private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
+  private val incomingMessages = MutableSharedFlow<String>(replay = UNLIMITED)
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
   private val connections = MutableStateFlow(setOf<SocketConnection>())
@@ -53,12 +52,6 @@ class Session<State>(
 
   suspend fun event(event: String) = events.emit(event)
 
-  suspend fun <T> event(event: T, type: String, serializer: KSerializer<T>) =
-    event(type + ":" + Json.encodeToString(serializer, event))
-
-  suspend inline fun <reified T> event(event: T, type: String = T::class.simpleName!!) =
-    event(event, type, serializer())
-
   fun setState(newState: State) {
     state.value = newState
   }
@@ -72,12 +65,7 @@ class Session<State>(
         activeListeners.value[id]?.invoke(response)
       }
 
-      else -> {
-        incomingMessages.emit(
-          Message.read(text)
-            ?: throw ServerError("Could not read message $text")
-        )
-      }
+      else -> incomingMessages.emit(text)
     }
   }
 

@@ -9,7 +9,7 @@ class GameController {
 
   suspend fun connect(connection: SocketConnection, id: String) {
     val game = game(id) ?: run {
-      connection.send(Frame.Text("GameNotFound"))
+      connection.send("GameNotFound")
       return
     }
     game.connect(connection)
