@@ -1,9 +1,6 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
-import coup.server.message.CancelGameStart
-import coup.server.message.Message
-import coup.server.message.StartGame
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.minutes
@@ -48,10 +45,10 @@ class Lobby(
               }
               launch {
                 player.messages.collect { message ->
-                  when (Message.read(message)) {
-                    StartGame -> startGameJob = scope.launch { startGame() }
-                    CancelGameStart -> startGameJob?.cancelAndJoin()
-                    null -> throw ServerError("Could not read message $message")
+                  when (message) {
+                    "StartGame" -> startGameJob = scope.launch { startGame() }
+                    "CancelGameStart" -> startGameJob?.cancelAndJoin()
+                    else -> throw ServerError("Could not read message $message")
                   }
                 }
               }
