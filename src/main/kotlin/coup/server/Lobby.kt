@@ -33,11 +33,12 @@ class Lobby(
 
   init {
     with(CoroutineScope(Dispatchers.Default)) {
+      val scope = this
       launch {
         sessions.collectLatest { sessions ->
           if (sessions.isEmpty()) {
             delay(5.minutes)
-            shutdown(this)
+            shutdown(scope)
           }
           coroutineScope {
             for (player in sessions.values) {
