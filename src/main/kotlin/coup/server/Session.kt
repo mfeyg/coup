@@ -12,14 +12,15 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 
 /** Represents a user's session. */
-class Session<State>(
+class Session<State, Message>(
   val id: String,
   var name: String,
   private val stateSerializer: KSerializer<State>,
+  private val messageParser: (String) -> Message = { throw IllegalArgumentException("Unexpected message $it") },
 ) : Promptable {
   private val activePrompts = MutableStateFlow(mapOf<String, String>())
   private val activeListeners = MutableStateFlow(mapOf<String, (String) -> Unit>())
-  private val incomingMessages = MutableSharedFlow<String>()
+  private val incomingMessages = MutableSharedFlow<Message>()
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
   private val connections = MutableStateFlow(setOf<SocketConnection>())
@@ -65,7 +66,7 @@ class Session<State>(
         activeListeners.value[id]?.invoke(response)
       }
 
-      else -> incomingMessages.emit(text)
+      else -> incomingMessages.emit(messageParser(text))
     }
   }
 
@@ -100,10 +101,12 @@ class Session<State>(
   }
 
   companion object {
-    inline operator fun <reified T> invoke(id: String, name: String): Session<T> = Session(id, name, serializer())
+    inline operator fun <reified T, MessageT> invoke(
+      id: String,
+      name: String,
+      noinline readMessage: (String) -> MessageT,
+    ) = Session<T, MessageT>(id, name, serializer(), readMessage)
 
-    inline operator fun <reified T> invoke(session: Session<*>): Session<T> = Session(session.id, session.name)
-
-    inline operator fun <reified T> invoke(connection: SocketConnection) = Session<T>(connection.id, connection.name)
+    inline operator fun <reified T> invoke(id: String, name: String) = Session<T, Nothing>(id, name, serializer())
   }
 }

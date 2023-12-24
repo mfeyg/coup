@@ -7,10 +7,12 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class Lobby(
-  private val createGame: suspend Lobby.(Iterable<Session<*>>) -> String
+  private val createGame: suspend Lobby.(Iterable<Session<*, *>>) -> String
 ) {
 
-  private val sessions = MutableStateFlow(mapOf<String, Session<LobbyState>>())
+  private enum class Command { StartGame, CancelGameStart }
+
+  private val sessions = MutableStateFlow(mapOf<String, Session<LobbyState, Command>>())
 
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
@@ -46,9 +48,8 @@ class Lobby(
               launch {
                 player.messages.collect { message ->
                   when (message) {
-                    "StartGame" -> startGameJob = scope.launch { startGame() }
-                    "CancelGameStart" -> startGameJob?.cancelAndJoin()
-                    else -> throw IllegalArgumentException("Could not read message $message")
+                    Command.StartGame -> startGameJob = scope.launch { startGame() }
+                    Command.CancelGameStart -> startGameJob?.cancelAndJoin()
                   }
                 }
               }
@@ -76,7 +77,11 @@ class Lobby(
       throw IllegalStateException("Lobby is closed")
     }
     val session = sessions.updateAndGet { sessions ->
-      if (!sessions.containsKey(socket.id)) sessions + (socket.id to Session(socket.id, socket.name)) else sessions
+      if (!sessions.containsKey(socket.id)) sessions + (socket.id to Session(
+        socket.id,
+        socket.name,
+        Command::valueOf,
+      )) else sessions
     }.getValue(socket.id)
     try {
       session.connect(socket)

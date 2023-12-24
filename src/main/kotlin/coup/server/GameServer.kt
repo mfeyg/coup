@@ -14,12 +14,12 @@ import kotlin.time.Duration.Companion.hours
 class GameServer private constructor(
   private val baseGame: Game,
   private val players: List<Player>,
-  private val playerSessions: List<Session<GameState>>,
+  private val playerSessions: List<Session<GameState, Nothing>>,
   private val playerColors: List<String>,
   private val lobby: Lobby,
 ) {
   private val updates = combine(players.map { it.updates } + baseGame.updates) {}
-  private val observers = MutableStateFlow(mapOf<String, Session<GameState>>())
+  private val observers = MutableStateFlow(mapOf<String, Session<GameState, Nothing>>())
   private val scope = CoroutineScope(Dispatchers.Default)
   private val connectionCount = MutableStateFlow(0)
 
@@ -62,12 +62,12 @@ class GameServer private constructor(
 
   companion object {
     suspend operator fun invoke(
-      playerSessions: Iterable<Session<*>>,
+      playerSessions: Iterable<Session<*, *>>,
       lobby: Lobby,
       ruleset: Ruleset = StandardRules()
     ): GameServer {
 
-      val sessions = playerSessions.take(ruleset.maxPlayers).map { Session<GameState>(it) }
+      val sessions = playerSessions.take(ruleset.maxPlayers).map { Session<GameState>(it.id, it.name) }
       val players: List<Player> = sessions.mapIndexed { sessionIndex, session ->
         Player(session.name, sessionIndex, ruleset) { player ->
           object : Agent {
@@ -106,7 +106,7 @@ class GameServer private constructor(
     }
   }
 
-  private fun session(connection: SocketConnection): Session<GameState> =
+  private fun session(connection: SocketConnection): Session<GameState, Nothing> =
     playerSession(connection.id) ?: observingSession(connection.id, connection.name)
 
   private fun playerSession(id: String) = playerSessions.find { it.id == id }
