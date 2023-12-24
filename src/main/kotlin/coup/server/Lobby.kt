@@ -2,7 +2,6 @@ package coup.server
 
 import coup.server.ConnectionController.SocketConnection
 import coup.server.message.CancelGameStart
-import coup.server.message.GameStarted
 import coup.server.message.StartGame
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -51,7 +50,6 @@ class Lobby(
                   when (message) {
                     StartGame -> startGameJob = scope.launch { startGame() }
                     CancelGameStart -> startGameJob?.cancelAndJoin()
-                    else -> {}
                   }
                 }
               }
@@ -108,6 +106,6 @@ class Lobby(
       players = players.subList(champion, players.size) + players.subList(0, champion)
     }
     val game = createGame(players)
-    players.forEach { player -> player.event(GameStarted(game)) }
+    players.forEach { player -> player.event("GameStarted:$game") }
   }
 }
