@@ -19,7 +19,7 @@ class Session<State>(
 ) : Promptable {
   private val activePrompts = MutableStateFlow(mapOf<String, String>())
   private val activeListeners = MutableStateFlow(mapOf<String, (String) -> Unit>())
-  private val incomingMessages = MutableSharedFlow<String>(replay = UNLIMITED)
+  private val incomingMessages = MutableSharedFlow<String>()
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
   private val connections = MutableStateFlow(setOf<SocketConnection>())
