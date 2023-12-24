@@ -58,7 +58,7 @@ class Session<State>(
 
   private suspend fun receiveFrame(frame: Frame) {
     val text = (frame as Frame.Text).readText()
-    val promptResponsePattern = Regex("\\[(\\w+)](\\{.*})")
+    val promptResponsePattern = Regex("""\[(\w+)](\{.*})""")
     when (val match = promptResponsePattern.matchEntire(text)) {
       is MatchResult -> {
         val (_, id, response) = match.groupValues
