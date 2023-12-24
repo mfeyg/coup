@@ -32,13 +32,12 @@ class Lobby(
   private val shuttingDown = MutableStateFlow(false)
 
   init {
-    CoroutineScope(Dispatchers.Default).also { scope ->
-      var startGameJob: Job? = null
-      scope.launch {
+    with(CoroutineScope(Dispatchers.Default)) {
+      launch {
         sessions.collectLatest { sessions ->
           if (sessions.isEmpty()) {
             delay(5.minutes)
-            shutdown(scope)
+            shutdown(this)
           }
           coroutineScope {
             for (player in sessions.values) {
@@ -48,11 +47,23 @@ class Lobby(
               launch {
                 player.messages.collect { message ->
                   when (message) {
-                    LobbyCommand.StartGame -> startGameJob = scope.launch { startGame() }
-                    LobbyCommand.CancelGameStart -> startGameJob?.cancelAndJoin()
+                    LobbyCommand.StartGame -> startingIn.value = 3
+                    LobbyCommand.CancelGameStart -> startingIn.value = null
                   }
                 }
               }
+            }
+          }
+        }
+      }
+      launch {
+        startingIn.collectLatest startingIn@{ value ->
+          if (value == null) return@startingIn
+          when (value) {
+            0 -> startGame()
+            else -> {
+              delay(1.seconds)
+              startingIn.update { value - 1 }
             }
           }
         }
@@ -95,18 +106,6 @@ class Lobby(
   }
 
   private suspend fun startGame() {
-    try {
-      repeat(3) { i ->
-        startingIn.value = 3 - i
-        delay(1.seconds)
-      }
-      newGame()
-    } finally {
-      startingIn.value = null
-    }
-  }
-
-  private suspend fun newGame() {
     var players = this.sessions.value.values.toList()
     val championId = champion.value
     val champion = players.indexOfFirst { it.id == championId }
