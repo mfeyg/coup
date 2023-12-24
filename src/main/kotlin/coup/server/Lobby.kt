@@ -59,11 +59,15 @@ class Lobby(
     }
   }
 
+  private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
+  fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
+
   private fun shutdown(scope: CoroutineScope) {
     shuttingDown.value = true
     for (session in sessions.value.values) {
       session.disconnect()
     }
+    _onShutDown.value.forEach { it() }
     scope.cancel()
   }
 

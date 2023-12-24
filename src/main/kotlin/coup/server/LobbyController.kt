@@ -2,39 +2,33 @@ package coup.server
 
 import coup.server.ConnectionController.SocketConnection
 import io.ktor.websocket.*
-import java.util.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 
 class LobbyController(private val createLobby: () -> Lobby) {
-  private val lobbyIds = WeakHashMap<Lobby, String>()
-  private val defaultId = newId
+  private val lobbyIds = MutableStateFlow(mapOf<String, Lobby>())
+  private val defaultLobbyId = newId
 
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
-    val lobby: Lobby
     if (newLobby) {
-      lobby = createLobby()
-      lobbyIds[lobby] = newId
-      socket.send(lobby)
+      socket.send("GoToLobby:${createLobby(newId)}")
     } else if (id == null) {
-      lobby = lobby(defaultId) ?: createLobby()
-      lobbyIds[lobby] = defaultId
-      socket.send(lobby)
+      lobby(defaultLobbyId) ?: createLobby(defaultLobbyId)
+      socket.send("GoToLobby:$defaultLobbyId")
     } else {
-      lobby = lobby(id) ?: run {
-        socket.send("LobbyNotFound")
-        return
-      }
+      lobby(id)?.connect(socket) ?: socket.send("LobbyNotFound:$id")
     }
-    lobby.connect(socket)
   }
 
-  private suspend fun SocketConnection.send(lobby: Lobby) {
-    send("GoToLobby:" + (lobbyIds[lobby] ?: return))
+  private fun createLobby(id: String): String {
+    val lobby = createLobby()
+    lobbyIds.update { it + (id to lobby) }
+    lobby.onShutDown {
+      lobbyIds.update { it.filterValues { it != lobby } }
+    }
+    return id
   }
 
-  private fun lobby(id: String): Lobby? = try {
-    lobbyIds.filterValues { it == id }.keys.firstOrNull()?.takeIf { it.isActive }
-  } catch (e: ConcurrentModificationException) {
-    lobby(id)
-  }
+  private fun lobby(id: String): Lobby? = lobbyIds.value[id]?.takeIf { it.isActive }
 
 }
