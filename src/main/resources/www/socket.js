@@ -5,7 +5,7 @@ const socketProtocol = location.protocol === "https:" ? "wss:" : "ws:"
 function readMessage(message) {
   let [_, type, content] = message.match(/^(\w+)(:?.*)$/)
   if (content?.[0] == ':') content = content.substring(1)
-  if (content?.match(/^[[{]|^\d+$/)) content = JSON.parse(content)
+  if (content?.match(/^[[{]/)) content = JSON.parse(content)
   return [type, content]
 }
 
@@ -19,7 +19,7 @@ class Socket {
     this.on("Prompts", prompts => this.prompts.value = 
       prompts.map(({type, id, prompt}) => ({type, prompt, respond: (msg) => this.send(`[${id}]` + JSON.stringify(msg))}))
     )
-    this.on("Id", ({ id }) => localStorage.setItem("id", id))
+    this.on("Id", (id) => localStorage.setItem("id", id))
     this.on("GetId", (_, respond) => respond(JSON.stringify({ id: localStorage.getItem("id") })))
     this.on("GetName", (_, respond) => {
       const name = localStorage.getItem('name')

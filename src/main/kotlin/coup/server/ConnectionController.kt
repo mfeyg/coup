@@ -1,7 +1,5 @@
 package coup.server
 
-import coup.server.Sendable.Companion.send
-import coup.server.message.Id
 import io.ktor.websocket.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json.Default.decodeFromString
@@ -11,7 +9,7 @@ class ConnectionController {
     WebSocketSession by socket
 
   suspend fun connection(socket: WebSocketSession): SocketConnection {
-    val id = readSocketId(socket) ?: newId(100).also { socket.send(Id(it)) }
+    val id = readSocketId(socket) ?: newId(100).also { socket.send("Id:$it") }
     val name = readSocketName(socket)
     return SocketConnection(socket, name, id)
   }
