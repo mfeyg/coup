@@ -1,11 +1,10 @@
 package coup.server.message
 
-import coup.server.Sendable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import kotlin.reflect.full.createType
 
-sealed interface Message : Sendable {
+sealed interface Message {
   companion object {
     private val messageTypes = Message::class.sealedSubclasses.associateBy { it.simpleName!! }
       .mapValues { (_, value) -> serializer(value.createType()) }
