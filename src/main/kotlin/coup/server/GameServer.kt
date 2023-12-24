@@ -23,6 +23,9 @@ class GameServer private constructor(
   private val scope = CoroutineScope(Dispatchers.Default)
   private val connectionCount = MutableStateFlow(0)
 
+  private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
+  fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
+
   init {
     scope.launch {
       updates.onEach {
@@ -45,6 +48,7 @@ class GameServer private constructor(
         connectionCount.collectLatest { connections ->
           if (connections == 0) {
             delay(1.hours)
+            _onShutDown.value.forEach { it() }
             scope.cancel()
           }
         }

@@ -2,10 +2,11 @@ package coup.server
 
 import coup.server.ConnectionController.SocketConnection
 import io.ktor.websocket.*
-import java.util.WeakHashMap
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 
 class GameController {
-  private val games = WeakHashMap<GameServer, String>()
+  private val games = MutableStateFlow(mapOf<String, GameServer>())
 
   suspend fun connect(connection: SocketConnection, id: String) {
     val game = game(id) ?: run {
@@ -15,16 +16,13 @@ class GameController {
     game.connect(connection)
   }
 
-  private fun game(gameId: String): GameServer? = try {
-    games.entries.find { (_, id) -> id == gameId }?.let { (game, _) -> game }
-  } catch (e: ConcurrentModificationException) {
-    game(gameId)
-  }
+  private fun game(gameId: String) = games.value[gameId]
 
   suspend fun newGame(players: Iterable<Session<*>>, lobby: Lobby): String {
     val gameServer = GameServer(players, lobby)
     val gameId = newId
-    games[gameServer] = gameId
+    games.update { it + (gameId to gameServer) }
+    gameServer.onShutDown { games.update { it - gameId } }
     return gameId
   }
 }
