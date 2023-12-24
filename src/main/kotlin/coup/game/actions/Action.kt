@@ -48,13 +48,7 @@ sealed class Action(val player: Player) {
     }
   }
 
-  open val target: Player?
-    get() = when (this) {
-      is Assassinate -> target
-      is Coup -> target
-      is Steal -> target
-      else -> null
-    }
+  open val target: Player? = null
 
   enum class Type {
     Income, ForeignAid, Tax, Steal, Exchange, Assassinate, Coup;
