@@ -10,9 +10,9 @@ class Lobby(
   private val createGame: suspend Lobby.(Iterable<Session<*, *>>) -> String
 ) {
 
-  private enum class Command { StartGame, CancelGameStart }
+  private enum class LobbyCommand { StartGame, CancelGameStart }
 
-  private val sessions = MutableStateFlow(mapOf<String, Session<LobbyState, Command>>())
+  private val sessions = MutableStateFlow(mapOf<String, Session<LobbyState, LobbyCommand>>())
 
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
@@ -48,8 +48,8 @@ class Lobby(
               launch {
                 player.messages.collect { message ->
                   when (message) {
-                    Command.StartGame -> startGameJob = scope.launch { startGame() }
-                    Command.CancelGameStart -> startGameJob?.cancelAndJoin()
+                    LobbyCommand.StartGame -> startGameJob = scope.launch { startGame() }
+                    LobbyCommand.CancelGameStart -> startGameJob?.cancelAndJoin()
                   }
                 }
               }
@@ -80,7 +80,7 @@ class Lobby(
       if (!sessions.containsKey(socket.id)) sessions + (socket.id to Session(
         socket.id,
         socket.name,
-        Command::valueOf,
+        LobbyCommand::valueOf,
       )) else sessions
     }.getValue(socket.id)
     try {
