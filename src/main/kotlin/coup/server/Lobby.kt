@@ -48,7 +48,7 @@ class Lobby(
                   when (message) {
                     "StartGame" -> startGameJob = scope.launch { startGame() }
                     "CancelGameStart" -> startGameJob?.cancelAndJoin()
-                    else -> throw ServerError("Could not read message $message")
+                    else -> throw IllegalArgumentException("Could not read message $message")
                   }
                 }
               }
