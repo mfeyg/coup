@@ -13,10 +13,7 @@ class Lobby(
   private val createGame: suspend Lobby.(Iterable<Session<*>>) -> String
 ) {
 
-  private fun Session(connection: SocketConnection) = Session<LobbyState>(connection)
-
-  private val sessions =
-    MutableStateFlow(CountingMap(SocketConnection::id, ::Session))
+  private val sessions = MutableStateFlow(mapOf<String, Session<LobbyState>>())
 
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
@@ -32,35 +29,29 @@ class Lobby(
       startingIn
     )
   }
-  private var scope: CoroutineScope? = null
-  val isActive: Boolean get() = scope?.isActive == true
+  val isActive: Boolean get() = !shuttingDown.value
+  private val shuttingDown = MutableStateFlow(false)
 
   init {
-    init()
-  }
-
-  private fun init() {
-    scope = scope?.takeIf { it.isActive }
-      ?: CoroutineScope(Dispatchers.Default).also { scope ->
-        var startGameJob: Job? = null
-        scope.launch {
-          sessions.collectLatest { players ->
-            if (players.isEmpty()) {
-              delay(5.minutes)
-              scope.cancel()
-            }
-            coroutineScope {
-              for (player in players.values) {
-                launch {
-                  state.collect(player::setState)
-                }
-                launch {
-                  player.messages.collect { message ->
-                    when (message) {
-                      StartGame -> startGameJob = scope.launch { startGame() }
-                      CancelGameStart -> startGameJob?.cancelAndJoin()
-                      else -> {}
-                    }
+    CoroutineScope(Dispatchers.Default).also { scope ->
+      var startGameJob: Job? = null
+      scope.launch {
+        sessions.collectLatest { sessions ->
+          if (sessions.isEmpty()) {
+            delay(5.minutes)
+            shutdown(scope)
+          }
+          coroutineScope {
+            for (player in sessions.values) {
+              launch {
+                state.collect(player::setState)
+              }
+              launch {
+                player.messages.collect { message ->
+                  when (message) {
+                    StartGame -> startGameJob = scope.launch { startGame() }
+                    CancelGameStart -> startGameJob?.cancelAndJoin()
+                    else -> {}
                   }
                 }
               }
@@ -68,19 +59,28 @@ class Lobby(
           }
         }
       }
+    }
+  }
+
+  private fun shutdown(scope: CoroutineScope) {
+    shuttingDown.value = true
+    for (session in sessions.value.values) {
+      session.disconnect()
+    }
+    scope.cancel()
   }
 
   suspend fun connect(socket: SocketConnection) {
-    if (scope?.isActive != true) {
+    if (!isActive) {
       throw IllegalStateException("Lobby is closed")
     }
-    val session = sessions.updateAndGet { it + socket }
-      .getValue(socket)
+    val session = sessions.updateAndGet { sessions ->
+      if (!sessions.containsKey(socket.id)) sessions + (socket.id to Session(socket.id, socket.name)) else sessions
+    }.getValue(socket.id)
     try {
-      init()
       session.connect(socket)
     } finally {
-      sessions.update { it - socket }
+      sessions.update { sessions -> if (session.connectionCount == 0) sessions - session.id else sessions }
     }
   }
 

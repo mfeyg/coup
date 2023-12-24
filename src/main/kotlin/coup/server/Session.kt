@@ -4,12 +4,9 @@ import coup.server.ConnectionController.SocketConnection
 import coup.server.message.Message
 import coup.server.prompt.Promptable
 import io.ktor.websocket.*
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -26,10 +23,10 @@ class Session<State>(
   private val incomingMessages = MutableSharedFlow<Message>(replay = UNLIMITED)
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val state = MutableStateFlow<State?>(null)
-  private val connectionCount = MutableStateFlow(0)
+  private val connections = MutableStateFlow(setOf<SocketConnection>())
+  val connectionCount = connections.value.size
 
   val messages get() = incomingMessages.asSharedFlow()
-  val connections get() = connectionCount.asStateFlow()
 
   @Serializable
   private data class Prompt<T>(val type: String, val id: String, val prompt: T)
@@ -84,8 +81,8 @@ class Session<State>(
     }
   }
 
-  suspend fun connect(connection: WebSocketSession) = coroutineScope {
-    connectionCount.update { it + 1 }
+  suspend fun connect(connection: SocketConnection) = coroutineScope {
+    connections.update { it + connection }
     try {
       val listeningJob = launch {
         state.onEach { state ->
@@ -103,7 +100,14 @@ class Session<State>(
       }
       listeningJob.cancelAndJoin()
     } finally {
-      connectionCount.update { it - 1 }
+      connections.update { it - connection }
+    }
+  }
+
+  fun disconnect() {
+    connections.value.forEach { connection ->
+      connection.cancel()
+      connections.update { it - connection }
     }
   }
 

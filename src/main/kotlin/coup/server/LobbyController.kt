@@ -2,14 +2,11 @@ package coup.server
 
 import coup.server.ConnectionController.SocketConnection
 import io.ktor.websocket.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.Default
 import java.util.*
 
 class LobbyController(private val createLobby: () -> Lobby) {
   private val lobbyIds = WeakHashMap<Lobby, String>()
   private val defaultId = newId
-  private val scope = CoroutineScope(Default)
 
   suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
     val lobby: Lobby
