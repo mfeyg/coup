@@ -5,7 +5,7 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
-class LobbyController(private val createLobby: () -> Lobby) {
+class LobbyController(private val newLobby: () -> Lobby) {
   private val lobbyIds = MutableStateFlow(mapOf<String, Lobby>())
   private val defaultLobbyId = newId
 
@@ -21,7 +21,7 @@ class LobbyController(private val createLobby: () -> Lobby) {
   }
 
   private fun createLobby(id: String): String {
-    val lobby = createLobby()
+    val lobby = newLobby()
     lobbyIds.update { it + (id to lobby) }
     lobby.onShutDown {
       lobbyIds.update { it.filterValues { it != lobby } }
