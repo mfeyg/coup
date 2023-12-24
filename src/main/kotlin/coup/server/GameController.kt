@@ -9,11 +9,7 @@ class GameController {
   private val games = MutableStateFlow(mapOf<String, GameServer>())
 
   suspend fun connect(connection: SocketConnection, id: String) {
-    val game = game(id) ?: run {
-      connection.send("GameNotFound")
-      return
-    }
-    game.connect(connection)
+    game(id)?.connect(connection) ?: connection.send("GameNotFound")
   }
 
   private fun game(gameId: String) = games.value[gameId]
