@@ -53,3 +53,13 @@
     background-color: #eee;
     color: black;
 }
+
+.player-name {
+    max-width: 20vw;
+    max-height: 2.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
