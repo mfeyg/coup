@@ -76,18 +76,19 @@ class GameServer private constructor(
     ): GameServer {
 
       val numPlayers = playerIds.size
-      val sessions = object {
+      val playerSessions = object {
         lateinit var value: List<Session<GameState, Nothing>>
       }
 
-      fun playerSession(player: Player) = sessions.value[player.playerNumber]
+      fun playerSession(player: Player) = playerSessions.value[player.playerNumber]
+
       val playerNumberById = buildMap {
         playerIds.forEachIndexed { index, id ->
           put(id, index)
         }
       }
 
-      fun session(id: String) = playerNumberById[id]?.let { sessions.value[it] }
+      fun session(id: String) = playerNumberById[id]?.let { playerSessions.value[it] }
 
       class PlayerAgent(private val player: Player) : Agent {
         override suspend fun chooseAction(board: Board) =
@@ -121,7 +122,7 @@ class GameServer private constructor(
         { session(it.id)?.connect(it) },
         { lobby.setChampion(playerIds[it.playerNumber]) })
 
-      sessions.value = List(numPlayers) { playerNumber ->
+      playerSessions.value = List(numPlayers) { playerNumber ->
         Session(
           playerIds[playerNumber],
           playerNames[playerNumber],
