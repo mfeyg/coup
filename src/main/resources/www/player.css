@@ -26,9 +26,12 @@
 }
 
 .player-influences {
-    display: flex;
-    flex-direction: column;
     grid-column-end: span 2;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5em;
 }
 
 .player-influence {
