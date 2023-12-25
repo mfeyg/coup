@@ -24,15 +24,16 @@ class GameServer private constructor(
   private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
   fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
 
-  private fun state(playerNumber: Int? = null) = combine(players.map { it.updates } + baseGame.updates) {
-    GameState(
-      players = players,
-      playerColor = playerColor,
-      thisPlayer = playerNumber?.let { players[it] },
-      currentPlayer = baseGame.currentPlayer,
-      winner = baseGame.winner,
-    )
-  }
+  private fun state(player: Player? = null) =
+    combine(players.map { it.updates } + baseGame.updates) {
+      GameState(
+        players = players,
+        thisPlayer = player,
+        playerColor = playerColor,
+        currentPlayer = baseGame.currentPlayer,
+        winner = baseGame.winner,
+      )
+    }
 
   fun start() {
     scope.launch {
@@ -109,7 +110,7 @@ class GameServer private constructor(
         Session(
           playerIds[playerNumber],
           playerNames[playerNumber],
-          gameServer.state(playerNumber)
+          gameServer.state(players[playerNumber])
         )
       }
       return gameServer
