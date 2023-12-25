@@ -26,28 +26,11 @@ class GameServer private constructor(
 
   private fun state(playerNumber: Int? = null) = combine(players.map { it.updates } + baseGame.updates) {
     GameState(
-      player = playerNumber?.let { players[it] }?.let { player ->
-        GameState.Player(
-          player.name,
-          playerColor(player),
-          player.playerNumber,
-          player.isk,
-          player.heldInfluences,
-          player.revealedInfluences,
-        )
-      },
-      players = players.map { opponent ->
-        GameState.Opponent(
-          opponent.name,
-          playerColor(opponent),
-          opponent.playerNumber,
-          opponent.isk,
-          opponent.heldInfluences.size,
-          opponent.revealedInfluences,
-        )
-      },
-      currentTurn = baseGame.currentPlayer.playerNumber.takeIf { baseGame.winner == null },
-      winner = baseGame.winner?.playerNumber,
+      players = players,
+      playerColor = playerColor,
+      thisPlayer = playerNumber?.let { players[it] },
+      currentPlayer = baseGame.currentPlayer,
+      winner = baseGame.winner,
     )
   }
 
