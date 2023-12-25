@@ -9,20 +9,9 @@ main {
     padding-top: 10%;
 }
 
-aside {
-    height: 100%;
-    flex-basis: content;
-    overflow-y: scroll;
-}
-
-aside>p {
-    margin: 0;
-    font-size: 0.8rem;
-}
-
 .players {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
 }
 
 
@@ -35,6 +24,10 @@ ul.buttons {
 @media (orientation: portrait) {
     ul.buttons {
         flex-direction: column;
+    }
+
+    .players {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

@@ -54,9 +54,9 @@
   function TurnIndicator({ thisPlayer, activePlayer }) {
     if (!activePlayer) return null;
     if (activePlayer.number === thisPlayer?.number) {
-      return html`<div class="turn-indicator">It's your turn</div>`
+      return html`<div class="turn-indicator active">Your turn</div>`
     } else {
-      return html`<div class="turn-indicator">It's ${activePlayer.name}'s turn</div>`
+      return html`<div class="turn-indicator">${activePlayer.name}'s turn</div>`
     }
   }
 
