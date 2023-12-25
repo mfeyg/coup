@@ -14,11 +14,10 @@ import kotlin.time.Duration.Companion.hours
 class GameServer private constructor(
   private val baseGame: Game,
   private val players: List<Player>,
-  private val playerSessions: List<Session<GameState, Nothing>>,
-  private val playerColors: List<String>,
-  private val lobby: Lobby,
+  private val playerColor: (Player) -> String,
+  private val connectPlayer: suspend (SocketConnection) -> Unit?,
+  private val setWinner: (Player) -> Unit,
 ) {
-  private val updates = combine(players.map { it.updates } + baseGame.updates) {}
   private val observers = MutableStateFlow(mapOf<String, Session<GameState, Nothing>>())
   private val scope = CoroutineScope(Dispatchers.Default)
   private val connectionCount = MutableStateFlow(0)
@@ -26,103 +25,12 @@ class GameServer private constructor(
   private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
   fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
 
-  init {
-    scope.launch {
-      updates.onEach {
-        playerSessions.forEachIndexed { index, player ->
-          player.setState(gameState(index))
-        }
-      }.launchIn(this)
-      launch {
-        observers.collectLatest { observers ->
-          coroutineScope {
-            observers.values.forEach { observer ->
-              updates.onEach {
-                observer.setState(gameState())
-              }.launchIn(this)
-            }
-          }
-        }
-      }
-      launch {
-        connectionCount.collectLatest { connections ->
-          if (connections == 0) {
-            delay(1.hours)
-            _onShutDown.value.forEach { it() }
-            scope.cancel()
-          }
-        }
-      }
-      baseGame.play()
-      baseGame.winner?.let { winner ->
-        lobby.setChampion(playerSessions[winner.playerNumber].id)
-      }
-    }
-  }
-
-  companion object {
-    suspend operator fun invoke(
-      playerSessions: Iterable<Session<*, *>>,
-      lobby: Lobby,
-      ruleset: Ruleset = StandardRules()
-    ): GameServer {
-
-      val sessions = playerSessions.take(ruleset.maxPlayers).map { Session<GameState>(it.id, it.name) }
-      val players: List<Player> = sessions.mapIndexed { sessionIndex, session ->
-        Player(session.name, sessionIndex, ruleset) { player ->
-          object : Agent {
-            override suspend fun chooseAction(board: Board) =
-              ChooseAction(player, session, ruleset).chooseAction(board)
-
-            override suspend fun chooseCardsToReturn(drawnCards: List<Influence>) =
-              ExchangeWithDeck(player, session).returnCards(drawnCards)
-
-            override suspend fun chooseReaction(action: Action) =
-              RespondToAction(player, session, ruleset).respondToAction(action)
-
-            override suspend fun chooseInfluenceToReveal(claimedInfluence: Influence, challenger: Player) =
-              RespondToChallenge(player, session).respondToChallenge(claimedInfluence, challenger)
-
-            override suspend fun chooseWhetherToChallenge(block: Reaction.Block) =
-              RespondToBlock(session).challengeBlock(block)
-
-            override suspend fun chooseInfluenceToSurrender() =
-              SurrenderInfluence(player, session).surrenderInfluence()
-          }
-        }
-      }
-      val baseGame = Game(ruleset, players)
-      val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
-      return GameServer(baseGame, players, sessions, playerColors, lobby)
-    }
-  }
-
-  suspend fun connect(connection: SocketConnection) {
-    try {
-      connectionCount.update { it + 1 }
-      session(connection).connect(connection)
-    } finally {
-      connectionCount.update { it - 1 }
-    }
-  }
-
-  private fun session(connection: SocketConnection): Session<GameState, Nothing> =
-    playerSession(connection.id) ?: observingSession(connection.id, connection.name)
-
-  private fun playerSession(id: String) = playerSessions.find { it.id == id }
-
-  private fun observingSession(id: String, observerName: String) =
-    observers.updateAndGet { observers ->
-      if (observers.containsKey(id)) observers else
-        observers + (id to Session(id, observerName))
-    }.getValue(id)
-
-  private fun gameState(playerNumber: Int? = null) =
+  private fun state(playerNumber: Int? = null) = combine(players.map { it.updates } + baseGame.updates) {
     GameState(
       player = playerNumber?.let { players[it] }?.let { player ->
         GameState.Player(
           player.name,
-          playerColors[player.playerNumber],
+          playerColor(player),
           player.playerNumber,
           player.isk,
           player.heldInfluences,
@@ -132,7 +40,7 @@ class GameServer private constructor(
       players = players.map { opponent ->
         GameState.Opponent(
           opponent.name,
-          playerColors[opponent.playerNumber],
+          playerColor(opponent),
           opponent.playerNumber,
           opponent.isk,
           opponent.heldInfluences.size,
@@ -142,4 +50,102 @@ class GameServer private constructor(
       currentTurn = baseGame.currentPlayer.playerNumber.takeIf { baseGame.winner == null },
       winner = baseGame.winner?.playerNumber,
     )
+  }
+
+  fun start() {
+    scope.launch {
+      connectionCount.collectLatest { connections ->
+        if (connections == 0) {
+          delay(1.hours)
+          _onShutDown.value.forEach { it() }
+          scope.cancel()
+        }
+      }
+    }
+    scope.launch {
+      baseGame.play()
+      baseGame.winner?.let { setWinner(it) }
+    }
+  }
+
+  companion object {
+    suspend operator fun invoke(
+      playerSessions: List<Session<*, *>>,
+      lobby: Lobby,
+      ruleset: Ruleset = StandardRules()
+    ): GameServer {
+
+      val numPlayers = playerSessions.take(ruleset.maxPlayers).size
+      val sessions = object {
+        lateinit var value: List<Session<GameState, Nothing>>
+      }
+
+      fun playerName(playerNumber: Int) = playerSessions[playerNumber].name
+      fun playerSession(player: Player) = sessions.value[player.playerNumber]
+      val playerNumberById = buildMap {
+        playerSessions.take(ruleset.maxPlayers).forEachIndexed { index, session ->
+          put(session.id, index)
+        }
+      }
+
+      fun session(id: String) = playerNumberById[id]?.let { sessions.value[it] }
+
+      class PlayerAgent(private val player: Player) : Agent {
+        override suspend fun chooseAction(board: Board) =
+          ChooseAction(player, playerSession(player), ruleset).chooseAction(board)
+
+        override suspend fun chooseCardsToReturn(drawnCards: List<Influence>) =
+          ExchangeWithDeck(player, playerSession(player)).returnCards(drawnCards)
+
+        override suspend fun chooseReaction(action: Action) =
+          RespondToAction(player, playerSession(player), ruleset).respondToAction(action)
+
+        override suspend fun chooseInfluenceToReveal(claimedInfluence: Influence, challenger: Player) =
+          RespondToChallenge(player, playerSession(player)).respondToChallenge(claimedInfluence, challenger)
+
+        override suspend fun chooseWhetherToChallenge(block: Reaction.Block) =
+          RespondToBlock(playerSession(player)).challengeBlock(block)
+
+        override suspend fun chooseInfluenceToSurrender() =
+          SurrenderInfluence(player, playerSession(player)).surrenderInfluence()
+      }
+
+      val players: List<Player> = List(numPlayers) { playerNumber ->
+        Player(playerName(playerNumber), playerNumber, ruleset, ::PlayerAgent)
+      }
+      val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
+
+      val gameServer = GameServer(
+        Game(ruleset, players),
+        players,
+        { playerColors[it.playerNumber] },
+        { session(it.id)?.connect(it) },
+        { lobby.setChampion(playerSessions[it.playerNumber].id) })
+
+      sessions.value = List(numPlayers) { playerNumber ->
+        Session(
+          playerSessions[playerNumber].id,
+          playerSessions[playerNumber].name,
+          gameServer.state(playerNumber)
+        )
+      }
+      return gameServer
+    }
+  }
+
+  suspend fun connect(connection: SocketConnection) {
+    try {
+      connectionCount.update { it + 1 }
+      connectPlayer(connection)
+        ?: observingSession(connection.id, connection.name).connect(connection)
+    } finally {
+      connectionCount.update { it - 1 }
+    }
+  }
+
+  private fun observingSession(id: String, observerName: String) =
+    observers.updateAndGet { observers ->
+      if (observers.containsKey(id)) observers else
+        observers + (id to Session(id, observerName, state()))
+    }.getValue(id)
 }

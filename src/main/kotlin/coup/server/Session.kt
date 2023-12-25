@@ -15,6 +15,7 @@ import kotlinx.serialization.serializer
 class Session<State, Message>(
   val id: String,
   var name: String,
+  private val state: Flow<State>,
   private val stateSerializer: KSerializer<State>,
   private val messageParser: (String) -> Message = { throw IllegalArgumentException("Unexpected message $it") },
 ) : Promptable {
@@ -22,7 +23,6 @@ class Session<State, Message>(
   private val activeListeners = MutableStateFlow(mapOf<String, (String) -> Unit>())
   private val incomingMessages = MutableSharedFlow<Message>()
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
-  private val state = MutableStateFlow<State?>(null)
   private val connections = MutableStateFlow(setOf<SocketConnection>())
   val connectionCount = connections.value.size
 
@@ -53,10 +53,6 @@ class Session<State, Message>(
 
   suspend fun event(event: String) = events.emit(event)
 
-  fun setState(newState: State) {
-    state.value = newState
-  }
-
   private suspend fun receiveFrame(frame: Frame) {
     val text = (frame as Frame.Text).readText()
     val promptResponsePattern = Regex("""\[(\w+)](\{.*})""")
@@ -75,9 +71,7 @@ class Session<State, Message>(
     try {
       val listeningJob = launch {
         state.onEach { state ->
-          state?.let {
-            connection.send("State" + Json.encodeToString(stateSerializer, state))
-          }
+          connection.send("State:" + Json.encodeToString(stateSerializer, state))
         }.launchIn(this)
         events.onEach { connection.send(it) }.launchIn(this)
         activePrompts.onEach { prompts ->
@@ -101,12 +95,14 @@ class Session<State, Message>(
   }
 
   companion object {
-    inline operator fun <reified T, MessageT> invoke(
+    inline operator fun <reified StateT, MessageT> invoke(
       id: String,
       name: String,
+      state: Flow<StateT>,
       noinline readMessage: (String) -> MessageT,
-    ) = Session<T, MessageT>(id, name, serializer(), readMessage)
+    ) = Session(id, name, state, serializer(), readMessage)
 
-    inline operator fun <reified T> invoke(id: String, name: String) = Session<T, Nothing>(id, name, serializer())
+    inline operator fun <reified StateT> invoke(id: String, name: String, state: Flow<StateT>) =
+      Session<StateT, Nothing>(id, name, state, serializer())
   }
 }

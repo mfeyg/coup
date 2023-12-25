@@ -7,7 +7,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class Lobby(
-  private val createGame: suspend Lobby.(Iterable<Session<*, *>>) -> String
+  private val createGame: suspend Lobby.(List<Session<*, *>>) -> String
 ) {
 
   private enum class LobbyCommand { StartGame, CancelGameStart }
@@ -45,9 +45,6 @@ class Lobby(
   init {
     with(CoroutineScope(Dispatchers.Default)) {
       val scope = this
-      eachSession { session ->
-        state.collect(session::setState)
-      }
       eachSession { session ->
         session.messages.collect { message ->
           when (message) {
@@ -103,6 +100,7 @@ class Lobby(
       if (!sessions.containsKey(socket.id)) sessions + (socket.id to Session(
         socket.id,
         socket.name,
+        state,
         LobbyCommand::valueOf,
       )) else sessions
     }.getValue(socket.id)

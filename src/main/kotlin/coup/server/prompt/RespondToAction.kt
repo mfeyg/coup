@@ -24,7 +24,7 @@ class RespondToAction(private val player: Player, private val promptable: Prompt
     val claimedInfluence: Influence?,
   ) {
     constructor(player: Player, action: Action, ruleset: Ruleset) : this(
-      player = player.playerNumber,
+      player = action.player.playerNumber,
       type = ActionType(action.type),
       target = action.target?.playerNumber,
       canBeChallenged = ruleset.canChallenge(player, action),

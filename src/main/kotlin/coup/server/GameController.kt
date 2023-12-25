@@ -14,11 +14,12 @@ class GameController {
 
   private fun game(gameId: String) = games.value[gameId]
 
-  suspend fun newGame(players: Iterable<Session<*, *>>, lobby: Lobby): String {
+  suspend fun newGame(players: List<Session<*, *>>, lobby: Lobby): String {
     val gameServer = GameServer(players, lobby)
     val gameId = newId
     games.update { it + (gameId to gameServer) }
     gameServer.onShutDown { games.update { it - gameId } }
+    gameServer.start()
     return gameId
   }
 }
