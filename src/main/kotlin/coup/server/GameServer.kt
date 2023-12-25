@@ -4,7 +4,6 @@ import coup.game.*
 import coup.game.Game
 import coup.game.actions.Action
 import coup.game.rules.Ruleset
-import coup.game.rules.StandardRules
 import coup.server.ConnectionController.SocketConnection
 import coup.server.prompt.*
 import kotlinx.coroutines.*
@@ -70,21 +69,21 @@ class GameServer private constructor(
 
   companion object {
     suspend operator fun invoke(
-      playerSessions: List<Session<*, *>>,
+      playerIds: List<String>,
+      playerNames: List<String>,
       lobby: Lobby,
-      ruleset: Ruleset = StandardRules()
+      ruleset: Ruleset,
     ): GameServer {
 
-      val numPlayers = playerSessions.take(ruleset.maxPlayers).size
+      val numPlayers = playerIds.size
       val sessions = object {
         lateinit var value: List<Session<GameState, Nothing>>
       }
 
-      fun playerName(playerNumber: Int) = playerSessions[playerNumber].name
       fun playerSession(player: Player) = sessions.value[player.playerNumber]
       val playerNumberById = buildMap {
-        playerSessions.take(ruleset.maxPlayers).forEachIndexed { index, session ->
-          put(session.id, index)
+        playerIds.forEachIndexed { index, id ->
+          put(id, index)
         }
       }
 
@@ -111,21 +110,21 @@ class GameServer private constructor(
       }
 
       val players: List<Player> = List(numPlayers) { playerNumber ->
-        Player(playerName(playerNumber), playerNumber, ruleset, ::PlayerAgent)
+        Player(playerNames[playerNumber], playerNumber, ruleset, ::PlayerAgent)
       }
-      val playerColors: List<String> = playerSessions.map { idColor(it.id).cssColor }
+      val playerColors: List<String> = playerIds.map { idColor(it).cssColor }
 
       val gameServer = GameServer(
         Game(ruleset, players),
         players,
         { playerColors[it.playerNumber] },
         { session(it.id)?.connect(it) },
-        { lobby.setChampion(playerSessions[it.playerNumber].id) })
+        { lobby.setChampion(playerIds[it.playerNumber]) })
 
       sessions.value = List(numPlayers) { playerNumber ->
         Session(
-          playerSessions[playerNumber].id,
-          playerSessions[playerNumber].name,
+          playerIds[playerNumber],
+          playerNames[playerNumber],
           gameServer.state(playerNumber)
         )
       }
