@@ -19,14 +19,11 @@ main {
 ul.buttons {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     padding: 0;
 }
 
 @media (orientation: portrait) {
-    ul.buttons {
-        flex-direction: column;
-    }
-
     .players {
         grid-template-columns: repeat(2, 1fr);
     }
