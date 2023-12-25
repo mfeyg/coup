@@ -18,7 +18,16 @@ data class GameState(
     val isk: Int,
     val heldInfluences: List<Influence>,
     val revealedInfluences: List<Influence>,
-  )
+  ) {
+    constructor(player: coup.game.Player, color: String) : this(
+      name = player.name,
+      color = color,
+      number = player.playerNumber,
+      isk = player.isk,
+      heldInfluences = player.heldInfluences,
+      revealedInfluences = player.revealedInfluences,
+    )
+  }
 
   @Serializable
   data class Opponent(
@@ -28,7 +37,16 @@ data class GameState(
     val isk: Int,
     val heldInfluences: Int,
     val revealedInfluences: List<Influence>,
-  )
+  ) {
+    constructor(player: coup.game.Player, color: String) : this(
+      name = player.name,
+      color = color,
+      number = player.playerNumber,
+      isk = player.isk,
+      heldInfluences = player.heldInfluences.size,
+      revealedInfluences = player.revealedInfluences,
+    )
+  }
 
   companion object {
     operator fun invoke(
@@ -38,28 +56,10 @@ data class GameState(
       currentPlayer: coup.game.Player?,
       winner: coup.game.Player?
     ) = GameState(
-      players = players.map { opponent(it, playerColor(it)) },
-      player = thisPlayer?.let { player(it, playerColor(it)) },
+      players = players.map { Opponent(it, playerColor(it)) },
+      player = thisPlayer?.let { Player(it, playerColor(it)) },
       currentTurn = currentPlayer?.playerNumber.takeIf { winner == null },
       winner = winner?.playerNumber,
-    )
-
-    private fun player(player: coup.game.Player, color: String) = Player(
-      name = player.name,
-      color = color,
-      number = player.playerNumber,
-      isk = player.isk,
-      heldInfluences = player.heldInfluences,
-      revealedInfluences = player.revealedInfluences,
-    )
-
-    private fun opponent(player: coup.game.Player, color: String) = Opponent(
-      name = player.name,
-      color = color,
-      number = player.playerNumber,
-      isk = player.isk,
-      heldInfluences = player.heldInfluences.size,
-      revealedInfluences = player.revealedInfluences,
     )
   }
 }
