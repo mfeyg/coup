@@ -68,10 +68,14 @@ class Lobby(
         startingIn.collectLatest startingIn@{ value ->
           if (value == null) return@startingIn
           when (value) {
-            0 -> startGame()
+            0 -> {
+              startGame()
+              delay(5.seconds)
+              startingIn.value = null
+            }
             else -> {
               delay(1.seconds)
-              startingIn.update { value - 1 }
+              startingIn.value = value - 1
             }
           }
         }
