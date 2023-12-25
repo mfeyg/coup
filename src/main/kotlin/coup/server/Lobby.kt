@@ -31,29 +31,36 @@ class Lobby(
   val isActive: Boolean get() = !shuttingDown.value
   private val shuttingDown = MutableStateFlow(false)
 
+  private fun CoroutineScope.eachSession(block: suspend (Session<LobbyState, LobbyCommand>) -> Unit) = launch {
+    val runningJobs = mutableMapOf<Session<LobbyState, LobbyCommand>, Job>()
+    this@Lobby.sessions.map { it.values.toSet() }.collect { sessions ->
+      runningJobs.minus(sessions).forEach { (_, job) -> job.cancel() }
+      runningJobs.keys.retainAll(sessions)
+      sessions.minus(runningJobs.keys).forEach { session ->
+        runningJobs[session] = launch { block(session) }
+      }
+    }
+  }
+
   init {
     with(CoroutineScope(Dispatchers.Default)) {
       val scope = this
+      eachSession { session ->
+        state.collect(session::setState)
+      }
+      eachSession { session ->
+        session.messages.collect { message ->
+          when (message) {
+            LobbyCommand.StartGame -> startingIn.value = 3
+            LobbyCommand.CancelGameStart -> startingIn.value = null
+          }
+        }
+      }
       launch {
         sessions.collectLatest { sessions ->
           if (sessions.isEmpty()) {
             delay(5.minutes)
             shutdown(scope)
-          }
-          coroutineScope {
-            for (player in sessions.values) {
-              launch {
-                state.collect(player::setState)
-              }
-              launch {
-                player.messages.collect { message ->
-                  when (message) {
-                    LobbyCommand.StartGame -> startingIn.value = 3
-                    LobbyCommand.CancelGameStart -> startingIn.value = null
-                  }
-                }
-              }
-            }
           }
         }
       }
