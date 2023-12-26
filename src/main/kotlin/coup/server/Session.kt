@@ -20,7 +20,7 @@ class Session<State, Message>(
   private val incomingMessages = MutableSharedFlow<Message>()
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val connections = MutableStateFlow(setOf<SocketConnection>())
-  val connectionCount = connections.value.size
+  val connectionCount get() = connections.value.size
 
   val messages get() = incomingMessages.asSharedFlow()
 
@@ -50,29 +50,31 @@ class Session<State, Message>(
     }
   }
 
-  suspend fun connect(connection: SocketConnection) = coroutineScope {
+  suspend fun connect(connection: SocketConnection) {
     connections.update { it + connection }
     try {
-      val listeningJob = launch {
-        state.onEach { state ->
-          connection.send("State:" + Json.encodeToString(stateSerializer, state))
-        }.launchIn(this)
-        events.onEach { connection.send(it) }.launchIn(this)
+      coroutineScope {
         launch {
-          prompts.collectLatest {
-            if (it.values.isEmpty()) {
-              connection.send("Prompts[]")
+          state.onEach { state ->
+            connection.send("State:" + Json.encodeToString(stateSerializer, state))
+          }.launchIn(this)
+          events.onEach { connection.send(it) }.launchIn(this)
+          launch {
+            prompts.collectLatest {
+              if (it.values.isEmpty()) {
+                connection.send("Prompts[]")
+              }
+              combine(it.values.map { it.prompt }) { prompts ->
+                connection.send("Prompts[" + prompts.joinToString(",") + "]")
+              }.collect()
             }
-            combine(it.values.map { it.prompt }) { prompts ->
-              connection.send("Prompts[" + prompts.joinToString(",") + "]")
-            }.collect()
           }
+          for (frame in connection.incoming) {
+            receiveFrame(frame)
+          }
+          cancel()
         }
       }
-      for (frame in connection.incoming) {
-        receiveFrame(frame)
-      }
-      listeningJob.cancelAndJoin()
     } finally {
       connections.update { it - connection }
     }
