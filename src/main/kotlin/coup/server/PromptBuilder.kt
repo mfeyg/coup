@@ -36,5 +36,9 @@ class PromptBuilder<T> {
     timeoutOption = timeout?.let { Prompt.TimeoutOption(timeout, defaultValue()) }
   }
 
-  fun prompt() = Prompt(id, prompt, readResponse!!, timeoutOption)
+  private fun toPrompt() = Prompt(id, prompt, readResponse!!, timeoutOption)
+
+  companion object {
+    fun <T> prompt(build: PromptBuilder<T>.() -> Unit) = PromptBuilder<T>().also(build).toPrompt()
+  }
 }

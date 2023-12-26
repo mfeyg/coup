@@ -21,9 +21,10 @@ class Prompt<T>(
 
   private val timeout = MutableStateFlow(timeoutOption?.timeout)
   private val response = CompletableDeferred<T>()
+
   val prompt = this.timeout.map(promptMessage)
 
-  fun complete(value: String) {
+  fun respond(value: String) {
     response.complete(readResponse(value))
   }
 

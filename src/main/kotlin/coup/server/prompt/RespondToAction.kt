@@ -6,13 +6,12 @@ import coup.game.Influence
 import coup.game.Player
 import coup.game.Reaction
 import coup.game.rules.Ruleset
-import coup.server.Session
+import coup.server.PromptBuilder.Companion.prompt
 import coup.server.prompt.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable
 
 class RespondToAction(
   private val player: Player,
-  private val session: Session<*, *>,
   private val ruleset: Ruleset,
   private val timeout: Int?,
 ) {
@@ -48,29 +47,28 @@ class RespondToAction(
     }
   }
 
-  suspend fun respondToAction(action: Action): Reaction =
-    session.prompt {
-      type = "RespondToAction"
-      request(
-        Request(player, action, ruleset)
-      )
-      readResponse { (reaction, influence): Response ->
-        when (reaction) {
-          Allow -> Reaction.Allow
+  fun respondToAction(action: Action) = prompt {
+    type = "RespondToAction"
+    request(
+      Request(player, action, ruleset)
+    )
+    readResponse { (reaction, influence): Response ->
+      when (reaction) {
+        Allow -> Reaction.Allow
 
-          Block -> {
-            requireNotNull(influence) { "Influence required to block." }
-            require(ruleset.canAttemptBlock(player, action)) { "$player cannot block $action." }
-            require(influence in ruleset.blockingInfluences(action)) { "$influence cannot block $action." }
-            Reaction.Block(player, influence)
-          }
+        Block -> {
+          requireNotNull(influence) { "Influence required to block." }
+          require(ruleset.canAttemptBlock(player, action)) { "$player cannot block $action." }
+          require(influence in ruleset.blockingInfluences(action)) { "$influence cannot block $action." }
+          Reaction.Block(player, influence)
+        }
 
-          Challenge -> {
-            require(ruleset.canChallenge(player, action)) { "$player cannot challenge $action" }
-            Reaction.Challenge(player)
-          }
+        Challenge -> {
+          require(ruleset.canChallenge(player, action)) { "$player cannot challenge $action" }
+          Reaction.Challenge(player)
         }
       }
-      timeout(timeout) { Reaction.Allow }
     }
+    timeout(timeout) { Reaction.Allow }
+  }
 }

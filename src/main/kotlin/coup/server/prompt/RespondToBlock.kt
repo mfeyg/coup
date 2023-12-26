@@ -2,10 +2,10 @@ package coup.server.prompt
 
 import coup.game.Influence
 import coup.game.Reaction.Block
-import coup.server.Session
+import coup.server.PromptBuilder.Companion.prompt
 import kotlinx.serialization.Serializable
 
-class RespondToBlock(private val session: Session<*, *>, private val timeout: Int?) {
+class RespondToBlock(private val timeout: Int?) {
 
   @Serializable
   private data class Request(
@@ -22,7 +22,7 @@ class RespondToBlock(private val session: Session<*, *>, private val timeout: In
     Allow, Challenge
   }
 
-  suspend fun challengeBlock(block: Block): Boolean = session.prompt {
+  fun challengeBlock(block: Block) = prompt {
     type = "RespondToBlock"
     request(
       Request(block)

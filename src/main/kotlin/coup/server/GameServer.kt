@@ -65,7 +65,8 @@ class GameServer private constructor(
         lateinit var value: List<Session<GameState, Nothing>>
       }
 
-      fun playerSession(player: Player) = playerSessions.value[player.playerNumber]
+      suspend fun <T> prompt(player: Player, prompt: () -> Prompt<T>) =
+        playerSessions.value[player.playerNumber].prompt(prompt())
 
       val playerNumberById = buildMap {
         playerIds.forEachIndexed { index, id ->
@@ -77,22 +78,22 @@ class GameServer private constructor(
 
       class PlayerAgent(private val player: Player) : Agent {
         override suspend fun chooseAction(board: Board) =
-          ChooseAction(player, playerSession(player), ruleset).chooseAction(board)
+          prompt(player) { ChooseAction(player, ruleset).chooseAction(board) }
 
         override suspend fun chooseCardsToReturn(drawnCards: List<Influence>) =
-          ExchangeWithDeck(player, playerSession(player)).returnCards(drawnCards)
+          prompt(player) { ExchangeWithDeck(player).returnCards(drawnCards) }
 
         override suspend fun chooseReaction(action: Action) =
-          RespondToAction(player, playerSession(player), ruleset, options.responseTimer).respondToAction(action)
+          prompt(player) { RespondToAction(player, ruleset, options.responseTimer).respondToAction(action) }
 
         override suspend fun chooseInfluenceToReveal(claimedInfluence: Influence, challenger: Player) =
-          RespondToChallenge(player, playerSession(player)).respondToChallenge(claimedInfluence, challenger)
+          prompt(player) { RespondToChallenge(player).respondToChallenge(claimedInfluence, challenger) }
 
         override suspend fun chooseWhetherToChallenge(block: Reaction.Block) =
-          RespondToBlock(playerSession(player), options.responseTimer).challengeBlock(block)
+          prompt(player) { RespondToBlock(options.responseTimer).challengeBlock(block) }
 
         override suspend fun chooseInfluenceToSurrender() =
-          SurrenderInfluence(player, playerSession(player)).surrenderInfluence()
+          prompt(player) { SurrenderInfluence(player).surrenderInfluence() }
       }
 
       val players: List<Player> = List(numPlayers) { playerNumber ->
