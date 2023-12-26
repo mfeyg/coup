@@ -10,10 +10,38 @@ class Lobby(
   private val createGame: suspend Lobby.(List<Session<*, *>>) -> String
 ) {
 
-  private enum class LobbyCommand { StartGame, CancelGameStart }
+  private sealed interface LobbyCommand {
+    data object StartGame : LobbyCommand
+    data object CancelGameStart : LobbyCommand
+    data class SetResponseTimer(val responseTimer: Int?) : LobbyCommand {
+      companion object {
+        val PATTERN = Regex("SetResponseTimer:(null|\\d+)")
+        fun parse(input: String): SetResponseTimer {
+          val (value) = PATTERN.matchEntire(input)?.destructured
+            ?: throw IllegalArgumentException("Unexpected input: $input")
+          return SetResponseTimer(
+            when (value) {
+              "null" -> null
+              else -> value.toInt()
+            }
+          )
+        }
+      }
+    }
+
+    companion object {
+      fun valueOf(command: String) = when {
+        command == "StartGame" -> StartGame
+        command == "CancelGameStart" -> CancelGameStart
+        command matches SetResponseTimer.PATTERN -> SetResponseTimer.parse(command)
+        else -> throw IllegalArgumentException("Unknown command $command")
+      }
+    }
+  }
 
   private val sessions = MutableStateFlow(mapOf<String, Session<LobbyState, LobbyCommand>>())
 
+  private val options = MutableStateFlow(Options())
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
   private val state = combine(sessions, champion, startingIn) { players, champion, startingIn ->
@@ -46,10 +74,14 @@ class Lobby(
     with(CoroutineScope(Dispatchers.Default)) {
       val scope = this
       eachSession { session ->
-        session.messages.collect { message ->
-          when (message) {
-            LobbyCommand.StartGame -> startingIn.value = 3
-            LobbyCommand.CancelGameStart -> startingIn.value = null
+        session.messages.collect { command ->
+          when (command) {
+            is LobbyCommand.StartGame -> startingIn.value = 3
+            is LobbyCommand.CancelGameStart -> startingIn.value = null
+            is LobbyCommand.SetResponseTimer -> {
+              startingIn.value = null
+              options.update { it.copy(responseTimer = command.responseTimer) }
+            }
           }
         }
       }
@@ -71,6 +103,7 @@ class Lobby(
               delay(5.seconds)
               startingIn.value = null
             }
+
             else -> {
               delay(1.seconds)
               startingIn.value = value - 1
