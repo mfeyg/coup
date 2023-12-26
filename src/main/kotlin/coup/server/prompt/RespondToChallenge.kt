@@ -2,11 +2,10 @@ package coup.server.prompt
 
 import coup.game.Influence
 import coup.game.Player
-import coup.server.PromptBuilder.Companion.prompt
 import kotlinx.serialization.Serializable
 
 object RespondToChallenge {
-  fun PromptContext.respondToChallenge(claim: Influence, challenger: Player) = prompt {
+  suspend fun PromptContext.respondToChallenge(claim: Influence, challenger: Player) = prompt {
     type = "RespondToChallenge"
     request(
       Request(claim, challenger.playerNumber)

@@ -1,11 +1,10 @@
 package coup.server.prompt
 
 import coup.game.Influence
-import coup.server.PromptBuilder.Companion.prompt
 import kotlinx.serialization.Serializable
 
 object ExchangeWithDeck {
-  fun PromptContext.returnCards(drawnCards: List<Influence>) = prompt {
+  suspend fun PromptContext.returnCards(drawnCards: List<Influence>) = prompt {
     type = "Exchange"
     request(
       Request(drawnCards)

@@ -71,8 +71,11 @@ class GameServer private constructor(
         lateinit var value: List<Session<GameState, Nothing>>
       }
 
-      suspend fun <T> prompt(player: Player, prompt: PromptContext.() -> Prompt<T>) =
-        playerSessions.value[player.playerNumber].prompt(PromptContext(player, ruleset, options).prompt())
+      suspend fun <T> prompt(player: Player, prompt: suspend PromptContext.() -> T) =
+        PromptContext(player, ruleset, options, object : PromptContext.Perform {
+          override suspend fun <T> invoke(prompt: Prompt<T>) =
+            playerSessions.value[player.playerNumber].prompt(prompt)
+        }).prompt()
 
       val playerNumberById = buildMap {
         playerIds.forEachIndexed { index, id ->

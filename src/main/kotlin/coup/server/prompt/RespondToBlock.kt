@@ -2,7 +2,6 @@ package coup.server.prompt
 
 import coup.game.Influence
 import coup.game.Reaction.Block
-import coup.server.PromptBuilder.Companion.prompt
 import kotlinx.serialization.Serializable
 
 object RespondToBlock {
@@ -22,7 +21,7 @@ object RespondToBlock {
     Allow, Challenge
   }
 
-  fun PromptContext.challengeBlock(block: Block) = prompt {
+  suspend fun PromptContext.challengeBlock(block: Block) = prompt {
     type = "RespondToBlock"
     request(
       Request(block)

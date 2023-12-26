@@ -6,7 +6,6 @@ import coup.game.Influence
 import coup.game.Player
 import coup.game.Reaction
 import coup.game.rules.Ruleset
-import coup.server.PromptBuilder.Companion.prompt
 import coup.server.prompt.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable
 
@@ -43,7 +42,7 @@ object RespondToAction {
     }
   }
 
-  fun PromptContext.respondToAction(action: Action) = prompt {
+  suspend fun PromptContext.respondToAction(action: Action) = prompt {
     type = "RespondToAction"
     request(
       Request(player, action, ruleset)
