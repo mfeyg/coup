@@ -31,6 +31,18 @@
     location.assign(`/game.html?id=${gameId}&lobbyId=${lobbyId}`)
   }
 
+  const responseTimer = computed(() => socket.state.value?.options.responseTimer)
+  function setResponseTimer(value) {
+    if (value) {
+      socket.send("SetResponseTimer:30")
+    } else {
+      socket.send("SetResponseTimer:null")
+    }
+  }
+  function SetResponseTimer() {
+    return html`<label>Response timer <input type="checkbox" checked=${responseTimer} onchange=${e => setResponseTimer(e.target.checked)}></input></label>`
+  }
+
   const Lobby = () => players.value == null ? "Loading..." : html`
     <div class="lobby">
     <h2>Players</h2>
@@ -42,9 +54,11 @@
       : html`<button onclick=${() => socket.send("CancelGameStart")}>Cancel</button>`
     }
     </div>
+    <footer>
     ${startingIn.value !== null ?
       html`<p class="counter">Starting in ${startingIn.value}</p>` :
-      html`<div class="new-lobby"><a href="/lobby.html?new">New lobby</a></div>`}
+      html`<div class="new-lobby"><a href="/lobby.html?new">New lobby</a></div><${SetResponseTimer} />`}
+    </footer>
     `
 
   render(html`<${Lobby}/>`, document.body)

@@ -19,8 +19,12 @@ h2 {
     min-width: 7rem;
 }
 
-.new-lobby {
+footer {
     margin-top: 0.5rem;
+    font-size: 0.8em;
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
 }
 
 .champion {

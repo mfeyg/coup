@@ -44,16 +44,17 @@ class Lobby(
   private val options = MutableStateFlow(Options())
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
-  private val state = combine(sessions, champion, startingIn) { players, champion, startingIn ->
+  private val state = combine(sessions, champion, startingIn, options) { players, champion, startingIn, options ->
     LobbyState(
-      players.values.map { player ->
+      players = players.values.map { player ->
         LobbyState.Player(
           player.name,
           idColor(player.id).cssColor,
           player.id == champion
         )
       },
-      startingIn
+      startingIn = startingIn,
+      options = options,
     )
   }
   val isActive: Boolean get() = !shuttingDown.value
