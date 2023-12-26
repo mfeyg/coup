@@ -3,7 +3,9 @@ package coup.game
 import coup.game.Player.Companion.challenger
 import coup.game.Player.Companion.reaction
 import coup.game.rules.Ruleset
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class Game(private val ruleset: Ruleset, players: List<Player>) {
 
@@ -37,9 +39,9 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
         val challenger = activePlayers.challenger(response)
         if (challenger != null) {
           val revealedInfluence = blocker.respondToChallenge(blockingInfluence, challenger)
-          if (revealedInfluence == blockingInfluence) {
-            blocker.swapOut(blockingInfluence, deck)
-            challenger.loseInfluence()
+          if (revealedInfluence == blockingInfluence) coroutineScope {
+            launch { blocker.swapOut(blockingInfluence, deck) }
+            launch { challenger.loseInfluence() }
           } else {
             action.perform()
           }
@@ -50,10 +52,10 @@ class Game(private val ruleset: Ruleset, players: List<Player>) {
         val (challenger) = response
         val requiredInfluence = ruleset.requiredInfluence(action)!!
         val revealedInfluence = player.respondToChallenge(requiredInfluence, challenger)
-        if (revealedInfluence == requiredInfluence) {
-          player.swapOut(revealedInfluence, deck)
-          challenger.loseInfluence()
-          action.perform()
+        if (revealedInfluence == requiredInfluence) coroutineScope {
+          launch { player.swapOut(revealedInfluence, deck) }
+          launch { challenger.loseInfluence() }
+          launch { action.perform() }
         }
       }
     }
