@@ -55,6 +55,7 @@ class Lobby(
       }
       launch {
         sessions.collectLatest { sessions ->
+          startingIn.value = null
           if (sessions.isEmpty()) {
             delay(5.minutes)
             shutdown(scope)
