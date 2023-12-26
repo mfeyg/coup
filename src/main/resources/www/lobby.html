@@ -1,6 +1,7 @@
 <title>coup::lobby</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="lobby.css">
+<link rel="stylesheet" href="overlay.css">
 
 <script type="importmap">
   {
@@ -17,6 +18,7 @@
   import { html, render } from "htm/preact"
   import { signal, computed } from "signals"
   import { newSocket } from "./socket.js"
+  import { Overlay } from "./overlay.js"
 
   const socket = newSocket("/lobby")
   const players = computed(() => socket.state.value?.players)
@@ -44,6 +46,7 @@
   }
 
   const Lobby = () => players.value == null ? "Loading..." : html`
+    <${Overlay} connected=${socket.connected.value} />
     <div class="lobby">
     <h2>Players</h2>
     ${(players.value).map(player => html`

@@ -3,6 +3,7 @@
 <link rel="stylesheet" href="game.css">
 <link rel="stylesheet" href="player.css">
 <link rel="stylesheet" href="isk.css">
+<link rel="stylesheet" href="overlay.css">
 
 <script type="importmap">
   {
@@ -21,6 +22,7 @@
   import { newSocket } from "./socket.js"
   import { Prompt } from "./prompt.js"
   import { Player } from "./player.js"
+  import { Overlay } from "./overlay.js"
 
   const socket = newSocket("/game")
   const thisPlayer = computed(() => socket.state.value?.player)
@@ -75,6 +77,7 @@
   }
 
   const Game = () => !socket.state.value ? html`<${Loading} />` : html`
+  <${Overlay} connected=${socket.connected.value} />
   <main>
     <${Players} players=${players.value} thisPlayer=${thisPlayer.value} currentTurn=${currentTurn.value} />
     <${WinnerIndicator} winner=${winner.value} thisPlayer=${thisPlayer.value} players=${players.value} />

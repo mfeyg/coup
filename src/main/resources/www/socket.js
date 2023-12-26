@@ -15,6 +15,7 @@ class Socket {
     this.handlers = new Map()
     this.state = signal(null)
     this.prompts = signal([])
+    this.connected = signal(false)
     this.on("State", state => this.state.value = state)
     this.on("Prompts", prompts => this.prompts.value = 
       prompts.map((prompt) => ({...prompt, respond: (msg) => this.send(`[${prompt.id}]` + JSON.stringify(msg))}))
@@ -32,6 +33,7 @@ class Socket {
   connect() {
     this.ws = new WebSocket(`${socketProtocol}${location.host}${this.path}${location.search}`)
     this.ws.onmessage = (msg) => {
+      this.connected.value = true
       const [type, message] = readMessage(msg.data)
       const handler = this.handlers.get(type)
       if (!handler) {
@@ -44,6 +46,7 @@ class Socket {
   }
 
   reconnect() {
+    this.connected.value = false
     setTimeout(() => {
       if (!this.backoff) this.backoff = 100;
       else if (this.backoff < 1000) this.backoff *= 10;
