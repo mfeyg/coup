@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import kotlin.time.Duration.Companion.seconds
 
 /** Represents a user's session. */
 class Session<State, Message>(
@@ -29,27 +30,46 @@ class Session<State, Message>(
   val messages get() = incomingMessages.asSharedFlow()
 
   @Serializable
-  data class PromptRequest<T>(val type: String, val id: String, val prompt: T)
+  private data class PromptRequest<T>(val type: String, val id: String, val prompt: T, val timeout: Int?)
+
+  private data class PromptTimeoutOption<T>(val timeout: Int, val defaultValue: T)
 
   inner class PromptBuilder<T>(private val type: String, private val readResponse: (String) -> T) {
 
     private val id = newId
-    private var prompt = Json.encodeToString(PromptRequest(type, id, null))
+    private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type, id, null, it)) }
+
+    private var timeoutOption: PromptTimeoutOption<T>? = null
 
     fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>): PromptBuilder<T> {
-      prompt = Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request))
+      prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request, it)) }
       return this
     }
 
     inline fun <reified T> request(request: T) = request(request, serializer())
 
+    fun timeout(timeout: Int?, defaultValue: T): PromptBuilder<T> {
+      timeoutOption = timeout?.let { PromptTimeoutOption(timeout, defaultValue) }
+      return this
+    }
+
     private val response = CompletableDeferred<T>()
 
     suspend fun send(): T {
       try {
-        activePrompts.update { it + (id to prompt) }
+        activePrompts.update { it + (id to prompt(timeoutOption?.timeout)) }
         activeListeners.update { it + (id to { response.complete(readResponse(it)) }) }
-        return response.await()
+        return coroutineScope {
+          launch {
+            val (timeout, default) = timeoutOption ?: return@launch
+            for (time in timeout downTo 1) {
+              activePrompts.update { it + (id to prompt(time)) }
+              delay(1.seconds)
+            }
+            response.complete(default)
+          }.let { job -> launch { response.join(); job.cancel() } }
+          response.await()
+        }
       } finally {
         activePrompts.update { it - id }
         activeListeners.update { it - id }

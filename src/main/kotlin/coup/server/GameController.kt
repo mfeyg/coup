@@ -16,7 +16,7 @@ class GameController {
 
   private fun game(gameId: String) = games.value[gameId]
 
-  suspend fun newGame(sessions: List<Session<*, *>>, lobby: Lobby, options: Options): String {
+  suspend fun newGame(sessions: List<Session<*, *>>, lobby: Lobby, options: GameOptions): String {
     val players = sessions.take(ruleset.maxPlayers)
     val gameServer = GameServer(players.map { it.id }, players.map { it.name }, lobby, ruleset, options)
     val gameId = newId

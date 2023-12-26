@@ -10,7 +10,12 @@ import coup.server.Session
 import coup.server.prompt.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable
 
-class RespondToAction(private val player: Player, private val session: Session<*, *>, private val ruleset: Ruleset) {
+class RespondToAction(
+  private val player: Player,
+  private val session: Session<*, *>,
+  private val ruleset: Ruleset,
+  private val timeout: Int?,
+) {
 
   @Serializable
   private data class Request(
@@ -64,5 +69,5 @@ class RespondToAction(private val player: Player, private val session: Session<*
       }
     }.request(
       Request(player, action, ruleset)
-    ).send()
+    ).timeout(timeout, Reaction.Allow).send()
 }

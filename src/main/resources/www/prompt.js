@@ -45,13 +45,14 @@ function TakeTurnPrompt({ options, onSelect }) {
   }
 }
 
-function ResponsePrompt({ blockingInfluences, claimedInfluence, onSelect }) {
+function ResponsePrompt({ blockingInfluences, claimedInfluence, onSelect, timeout }) {
   const [blocking, setBlocking] = useState(false)
   if (blocking) {
     return html`
-      <p>Choose an influence to block as:</p>
+      <p>Choose an influence to block as: ${timeout != null && `(${timeout})`}</p>
       ${blockingInfluences.map(influence => html`
         <button onclick=${() => onSelect({ reaction: "Block", influence })}>${influence}</button>`)}
+      <button onclick=${() => setBlocking(false)}>Never mind</button>
     `
   }
   function AllowButton() {
@@ -64,7 +65,7 @@ function ResponsePrompt({ blockingInfluences, claimedInfluence, onSelect }) {
     return claimedInfluence && html`<button onclick=${() => onSelect({ reaction: "Challenge" })}>Challenge claim of ${claimedInfluence}</button>`
   }
   return html`
-    <p>How will you respond?</p>
+    <p>How will you respond? ${timeout != null && `(${timeout})`}</p>
     <${AllowButton} />
     <${BlockButton} />
     <${ChallengeButon} />
@@ -124,7 +125,9 @@ export function Prompt({ prompt, player, opponents }) {
       <${ResponsePrompt}
         blockingInfluences=${message.canBeBlocked && message.blockingInfluences}
         claimedInfluence=${message.canBeChallenged && message.claimedInfluence}
-        onSelect=${respond} />
+        onSelect=${respond}
+        timeout=${prompt.timeout}
+        />
       `
       break;
     case "RespondToBlock":
@@ -132,7 +135,9 @@ export function Prompt({ prompt, player, opponents }) {
       <p>${opponents[message.blocker].name} wishes to block as the ${message.blockingInfluence}.</p>
       <${ResponsePrompt}
         claimedInfluence=${message.blockingInfluence}
-        onSelect=${respond}/>
+        onSelect=${respond}
+        timeout=${prompt.timeout}
+        />
       `
       break;
     case "RespondToChallenge":

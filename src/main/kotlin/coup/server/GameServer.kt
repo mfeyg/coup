@@ -57,7 +57,7 @@ class GameServer private constructor(
       playerNames: List<String>,
       lobby: Lobby,
       ruleset: Ruleset,
-      options: Options,
+      options: GameOptions,
     ): GameServer {
 
       val numPlayers = playerIds.size
@@ -83,13 +83,13 @@ class GameServer private constructor(
           ExchangeWithDeck(player, playerSession(player)).returnCards(drawnCards)
 
         override suspend fun chooseReaction(action: Action) =
-          RespondToAction(player, playerSession(player), ruleset).respondToAction(action)
+          RespondToAction(player, playerSession(player), ruleset, options.responseTimer).respondToAction(action)
 
         override suspend fun chooseInfluenceToReveal(claimedInfluence: Influence, challenger: Player) =
           RespondToChallenge(player, playerSession(player)).respondToChallenge(claimedInfluence, challenger)
 
         override suspend fun chooseWhetherToChallenge(block: Reaction.Block) =
-          RespondToBlock(playerSession(player)).challengeBlock(block)
+          RespondToBlock(playerSession(player), options.responseTimer).challengeBlock(block)
 
         override suspend fun chooseInfluenceToSurrender() =
           SurrenderInfluence(player, playerSession(player)).surrenderInfluence()

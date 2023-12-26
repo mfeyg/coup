@@ -7,7 +7,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class Lobby(
-  private val newGame: suspend (List<Session<*, *>>, Lobby, Options) -> String
+  private val newGame: suspend (List<Session<*, *>>, Lobby, GameOptions) -> String
 ) {
 
   private sealed interface LobbyCommand {
@@ -41,7 +41,7 @@ class Lobby(
 
   private val sessions = MutableStateFlow(mapOf<String, Session<LobbyState, LobbyCommand>>())
 
-  private val options = MutableStateFlow(Options())
+  private val options = MutableStateFlow(GameOptions.default)
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<String?>(null)
   private val state = combine(sessions, champion, startingIn, options) { players, champion, startingIn, options ->

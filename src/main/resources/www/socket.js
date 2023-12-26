@@ -17,7 +17,7 @@ class Socket {
     this.prompts = signal([])
     this.on("State", state => this.state.value = state)
     this.on("Prompts", prompts => this.prompts.value = 
-      prompts.map(({type, id, prompt}) => ({type, prompt, respond: (msg) => this.send(`[${id}]` + JSON.stringify(msg))}))
+      prompts.map((prompt) => ({...prompt, respond: (msg) => this.send(`[${prompt.id}]` + JSON.stringify(msg))}))
     )
     this.on("Id", (id) => localStorage.setItem("id", id))
     this.on("GetId", (_, respond) => respond(JSON.stringify({ id: localStorage.getItem("id") })))

@@ -5,7 +5,7 @@ import coup.game.Reaction.Block
 import coup.server.Session
 import kotlinx.serialization.Serializable
 
-class RespondToBlock(private val session: Session<*, *>) {
+class RespondToBlock(private val session: Session<*, *>, private val timeout: Int?) {
 
   @Serializable
   private data class Request(
@@ -32,5 +32,5 @@ class RespondToBlock(private val session: Session<*, *>) {
       }
     }.request(
       Request(block)
-    ).send()
+    ).timeout(timeout, false).send()
 }
