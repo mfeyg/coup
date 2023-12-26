@@ -16,7 +16,7 @@ class PlayerTest {
 
   private fun mockPlayer(num: Int): Player {
     val agent = mockk<Agent>()
-    val player = Player("Player $num", num, rules, { agent })
+    val player = Player("Player $num", num, rules) { agent }
     prompts[player] = agent
     return player
   }
