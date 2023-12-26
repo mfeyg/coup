@@ -29,7 +29,7 @@ class Session<State, Message>(
   suspend fun <T> prompt(prompt: Prompt<T>): T {
     try {
       prompts.update { it + (prompt.id to prompt) }
-      return prompt.await()
+      return prompt.response()
     } finally {
       prompts.update { it - prompt.id }
     }

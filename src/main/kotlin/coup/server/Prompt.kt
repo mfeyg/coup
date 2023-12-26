@@ -28,7 +28,7 @@ class Prompt<T>(
     response.complete(readResponse(value))
   }
 
-  suspend fun await(): T = coroutineScope {
+  suspend fun response(): T = coroutineScope {
     launch timeout@{
       val (_, defaultValue) = timeoutOption ?: return@timeout
       timeout.collectLatest timeouts@{ value ->
