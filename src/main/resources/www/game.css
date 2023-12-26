@@ -21,6 +21,7 @@ ul.buttons {
     flex-direction: row;
     flex-wrap: wrap;
     padding: 0;
+    justify-content: center;
 }
 
 @media (orientation: portrait) {

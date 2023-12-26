@@ -50,9 +50,11 @@ function ResponsePrompt({ blockingInfluences, claimedInfluence, onSelect, timeou
   if (blocking) {
     return html`
       <p>Choose an influence to block as: ${timeout != null && `(${timeout})`}</p>
+      <ul class="buttons">
       ${blockingInfluences.map(influence => html`
-        <button onclick=${() => onSelect({ reaction: "Block", influence })}>${influence}</button>`)}
-      <button onclick=${() => setBlocking(false)}>Never mind</button>
+        <li><button onclick=${() => onSelect({ reaction: "Block", influence })}>${influence}</button></li>`)}
+        <li><button onclick=${() => setBlocking(false)}>Never mind</button></li>
+      </ul>
     `
   }
   function AllowButton() {
@@ -66,9 +68,11 @@ function ResponsePrompt({ blockingInfluences, claimedInfluence, onSelect, timeou
   }
   return html`
     <p>How will you respond? ${timeout != null && `(${timeout})`}</p>
-    <${AllowButton} />
-    <${BlockButton} />
-    <${ChallengeButon} />
+    <ul class="buttons">
+    <li><${AllowButton} /></li>
+    <li><${BlockButton} /></li>
+    <li><${ChallengeButon} /></li>
+    </ul>
   `
 }
 
@@ -84,8 +88,10 @@ function PromptReturn({ influences, number, onSelect }) {
   selected.forEach(influence => influences.splice(influences.indexOf(influence), 1))
   return html`
   <p>Select influences to return:</p>
+  <ul class="buttons">
   ${influences.map(influence => html`
-    <button onclick=${() => select(influence)}>${influence}</button>`)}
+    <li><button onclick=${() => select(influence)}>${influence}</button></li>`)}
+  </ul>
   `
 }
 
