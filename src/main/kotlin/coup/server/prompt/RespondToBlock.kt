@@ -5,7 +5,7 @@ import coup.game.Reaction.Block
 import coup.server.PromptBuilder.Companion.prompt
 import kotlinx.serialization.Serializable
 
-class RespondToBlock(private val timeout: Int?) {
+object RespondToBlock {
 
   @Serializable
   private data class Request(
@@ -22,7 +22,7 @@ class RespondToBlock(private val timeout: Int?) {
     Allow, Challenge
   }
 
-  fun challengeBlock(block: Block) = prompt {
+  fun PromptContext.challengeBlock(block: Block) = prompt {
     type = "RespondToBlock"
     request(
       Request(block)
@@ -33,6 +33,6 @@ class RespondToBlock(private val timeout: Int?) {
         ResponseType.Challenge -> true
       }
     }
-    timeout(timeout) { false }
+    timeout(options.responseTimer) { false }
   }
 }

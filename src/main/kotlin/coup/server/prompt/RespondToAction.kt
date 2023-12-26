@@ -10,11 +10,7 @@ import coup.server.PromptBuilder.Companion.prompt
 import coup.server.prompt.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable
 
-class RespondToAction(
-  private val player: Player,
-  private val ruleset: Ruleset,
-  private val timeout: Int?,
-) {
+object RespondToAction {
 
   @Serializable
   private data class Request(
@@ -47,7 +43,7 @@ class RespondToAction(
     }
   }
 
-  fun respondToAction(action: Action) = prompt {
+  fun PromptContext.respondToAction(action: Action) = prompt {
     type = "RespondToAction"
     request(
       Request(player, action, ruleset)
@@ -69,6 +65,6 @@ class RespondToAction(
         }
       }
     }
-    timeout(timeout) { Reaction.Allow }
+    timeout(options.responseTimer) { Reaction.Allow }
   }
 }

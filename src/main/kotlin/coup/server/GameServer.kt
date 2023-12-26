@@ -6,6 +6,12 @@ import coup.game.actions.Action
 import coup.game.rules.Ruleset
 import coup.server.ConnectionController.SocketConnection
 import coup.server.prompt.*
+import coup.server.prompt.ChooseAction.chooseAction
+import coup.server.prompt.ExchangeWithDeck.returnCards
+import coup.server.prompt.RespondToAction.respondToAction
+import coup.server.prompt.RespondToBlock.challengeBlock
+import coup.server.prompt.RespondToChallenge.respondToChallenge
+import coup.server.prompt.SurrenderInfluence.surrenderInfluence
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
@@ -65,8 +71,8 @@ class GameServer private constructor(
         lateinit var value: List<Session<GameState, Nothing>>
       }
 
-      suspend fun <T> prompt(player: Player, prompt: () -> Prompt<T>) =
-        playerSessions.value[player.playerNumber].prompt(prompt())
+      suspend fun <T> prompt(player: Player, prompt: PromptContext.() -> Prompt<T>) =
+        playerSessions.value[player.playerNumber].prompt(PromptContext(player, ruleset, options).prompt())
 
       val playerNumberById = buildMap {
         playerIds.forEachIndexed { index, id ->
@@ -78,22 +84,22 @@ class GameServer private constructor(
 
       class PlayerAgent(private val player: Player) : Agent {
         override suspend fun chooseAction(board: Board) =
-          prompt(player) { ChooseAction(player, ruleset).chooseAction(board) }
+          prompt(player) { this.chooseAction(board) }
 
         override suspend fun chooseCardsToReturn(drawnCards: List<Influence>) =
-          prompt(player) { ExchangeWithDeck(player).returnCards(drawnCards) }
+          prompt(player) { returnCards(drawnCards) }
 
         override suspend fun chooseReaction(action: Action) =
-          prompt(player) { RespondToAction(player, ruleset, options.responseTimer).respondToAction(action) }
+          prompt(player) { respondToAction(action) }
 
         override suspend fun chooseInfluenceToReveal(claimedInfluence: Influence, challenger: Player) =
-          prompt(player) { RespondToChallenge(player).respondToChallenge(claimedInfluence, challenger) }
+          prompt(player) { respondToChallenge(claimedInfluence, challenger) }
 
         override suspend fun chooseWhetherToChallenge(block: Reaction.Block) =
-          prompt(player) { RespondToBlock(options.responseTimer).challengeBlock(block) }
+          prompt(player) { challengeBlock(block) }
 
         override suspend fun chooseInfluenceToSurrender() =
-          prompt(player) { SurrenderInfluence(player).surrenderInfluence() }
+          prompt(player) { surrenderInfluence() }
       }
 
       val players: List<Player> = List(numPlayers) { playerNumber ->

@@ -3,15 +3,11 @@ package coup.server.prompt
 import coup.game.Board
 import coup.game.Player
 import coup.game.actions.ActionBuilder
-import coup.game.rules.Ruleset
 import coup.server.PromptBuilder.Companion.prompt
 import coup.server.prompt.ActionType.Companion.actionType
 import kotlinx.serialization.Serializable
 
-class ChooseAction(
-  private val player: Player,
-  private val ruleset: Ruleset
-) {
+object ChooseAction {
 
   @Serializable
   private data class Request(val options: List<Option>)
@@ -41,7 +37,7 @@ class ChooseAction(
     val target: Int? = null
   )
 
-  fun chooseAction(board: Board) = prompt {
+  fun PromptContext.chooseAction(board: Board) = prompt {
     val actionsAvailable = ruleset.availableActions(player, board).associateBy { it.actionType }
     val targets = (board.activePlayers - player).associateBy { it.playerNumber }
     type = "TakeTurn"
