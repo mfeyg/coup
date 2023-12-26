@@ -9,9 +9,11 @@ class SurrenderInfluence(private val player: Player, private val session: Sessio
   @Serializable
   private data class Response(val influence: Influence)
 
-  suspend fun surrenderInfluence(): Influence =
-    session.prompt("SurrenderInfluence") { (influence): Response ->
+  suspend fun surrenderInfluence(): Influence = session.prompt {
+    type = "SurrenderInfluence"
+    readResponse { (influence): Response ->
       require(influence in player.heldInfluences)
       influence
-    }.send()
+    }
+  }
 }

@@ -22,15 +22,17 @@ class RespondToBlock(private val session: Session<*, *>, private val timeout: In
     Allow, Challenge
   }
 
-  suspend fun challengeBlock(block: Block): Boolean =
-    session.prompt(
-      "RespondToBlock",
-    ) { (response): Response ->
+  suspend fun challengeBlock(block: Block): Boolean = session.prompt {
+    type = "RespondToBlock"
+    request(
+      Request(block)
+    )
+    readResponse { (response): Response ->
       when (response) {
         ResponseType.Allow -> false
         ResponseType.Challenge -> true
       }
-    }.request(
-      Request(block)
-    ).timeout(timeout, false).send()
+    }
+    timeout(timeout) { false }
+  }
 }

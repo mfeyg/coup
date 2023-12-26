@@ -2,7 +2,6 @@ package coup.server.prompt
 
 import coup.game.Board
 import coup.game.Player
-import coup.game.actions.Action
 import coup.game.actions.ActionBuilder
 import coup.game.rules.Ruleset
 import coup.server.Session
@@ -43,10 +42,14 @@ class ChooseAction(
     val target: Int? = null
   )
 
-  suspend fun chooseAction(board: Board): Action {
+  suspend fun chooseAction(board: Board) = session.prompt {
     val actionsAvailable = ruleset.availableActions(player, board).associateBy { it.actionType }
     val targets = (board.activePlayers - player).associateBy { it.playerNumber }
-    return session.prompt("TakeTurn") { (actionType, target): Response ->
+    type = "TakeTurn"
+    request(
+      Request(actionsAvailable.values.map { Option(it, targets.values) })
+    )
+    readResponse { (actionType, target): Response ->
       val action = actionsAvailable[actionType] ?: throw IllegalArgumentException("$actionType is not a valid action.")
       if (action.targetRequired) {
         val targetNumber = target ?: throw IllegalArgumentException("Action $actionType requires a target")
@@ -54,6 +57,6 @@ class ChooseAction(
           ?: throw IllegalArgumentException("Invalid target $targetNumber")
       }
       action.build()
-    }.request(Request(actionsAvailable.values.map { Option(it, targets.values) })).send()
+    }
   }
 }

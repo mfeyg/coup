@@ -34,22 +34,27 @@ class Session<State, Message>(
 
   private data class PromptTimeoutOption<T>(val timeout: Int, val defaultValue: T)
 
-  inner class PromptBuilder<T>(private val type: String, private val readResponse: (String) -> T) {
-
+  inner class PromptBuilder<T> {
+    var type: String? = null
+    var readResponse: ((String) -> T)? = null
     private val id = newId
-    private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type, id, null, it)) }
+    private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type!!, id, null, it)) }
 
     private var timeoutOption: PromptTimeoutOption<T>? = null
 
     fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>): PromptBuilder<T> {
-      prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request, it)) }
+      prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type!!, id, request, it)) }
       return this
     }
 
     inline fun <reified T> request(request: T) = request(request, serializer())
 
-    fun timeout(timeout: Int?, defaultValue: T): PromptBuilder<T> {
-      timeoutOption = timeout?.let { PromptTimeoutOption(timeout, defaultValue) }
+    inline fun <reified ResponseT> readResponse(noinline read: (ResponseT) -> T) {
+      readResponse = { read(Json.decodeFromString(it)) }
+    }
+
+    fun timeout(timeout: Int?, defaultValue: () -> T): PromptBuilder<T> {
+      timeoutOption = timeout?.let { PromptTimeoutOption(timeout, defaultValue()) }
       return this
     }
 
@@ -58,7 +63,7 @@ class Session<State, Message>(
     suspend fun send(): T {
       try {
         activePrompts.update { it + (id to prompt(timeoutOption?.timeout)) }
-        activeListeners.update { it + (id to { response.complete(readResponse(it)) }) }
+        activeListeners.update { it + (id to { response.complete(readResponse!!(it)) }) }
         return coroutineScope {
           launch {
             val (timeout, default) = timeoutOption ?: return@launch
@@ -77,11 +82,7 @@ class Session<State, Message>(
     }
   }
 
-  @JvmName("promptHelper")
-  fun <T> prompt(type: String, readResponse: (String) -> T) = PromptBuilder(type, readResponse)
-
-  inline fun <T, reified Response> prompt(type: String, noinline readResponse: (Response) -> T) =
-    prompt(type) { readResponse(Json.decodeFromString(it)) }
+  suspend fun <T> prompt(build: PromptBuilder<T>.() -> Unit) = PromptBuilder<T>().also(build).send()
 
   suspend fun event(event: String) = events.emit(event)
 

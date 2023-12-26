@@ -9,11 +9,16 @@ class RespondToChallenge(private val player: Player, private val session: Sessio
   suspend fun respondToChallenge(
     claim: Influence,
     challenger: Player,
-  ): Influence =
-    session.prompt("RespondToChallenge") { (influence): Response ->
+  ): Influence = session.prompt {
+    type = "RespondToChallenge"
+    request(
+      Request(claim, challenger.playerNumber)
+    )
+    readResponse { (influence): Response ->
       require(influence in player.heldInfluences) { "$player does not have a $influence" }
       influence
-    }.request(Request(claim, challenger.playerNumber)).send()
+    }
+  }
 
   @Serializable
   private data class Request(val claim: Influence, val challenger: Int)

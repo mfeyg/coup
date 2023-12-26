@@ -49,25 +49,28 @@ class RespondToAction(
   }
 
   suspend fun respondToAction(action: Action): Reaction =
-    session.prompt(
-      "RespondToAction",
-    ) { (reaction, influence): Response ->
-      when (reaction) {
-        Allow -> Reaction.Allow
+    session.prompt {
+      type = "RespondToAction"
+      request(
+        Request(player, action, ruleset)
+      )
+      readResponse { (reaction, influence): Response ->
+        when (reaction) {
+          Allow -> Reaction.Allow
 
-        Block -> {
-          requireNotNull(influence) { "Influence required to block." }
-          require(ruleset.canAttemptBlock(player, action)) { "$player cannot block $action." }
-          require(influence in ruleset.blockingInfluences(action)) { "$influence cannot block $action." }
-          Reaction.Block(player, influence)
-        }
+          Block -> {
+            requireNotNull(influence) { "Influence required to block." }
+            require(ruleset.canAttemptBlock(player, action)) { "$player cannot block $action." }
+            require(influence in ruleset.blockingInfluences(action)) { "$influence cannot block $action." }
+            Reaction.Block(player, influence)
+          }
 
-        Challenge -> {
-          require(ruleset.canChallenge(player, action)) { "$player cannot challenge $action" }
-          Reaction.Challenge(player)
+          Challenge -> {
+            require(ruleset.canChallenge(player, action)) { "$player cannot challenge $action" }
+            Reaction.Challenge(player)
+          }
         }
       }
-    }.request(
-      Request(player, action, ruleset)
-    ).timeout(timeout, Reaction.Allow).send()
+      timeout(timeout) { Reaction.Allow }
+    }
 }
