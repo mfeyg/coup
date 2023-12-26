@@ -47,9 +47,8 @@ class Session<State, Message>(
 
     private var timeoutOption: PromptTimeoutOption<T>? = null
 
-    fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>): PromptBuilder<T> {
+    fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>) {
       prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request, it)) }
-      return this
     }
 
     inline fun <reified T> request(request: T) = request(request, serializer())
@@ -58,9 +57,8 @@ class Session<State, Message>(
       readResponse = { read(Json.decodeFromString(it)) }
     }
 
-    fun timeout(timeout: Int?, defaultValue: () -> T): PromptBuilder<T> {
+    fun timeout(timeout: Int?, defaultValue: () -> T) {
       timeoutOption = timeout?.let { PromptTimeoutOption(timeout, defaultValue()) }
-      return this
     }
 
     private val response = CompletableDeferred<T>()
