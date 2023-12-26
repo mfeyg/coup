@@ -27,4 +27,8 @@ class PlayerAgent(private val context: PromptContext) : Agent {
 
   override suspend fun chooseInfluenceToSurrender() =
     context.surrenderInfluence()
+
+  companion object {
+    fun PromptContext.agent() = PlayerAgent(this)
+  }
 }

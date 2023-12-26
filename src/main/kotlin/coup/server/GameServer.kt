@@ -5,6 +5,7 @@ import coup.game.Game
 import coup.game.rules.Ruleset
 import coup.server.ConnectionController.SocketConnection
 import coup.server.prompt.*
+import coup.server.prompt.PlayerAgent.Companion.agent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
@@ -64,12 +65,11 @@ class GameServer private constructor(
         lateinit var value: List<Session<GameState, Nothing>>
       }
 
-      fun agent(player: Player) = PlayerAgent(
+      fun agent(player: Player) =
         PromptContext(player, ruleset, options, object : PromptContext.Perform {
           override suspend fun <T> invoke(prompt: Prompt<T>) =
             playerSessions.value[player.playerNumber].prompt(prompt)
-        })
-      )
+        }).agent()
 
       val playerNumberById = buildMap {
         playerIds.forEachIndexed { index, id ->
