@@ -20,8 +20,6 @@ class Session<State, Message>(
   private val stateSerializer: KSerializer<State>,
   private val messageParser: (String) -> Message = { throw IllegalArgumentException("Unexpected message $it") },
 ) {
-  private val activePrompts = MutableStateFlow(mapOf<String, String>())
-  private val activeListeners = MutableStateFlow(mapOf<String, (String) -> Unit>())
   private val incomingMessages = MutableSharedFlow<Message>()
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val connections = MutableStateFlow(setOf<SocketConnection>())
@@ -29,23 +27,55 @@ class Session<State, Message>(
 
   val messages get() = incomingMessages.asSharedFlow()
 
-  @Serializable
-  private data class PromptRequest<T>(
-    val type: String? = null,
+  private val prompts = MutableStateFlow(mapOf<String, Prompt<*>>())
+
+  class Prompt<T>(
     val id: String,
-    val prompt: T? = null,
-    val timeout: Int? = null
-  )
+    prompt: (timeout: Int?) -> String,
+    private val readResponse: (String) -> T,
+    private val timeoutOption: TimeoutOption<T>?,
+  ) {
+    data class TimeoutOption<T>(val timeout: Int, val defaultValue: T)
 
-  private data class PromptTimeoutOption<T>(val timeout: Int, val defaultValue: T)
+    private val timeout = MutableStateFlow(timeoutOption?.timeout)
+    private val response = CompletableDeferred<T>()
+    val prompt = this.timeout.map(prompt)
 
-  inner class PromptBuilder<T> {
+    fun complete(value: String) {
+      response.complete(readResponse(value))
+    }
+
+    suspend fun await(): T = coroutineScope {
+      launch timeout@{
+        val (_, defaultValue) = timeoutOption ?: return@timeout
+        timeout.collectLatest timeouts@{ value ->
+          if (value == null) return@timeouts
+          if (value == 0) response.complete(defaultValue)
+          else {
+            delay(1.seconds)
+            timeout.value = value - 1
+          }
+        }
+      }.let { job -> launch { response.join(); job.cancel() } }
+      response.await()
+    }
+  }
+
+  class PromptBuilder<T> {
+    @Serializable
+    private data class PromptRequest<T>(
+      val type: String? = null,
+      val id: String,
+      val prompt: T? = null,
+      val timeout: Int? = null
+    )
+
     var type: String? = null
     var readResponse: ((String) -> T)? = null
     private val id = newId
     private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type, id, null, it)) }
 
-    private var timeoutOption: PromptTimeoutOption<T>? = null
+    private var timeoutOption: Prompt.TimeoutOption<T>? = null
 
     fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>) {
       prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request, it)) }
@@ -58,35 +88,21 @@ class Session<State, Message>(
     }
 
     fun timeout(timeout: Int?, defaultValue: () -> T) {
-      timeoutOption = timeout?.let { PromptTimeoutOption(timeout, defaultValue()) }
+      timeoutOption = timeout?.let { Prompt.TimeoutOption(timeout, defaultValue()) }
     }
 
-    private val response = CompletableDeferred<T>()
-
-    suspend fun send(): T {
-      val readResponse = checkNotNull(readResponse)
-      try {
-        activePrompts.update { it + (id to prompt(timeoutOption?.timeout)) }
-        activeListeners.update { it + (id to { response.complete(readResponse(it)) }) }
-        return coroutineScope {
-          launch {
-            val (timeout, default) = timeoutOption ?: return@launch
-            for (time in timeout downTo 1) {
-              activePrompts.update { it + (id to prompt(time)) }
-              delay(1.seconds)
-            }
-            response.complete(default)
-          }.let { job -> launch { response.join(); job.cancel() } }
-          response.await()
-        }
-      } finally {
-        activePrompts.update { it - id }
-        activeListeners.update { it - id }
-      }
-    }
+    fun prompt() = Prompt(id, prompt, readResponse!!, timeoutOption)
   }
 
-  suspend fun <T> prompt(build: PromptBuilder<T>.() -> Unit) = PromptBuilder<T>().also(build).send()
+  suspend fun <T> prompt(build: PromptBuilder<T>.() -> Unit): T {
+    val prompt = PromptBuilder<T>().also(build).prompt()
+    prompts.update { it + (prompt.id to prompt) }
+    try {
+      return prompt.await()
+    } finally {
+      prompts.update { it - prompt.id }
+    }
+  }
 
   suspend fun event(event: String) = events.emit(event)
 
@@ -96,7 +112,7 @@ class Session<State, Message>(
     when (val match = promptResponsePattern.matchEntire(text)) {
       is MatchResult -> {
         val (_, id, response) = match.groupValues
-        activeListeners.value[id]?.invoke(response)
+        prompts.value[id]?.complete(response)
       }
 
       else -> incomingMessages.emit(messageParser(text))
@@ -111,9 +127,16 @@ class Session<State, Message>(
           connection.send("State:" + Json.encodeToString(stateSerializer, state))
         }.launchIn(this)
         events.onEach { connection.send(it) }.launchIn(this)
-        activePrompts.onEach { prompts ->
-          connection.send("Prompts[" + prompts.values.joinToString(",") + "]")
-        }.launchIn(this)
+        launch {
+          prompts.collectLatest {
+            if (it.values.isEmpty()) {
+              connection.send("Prompts[]")
+            }
+            combine(it.values.map { it.prompt }) { prompts ->
+              connection.send("Prompts[" + prompts.joinToString(",") + "]")
+            }.collect()
+          }
+        }
       }
       for (frame in connection.incoming) {
         receiveFrame(frame)
