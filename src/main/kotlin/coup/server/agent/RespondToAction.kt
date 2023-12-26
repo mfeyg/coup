@@ -1,4 +1,4 @@
-package coup.server.prompt
+package coup.server.agent
 
 import coup.game.actions.Action
 import coup.game.actions.Action.Type.Companion.type
@@ -6,7 +6,7 @@ import coup.game.Influence
 import coup.game.Player
 import coup.game.Reaction
 import coup.game.rules.Ruleset
-import coup.server.prompt.RespondToAction.Response.Type.*
+import coup.server.agent.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable
 
 object RespondToAction {

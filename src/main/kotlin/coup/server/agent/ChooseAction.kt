@@ -1,9 +1,9 @@
-package coup.server.prompt
+package coup.server.agent
 
 import coup.game.Board
 import coup.game.Player
 import coup.game.actions.ActionBuilder
-import coup.server.prompt.ActionType.Companion.actionType
+import coup.server.agent.ActionType.Companion.actionType
 import kotlinx.serialization.Serializable
 
 object ChooseAction {

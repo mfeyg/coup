@@ -1,13 +1,13 @@
-package coup.server.prompt
+package coup.server.agent
 
 import coup.game.*
 import coup.game.actions.Action
-import coup.server.prompt.ChooseAction.chooseAction
-import coup.server.prompt.ExchangeWithDeck.returnCards
-import coup.server.prompt.RespondToAction.respondToAction
-import coup.server.prompt.RespondToBlock.challengeBlock
-import coup.server.prompt.RespondToChallenge.respondToChallenge
-import coup.server.prompt.SurrenderInfluence.surrenderInfluence
+import coup.server.agent.ChooseAction.chooseAction
+import coup.server.agent.ExchangeWithDeck.returnCards
+import coup.server.agent.RespondToAction.respondToAction
+import coup.server.agent.RespondToBlock.challengeBlock
+import coup.server.agent.RespondToChallenge.respondToChallenge
+import coup.server.agent.SurrenderInfluence.surrenderInfluence
 
 class PlayerAgent(private val context: PromptContext) : Agent {
   override suspend fun chooseAction(board: Board) =

@@ -1,4 +1,4 @@
-package coup.server.prompt
+package coup.server.agent
 
 import coup.game.Influence
 import coup.game.Player

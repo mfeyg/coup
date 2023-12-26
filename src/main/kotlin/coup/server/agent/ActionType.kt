@@ -1,4 +1,4 @@
-package coup.server.prompt
+package coup.server.agent
 
 import coup.game.actions.Action
 import coup.game.actions.ActionBuilder

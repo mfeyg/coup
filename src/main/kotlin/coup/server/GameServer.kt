@@ -4,8 +4,8 @@ import coup.game.*
 import coup.game.Game
 import coup.game.rules.Ruleset
 import coup.server.ConnectionController.SocketConnection
-import coup.server.prompt.*
-import coup.server.prompt.PlayerAgent.Companion.agent
+import coup.server.agent.*
+import coup.server.agent.PlayerAgent.Companion.agent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
