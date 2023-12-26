@@ -20,7 +20,7 @@ class ChooseAction(
   @Serializable
   private data class Option(
     val actionType: ActionType,
-    val targets: List<Target>,
+    val targets: List<Target> = emptyList(),
   ) {
     constructor(actionBuilder: ActionBuilder, targets: Iterable<Player>) : this(
       actionType = actionBuilder.actionType,

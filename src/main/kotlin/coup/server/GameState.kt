@@ -5,10 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GameState(
-  val player: Player?,
+  val player: Player? = null,
   val players: List<Opponent>,
-  val currentTurn: Int?,
-  val winner: Int?
+  val currentTurn: Int? = null,
+  val winner: Int? = null,
 ) {
   @Serializable
   data class Player(

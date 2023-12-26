@@ -49,13 +49,13 @@
     ${(players.value).map(player => html`
       <div class="player ${player.champion ? "champion" : ""}"><div class="player-icon" style="background-color: ${player.color}"></div>${player.name}</div>
     `)}
-    ${startingIn.value === null
+    ${startingIn.value == null
       ? html`<button disabled=${players.value.length <= 1} onclick=${() => socket.send("StartGame")}>Start game</button>`
       : html`<button onclick=${() => socket.send("CancelGameStart")}>Cancel</button>`
     }
     </div>
     <footer>
-    ${startingIn.value !== null ?
+    ${startingIn.value != null ?
       html`<p class="counter">Starting in ${startingIn.value}</p>` :
       html`<div class="new-lobby"><a href="/lobby.html?new">New lobby</a></div><${SetResponseTimer} />`}
     </footer>

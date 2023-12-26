@@ -27,7 +27,7 @@ function TakeTurnPrompt({ options, onSelect }) {
   const [action, setAction] = useState(null)
 
   function selectAction(option) {
-    if (!option.targets.length) {
+    if (!option.targets?.length) {
       onSelect({ actionType: option.actionType })
     } else {
       setAction(option)
