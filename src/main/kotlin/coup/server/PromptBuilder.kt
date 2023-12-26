@@ -1,5 +1,6 @@
 package coup.server
 
+import coup.server.PromptWithTimeout.TimeoutOption
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -20,7 +21,7 @@ class PromptBuilder<T> {
   private val id = newId
   private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type, id, null, it)) }
 
-  private var timeoutOption: Prompt.TimeoutOption<T>? = null
+  private var timeoutOption: TimeoutOption<T>? = null
 
   fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>) {
     prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request, it)) }
@@ -33,10 +34,10 @@ class PromptBuilder<T> {
   }
 
   fun timeout(timeout: Int?, defaultValue: () -> T) {
-    timeoutOption = timeout?.let { Prompt.TimeoutOption(timeout, defaultValue()) }
+    timeoutOption = timeout?.let { TimeoutOption(timeout, defaultValue()) }
   }
 
-  private fun toPrompt() = Prompt(id, prompt, readResponse!!, timeoutOption)
+  private fun toPrompt() = PromptWithTimeout(id, prompt, readResponse!!, timeoutOption)
 
   companion object {
     fun <T> prompt(build: PromptBuilder<T>.() -> Unit) = PromptBuilder<T>().also(build).toPrompt()
