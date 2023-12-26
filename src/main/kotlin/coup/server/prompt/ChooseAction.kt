@@ -5,15 +5,15 @@ import coup.game.Player
 import coup.game.actions.Action
 import coup.game.actions.ActionBuilder
 import coup.game.rules.Ruleset
+import coup.server.Session
 import coup.server.prompt.ActionType.Companion.actionType
-import coup.server.prompt.Promptable.Companion.prompt
 import kotlinx.serialization.Serializable
 
 class ChooseAction(
   private val player: Player,
-  private val promptable: Promptable,
+  private val session: Session<*, *>,
   private val ruleset: Ruleset
-)  {
+) {
 
   @Serializable
   private data class Request(val options: List<Option>)
@@ -46,10 +46,7 @@ class ChooseAction(
   suspend fun chooseAction(board: Board): Action {
     val actionsAvailable = ruleset.availableActions(player, board).associateBy { it.actionType }
     val targets = (board.activePlayers - player).associateBy { it.playerNumber }
-    return promptable.prompt(
-      "TakeTurn",
-      Request(actionsAvailable.values.map { Option(it, targets.values) })
-    ) { (actionType, target): Response ->
+    return session.prompt("TakeTurn") { (actionType, target): Response ->
       val action = actionsAvailable[actionType] ?: throw IllegalArgumentException("$actionType is not a valid action.")
       if (action.targetRequired) {
         val targetNumber = target ?: throw IllegalArgumentException("Action $actionType requires a target")
@@ -57,6 +54,6 @@ class ChooseAction(
           ?: throw IllegalArgumentException("Invalid target $targetNumber")
       }
       action.build()
-    }
+    }.request(Request(actionsAvailable.values.map { Option(it, targets.values) })).send()
   }
 }

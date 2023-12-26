@@ -16,9 +16,9 @@ class GameController {
 
   private fun game(gameId: String) = games.value[gameId]
 
-  suspend fun newGame(sessions: List<Session<*, *>>, lobby: Lobby): String {
+  suspend fun newGame(sessions: List<Session<*, *>>, lobby: Lobby, options: Options): String {
     val players = sessions.take(ruleset.maxPlayers)
-    val gameServer = GameServer(players.map { it.id }, players.map { it.name }, lobby, ruleset)
+    val gameServer = GameServer(players.map { it.id }, players.map { it.name }, lobby, ruleset, options)
     val gameId = newId
     games.update { it + (gameId to gameServer) }
     gameServer.onShutDown { games.update { it - gameId } }

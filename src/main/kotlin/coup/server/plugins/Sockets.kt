@@ -15,9 +15,7 @@ fun Application.configureSockets() {
   }
   routing {
     val gameController = GameController()
-    val lobbyController = LobbyController {
-      Lobby { gameController.newGame(it, this) }
-    }
+    val lobbyController = LobbyController { Lobby(gameController::newGame) }
     val connectionController = ConnectionController()
     webSocket("/lobby") {
       lobbyController.connect(

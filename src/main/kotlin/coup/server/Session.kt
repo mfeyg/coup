@@ -1,13 +1,13 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
-import coup.server.prompt.Promptable
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 
@@ -18,7 +18,7 @@ class Session<State, Message>(
   private val state: Flow<State>,
   private val stateSerializer: KSerializer<State>,
   private val messageParser: (String) -> Message = { throw IllegalArgumentException("Unexpected message $it") },
-) : Promptable {
+) {
   private val activePrompts = MutableStateFlow(mapOf<String, String>())
   private val activeListeners = MutableStateFlow(mapOf<String, (String) -> Unit>())
   private val incomingMessages = MutableSharedFlow<Message>()
@@ -29,27 +29,39 @@ class Session<State, Message>(
   val messages get() = incomingMessages.asSharedFlow()
 
   @Serializable
-  private data class Prompt<T>(val type: String, val id: String, val prompt: T)
+  data class PromptRequest<T>(val type: String, val id: String, val prompt: T)
 
-  override suspend fun <T, RequestT, ResponseT> prompt(
-    promptType: String,
-    request: RequestT,
-    requestSerializer: KSerializer<RequestT>,
-    responseSerializer: KSerializer<ResponseT>,
-    readResponse: (ResponseT) -> T
-  ): T {
-    val response = CompletableDeferred<ResponseT>()
-    val id = newId
-    val prompt = Json.encodeToString(Prompt.serializer(requestSerializer), Prompt(promptType, id, request))
-    try {
-      activePrompts.update { it + (id to prompt) }
-      activeListeners.update { it + (id to { response.complete(Json.decodeFromString(responseSerializer, it)) }) }
-      return readResponse(response.await())
-    } finally {
-      activePrompts.update { it - id }
-      activeListeners.update { it - id }
+  inner class PromptBuilder<T>(private val type: String, private val readResponse: (String) -> T) {
+
+    private val id = newId
+    private var prompt = Json.encodeToString(PromptRequest(type, id, null))
+
+    fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>): PromptBuilder<T> {
+      prompt = Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request))
+      return this
+    }
+
+    inline fun <reified T> request(request: T) = request(request, serializer())
+
+    private val response = CompletableDeferred<T>()
+
+    suspend fun send(): T {
+      try {
+        activePrompts.update { it + (id to prompt) }
+        activeListeners.update { it + (id to { response.complete(readResponse(it)) }) }
+        return response.await()
+      } finally {
+        activePrompts.update { it - id }
+        activeListeners.update { it - id }
+      }
     }
   }
+
+  @JvmName("promptHelper")
+  fun <T> prompt(type: String, readResponse: (String) -> T) = PromptBuilder(type, readResponse)
+
+  inline fun <T, reified Response> prompt(type: String, noinline readResponse: (Response) -> T) =
+    prompt(type) { readResponse(Json.decodeFromString(it)) }
 
   suspend fun event(event: String) = events.emit(event)
 

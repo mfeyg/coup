@@ -57,6 +57,7 @@ class GameServer private constructor(
       playerNames: List<String>,
       lobby: Lobby,
       ruleset: Ruleset,
+      options: Options,
     ): GameServer {
 
       val numPlayers = playerIds.size
@@ -104,7 +105,8 @@ class GameServer private constructor(
         players,
         { playerColors[it.playerNumber] },
         { session(it.id)?.connect(it) },
-        { lobby.setChampion(playerIds[it.playerNumber]) })
+        { lobby.setChampion(playerIds[it.playerNumber]) },
+      )
 
       playerSessions.value = List(numPlayers) { playerNumber ->
         Session(

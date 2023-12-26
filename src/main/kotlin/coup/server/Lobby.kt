@@ -7,7 +7,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class Lobby(
-  private val createGame: suspend Lobby.(List<Session<*, *>>) -> String
+  private val newGame: suspend (List<Session<*, *>>, Lobby, Options) -> String
 ) {
 
   private sealed interface LobbyCommand {
@@ -152,12 +152,13 @@ class Lobby(
 
   private suspend fun startGame() {
     var players = this.sessions.value.values.toList()
+    val options = options.value
     val championId = champion.value
     val champion = players.indexOfFirst { it.id == championId }
     if (champion != -1) {
       players = players.subList(champion, players.size) + players.subList(0, champion)
     }
-    val game = createGame(players)
+    val game = newGame(players, this, options)
     players.forEach { player -> player.event("GameStarted:$game") }
   }
 }

@@ -6,12 +6,11 @@ import coup.game.Influence
 import coup.game.Player
 import coup.game.Reaction
 import coup.game.rules.Ruleset
-import coup.server.prompt.Promptable.Companion.prompt
+import coup.server.Session
 import coup.server.prompt.RespondToAction.Response.Type.*
 import kotlinx.serialization.Serializable
 
-class RespondToAction(private val player: Player, private val promptable: Promptable, private val ruleset: Ruleset)
-  {
+class RespondToAction(private val player: Player, private val session: Session<*, *>, private val ruleset: Ruleset) {
 
   @Serializable
   private data class Request(
@@ -45,15 +44,14 @@ class RespondToAction(private val player: Player, private val promptable: Prompt
   }
 
   suspend fun respondToAction(action: Action): Reaction =
-    promptable.prompt(
+    session.prompt(
       "RespondToAction",
-      Request(player, action, ruleset)
-    ) { response: Response ->
-      when (response.reaction) {
+    ) { (reaction, influence): Response ->
+      when (reaction) {
         Allow -> Reaction.Allow
 
         Block -> {
-          val influence = requireNotNull(response.influence) { "Influence required to block." }
+          requireNotNull(influence) { "Influence required to block." }
           require(ruleset.canAttemptBlock(player, action)) { "$player cannot block $action." }
           require(influence in ruleset.blockingInfluences(action)) { "$influence cannot block $action." }
           Reaction.Block(player, influence)
@@ -64,5 +62,7 @@ class RespondToAction(private val player: Player, private val promptable: Prompt
           Reaction.Challenge(player)
         }
       }
-    }
+    }.request(
+      Request(player, action, ruleset)
+    ).send()
 }
