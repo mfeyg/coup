@@ -6,11 +6,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
-import kotlin.time.Duration.Companion.seconds
 
 /** Represents a user's session. */
 class Session<State, Message>(
@@ -29,75 +26,10 @@ class Session<State, Message>(
 
   private val prompts = MutableStateFlow(mapOf<String, Prompt<*>>())
 
-  class Prompt<T>(
-    val id: String,
-    prompt: (timeout: Int?) -> String,
-    private val readResponse: (String) -> T,
-    private val timeoutOption: TimeoutOption<T>?,
-  ) {
-    data class TimeoutOption<T>(val timeout: Int, val defaultValue: T)
-
-    private val timeout = MutableStateFlow(timeoutOption?.timeout)
-    private val response = CompletableDeferred<T>()
-    val prompt = this.timeout.map(prompt)
-
-    fun complete(value: String) {
-      response.complete(readResponse(value))
-    }
-
-    suspend fun await(): T = coroutineScope {
-      launch timeout@{
-        val (_, defaultValue) = timeoutOption ?: return@timeout
-        timeout.collectLatest timeouts@{ value ->
-          if (value == null) return@timeouts
-          if (value == 0) response.complete(defaultValue)
-          else {
-            delay(1.seconds)
-            timeout.value = value - 1
-          }
-        }
-      }.let { job -> launch { response.join(); job.cancel() } }
-      response.await()
-    }
-  }
-
-  class PromptBuilder<T> {
-    @Serializable
-    private data class PromptRequest<T>(
-      val type: String? = null,
-      val id: String,
-      val prompt: T? = null,
-      val timeout: Int? = null
-    )
-
-    var type: String? = null
-    var readResponse: ((String) -> T)? = null
-    private val id = newId
-    private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type, id, null, it)) }
-
-    private var timeoutOption: Prompt.TimeoutOption<T>? = null
-
-    fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>) {
-      prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request, it)) }
-    }
-
-    inline fun <reified T> request(request: T) = request(request, serializer())
-
-    inline fun <reified ResponseT> readResponse(noinline read: (ResponseT) -> T) {
-      readResponse = { read(Json.decodeFromString(it)) }
-    }
-
-    fun timeout(timeout: Int?, defaultValue: () -> T) {
-      timeoutOption = timeout?.let { Prompt.TimeoutOption(timeout, defaultValue()) }
-    }
-
-    fun prompt() = Prompt(id, prompt, readResponse!!, timeoutOption)
-  }
-
   suspend fun <T> prompt(build: PromptBuilder<T>.() -> Unit): T {
     val prompt = PromptBuilder<T>().also(build).prompt()
-    prompts.update { it + (prompt.id to prompt) }
     try {
+      prompts.update { it + (prompt.id to prompt) }
       return prompt.await()
     } finally {
       prompts.update { it - prompt.id }
