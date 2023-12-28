@@ -26,8 +26,8 @@ class GameServer private constructor(
   private fun state(player: Player? = null) =
     game.updates.map {
       GameState(
-        players = players.indices.map { i -> GameState.Opponent(game.players[i], players[i]) },
-        player = player?.number?.let { i -> GameState.Player(game.players[i], players[i]) },
+        player = player?.number?.let { i -> GameState.Player(players[i], game.players[i]) },
+        players = players.indices.map { i -> GameState.Opponent(players[i], game.players[i]) },
         currentTurn = game.currentPlayer.number.takeIf { game.winner == null },
         winner = game.winner?.number,
       )

@@ -18,7 +18,7 @@ data class GameState(
     val heldInfluences: List<Influence>,
     val revealedInfluences: List<Influence>,
   ) {
-    constructor(player: coup.game.Player, person: Person) : this(
+    constructor(person: Person, player: coup.game.Player) : this(
       name = person.name,
       number = player.number,
       isk = player.isk,
@@ -35,7 +35,7 @@ data class GameState(
     val heldInfluences: Int,
     val revealedInfluences: List<Influence>,
   ) {
-    constructor(player: coup.game.Player, person: Person) : this(
+    constructor(person: Person, player: coup.game.Player) : this(
       name = person.name,
       number = player.number,
       isk = player.isk,
