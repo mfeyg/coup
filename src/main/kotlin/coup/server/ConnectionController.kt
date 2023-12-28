@@ -26,7 +26,7 @@ class ConnectionController {
   }
 
   @OptIn(ExperimentalStdlibApi::class)
-  val Color.cssColor: String
+  private val Color.cssColor: String
     get() {
       val colorFormat = HexFormat {
         number.prefix = "#"
