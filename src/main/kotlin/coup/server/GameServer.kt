@@ -49,7 +49,7 @@ class GameServer private constructor(
   }
 
   companion object {
-    suspend operator fun invoke(
+    operator fun invoke(
       players: List<Person>,
       lobby: Lobby,
       ruleset: Ruleset,
