@@ -47,8 +47,8 @@
     border-color: darkgreen;
     background-color: rgb(189, 211, 212);
     color: black;
-    min-height: 7.16em;
-    min-width: 5em;
+    min-height: min(7em, 16vw);
+    min-width: min(6em, 14vw);
 }
 
 .player-influence.player-influence-revealed {
@@ -59,8 +59,8 @@
 }
 
 .player-influence::before {
-    height: 6em;
-    width: 6em;
+    height: min(6em, 14vw);
+    width: min(6em, 14vw);
 }
 
 .player-influence {
