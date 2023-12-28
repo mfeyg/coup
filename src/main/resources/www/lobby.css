@@ -30,3 +30,9 @@ footer {
 .champion {
     text-shadow: #FC0 1px 0 10px;
 }
+
+.champion::after {
+    content: url("/images/queen-crown.svg");
+    width: 1em;
+    height: 1em;
+}
