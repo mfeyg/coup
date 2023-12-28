@@ -18,5 +18,5 @@ export function Isk({amount}) {
         setTimeout(() => setDifference(0), 1000);
     }
     setPreviousAmount(amount);
-    return html`<div class="isk">${amount}<${Difference} difference=${difference} /></div>`
+    return html`<div class="isk" style="--number: ${amount}">${amount} ISK<${Difference} difference=${difference} /></div>`
 }
