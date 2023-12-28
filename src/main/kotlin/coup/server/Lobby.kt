@@ -48,7 +48,7 @@ class Lobby(
     LobbyState(
       players = players.values.map { player ->
         LobbyState.Player(
-          player.name,
+          player.user.name,
           idColor(player.id).cssColor,
           player.id == champion
         )
@@ -132,13 +132,12 @@ class Lobby(
       throw IllegalStateException("Lobby is closed")
     }
     val session = sessions.updateAndGet { sessions ->
-      if (!sessions.containsKey(socket.id)) sessions + (socket.id to Session(
-        socket.id,
-        socket.name,
+      if (!sessions.containsKey(socket.user.id)) sessions + (socket.user.id to Session(
+        socket.user,
         state,
         LobbyCommand::valueOf,
       )) else sessions
-    }.getValue(socket.id)
+    }.getValue(socket.user.id)
     try {
       session.connect(socket)
     } finally {

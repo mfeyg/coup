@@ -7,21 +7,22 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class Game(private val ruleset: Ruleset, players: List<Player>) {
+class Game(private val ruleset: Ruleset, numPlayers: Int, playerAgent: (Player) -> Agent) {
 
-  private val board = ruleset.setUpBoard(players)
+  private val board = ruleset.setUpBoard((0 until numPlayers).map { i -> Player(i, ruleset, playerAgent) })
 
-  private val activePlayers get() = board.activePlayers
-  private val deck get() = board.deck
+  private val activePlayers by board::activePlayers
+  private val deck by board::deck
 
-  private val currentTurn = MutableStateFlow(Turn(players))
+  private val currentTurn = MutableStateFlow(Turn(activePlayers))
 
   private fun nextTurn() = with(currentTurn) { value = value.next() }
 
   val currentPlayer: Player get() = currentTurn.value.currentPlayer
   val winner: Player? get() = activePlayers.singleOrNull()
 
-  val updates = currentTurn.map {}
+  val players by board::players
+  val updates = combine(board.players.map { it.updates } + currentTurn) {}
 
   suspend fun play() {
     while (winner == null) takeTurn()

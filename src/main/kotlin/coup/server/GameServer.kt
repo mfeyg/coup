@@ -11,11 +11,10 @@ import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
 
 class GameServer private constructor(
-  private val baseGame: Game,
-  private val players: List<Player>,
-  private val playerColor: (Player) -> String,
+  private val game: Game,
+  private val players: List<Person>,
   private val connectPlayer: suspend (SocketConnection) -> Unit?,
-  private val setWinner: (Player) -> Unit,
+  private val onComplete: (Game) -> Unit,
 ) {
   private val observers = MutableStateFlow(mapOf<String, Session<GameState, Nothing>>())
   private val scope = CoroutineScope(Dispatchers.Default)
@@ -25,13 +24,12 @@ class GameServer private constructor(
   fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
 
   private fun state(player: Player? = null) =
-    combine(players.map { it.updates } + baseGame.updates) {
+    game.updates.map {
       GameState(
-        players = players,
-        thisPlayer = player,
-        playerColor = playerColor,
-        currentPlayer = baseGame.currentPlayer,
-        winner = baseGame.winner,
+        players = players.indices.map { i -> GameState.Opponent(game.players[i], players[i]) },
+        player = player?.number?.let { i -> GameState.Player(game.players[i], players[i]) },
+        currentTurn = game.currentPlayer.number.takeIf { game.winner == null },
+        winner = game.winner?.number,
       )
     }
 
@@ -46,57 +44,52 @@ class GameServer private constructor(
       }
     }
     scope.launch {
-      baseGame.play()
-      baseGame.winner?.let { setWinner(it) }
+      game.play()
+      onComplete(game)
     }
   }
 
   companion object {
     suspend operator fun invoke(
-      playerIds: List<String>,
-      playerNames: List<String>,
+      players: List<Person>,
       lobby: Lobby,
       ruleset: Ruleset,
       options: GameOptions,
     ): GameServer {
 
-      val numPlayers = playerIds.size
       val playerSessions = object {
         lateinit var value: List<Session<GameState, Nothing>>
       }
 
       fun agent(player: Player) =
-        PromptContext(player, ruleset, options, object : PromptContext.Perform {
+        PromptContext(player, ruleset, players, options, object : PromptContext.Perform {
           override suspend fun <T> invoke(prompt: Prompt<T>) =
-            playerSessions.value[player.playerNumber].prompt(prompt)
+            playerSessions.value[player.number].prompt(prompt)
         }).agent()
 
       val playerNumberById = buildMap {
-        playerIds.forEachIndexed { index, id ->
-          put(id, index)
+        players.forEachIndexed { index, it ->
+          put(it.id, index)
         }
       }
 
       fun session(id: String) = playerNumberById[id]?.let { playerSessions.value[it] }
 
-      val players: List<Player> = List(numPlayers) { playerNumber ->
-        Player(playerNames[playerNumber], playerNumber, ruleset, ::agent)
+      val gamePlayers: List<Player> = List(players.size) { playerNumber ->
+        Player(playerNumber, ruleset, ::agent)
       }
-      val playerColors: List<String> = playerIds.map { idColor(it).cssColor }
 
       val gameServer = GameServer(
-        Game(ruleset, players),
+        Game(ruleset, players.size, ::agent),
         players,
-        { playerColors[it.playerNumber] },
-        { session(it.id)?.connect(it) },
-        { lobby.setChampion(playerIds[it.playerNumber]) },
+        { session(it.user.id)?.connect(it) },
+        { game -> game.winner?.let { lobby.setChampion(players[it.number].id) } },
       )
 
-      playerSessions.value = List(numPlayers) { playerNumber ->
+      playerSessions.value = List(gamePlayers.size) { playerNumber ->
         Session(
-          playerIds[playerNumber],
-          playerNames[playerNumber],
-          gameServer.state(players[playerNumber])
+          players[playerNumber],
+          gameServer.state(gamePlayers[playerNumber])
         )
       }
       return gameServer
@@ -107,15 +100,15 @@ class GameServer private constructor(
     try {
       connectionCount.update { it + 1 }
       connectPlayer(connection)
-        ?: observingSession(connection.id, connection.name).connect(connection)
+        ?: observingSession(connection.user).connect(connection)
     } finally {
       connectionCount.update { it - 1 }
     }
   }
 
-  private fun observingSession(id: String, observerName: String) =
+  private fun observingSession(user: Person) =
     observers.updateAndGet { observers ->
-      if (observers.containsKey(id)) observers else
-        observers + (id to Session(id, observerName, state()))
-    }.getValue(id)
+      if (observers.containsKey(user.id)) observers else
+        observers + (user.id to Session(user, state()))
+    }.getValue(user.id)
 }

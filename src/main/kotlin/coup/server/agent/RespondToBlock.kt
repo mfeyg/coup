@@ -11,7 +11,7 @@ object RespondToBlock {
     val blocker: Int,
     val blockingInfluence: Influence
   ) {
-    constructor(block: Block) : this(block.blocker.playerNumber, block.blockingInfluence)
+    constructor(block: Block) : this(block.blocker.number, block.blockingInfluence)
   }
 
   @Serializable

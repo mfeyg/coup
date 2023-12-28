@@ -22,9 +22,9 @@ object RespondToAction {
     val claimedInfluence: Influence?,
   ) {
     constructor(player: Player, action: Action, ruleset: Ruleset) : this(
-      player = action.player.playerNumber,
+      player = action.player.number,
       type = ActionType(action.type),
-      target = action.target?.playerNumber,
+      target = action.target?.number,
       canBeChallenged = ruleset.canChallenge(player, action),
       canBeBlocked = ruleset.canAttemptBlock(player, action),
       blockingInfluences = ruleset.blockingInfluences(action),

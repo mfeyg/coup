@@ -8,7 +8,7 @@ object RespondToChallenge {
   suspend fun PromptContext.respondToChallenge(claim: Influence, challenger: Player) = prompt {
     type = "RespondToChallenge"
     request(
-      Request(claim, challenger.playerNumber)
+      Request(claim, challenger.number)
     )
     readResponse { (influence): Response ->
       require(influence in player.heldInfluences) { "$player does not have a $influence" }

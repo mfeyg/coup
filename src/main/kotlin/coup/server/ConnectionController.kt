@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json.Default.decodeFromString
 
 class ConnectionController {
-  class SocketConnection(private val socket: WebSocketSession, val name: String, val id: String) :
+  class SocketConnection(private val socket: WebSocketSession, val user: Person) :
     WebSocketSession by socket
 
   suspend fun connection(socket: WebSocketSession): SocketConnection {
     val id = readSocketId(socket) ?: newId(100).also { socket.send("Id:$it") }
     val name = readSocketName(socket)
-    return SocketConnection(socket, name, id)
+    return SocketConnection(socket, Person(id, name))
   }
 
   @Serializable

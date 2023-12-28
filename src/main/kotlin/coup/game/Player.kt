@@ -7,8 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 class Player(
-  val name: String,
-  val playerNumber: Int,
+  val number: Int,
   private val ruleset: Ruleset,
   agent: (Player) -> Agent,
 ) {
@@ -106,7 +105,7 @@ class Player(
     return influence
   }
 
-  override fun toString() = "Player $playerNumber ($name)"
+  override fun toString() = "Player $number"
 
   companion object {
 

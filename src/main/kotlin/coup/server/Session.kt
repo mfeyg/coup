@@ -11,12 +11,14 @@ import kotlinx.serialization.serializer
 
 /** Represents a user's session. */
 class Session<State, Message>(
-  val id: String,
-  var name: String,
+  val user: Person,
   private val state: Flow<State>,
   private val stateSerializer: KSerializer<State>,
   private val messageParser: (String) -> Message = { throw IllegalArgumentException("Unexpected message $it") },
 ) {
+
+  val id by user::id
+
   private val incomingMessages = MutableSharedFlow<Message>()
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
   private val connections = MutableStateFlow(setOf<SocketConnection>())
@@ -89,13 +91,12 @@ class Session<State, Message>(
 
   companion object {
     inline operator fun <reified StateT, MessageT> invoke(
-      id: String,
-      name: String,
+      user: Person,
       state: Flow<StateT>,
       noinline readMessage: (String) -> MessageT,
-    ) = Session(id, name, state, serializer(), readMessage)
+    ) = Session(user, state, serializer(), readMessage)
 
-    inline operator fun <reified StateT> invoke(id: String, name: String, state: Flow<StateT>) =
-      Session<StateT, Nothing>(id, name, state, serializer())
+    inline operator fun <reified StateT> invoke(user: Person, state: Flow<StateT>) =
+      Session<StateT, Nothing>(user, state, serializer())
   }
 }

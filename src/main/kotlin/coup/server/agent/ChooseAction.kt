@@ -1,8 +1,6 @@
 package coup.server.agent
 
 import coup.game.Board
-import coup.game.Player
-import coup.game.actions.ActionBuilder
 import coup.server.agent.ActionType.Companion.actionType
 import kotlinx.serialization.Serializable
 
@@ -15,20 +13,13 @@ object ChooseAction {
   private data class Option(
     val actionType: ActionType,
     val targets: List<Target> = emptyList(),
-  ) {
-    constructor(actionBuilder: ActionBuilder, targets: Iterable<Player>) : this(
-      actionType = actionBuilder.actionType,
-      targets = if (actionBuilder.targetRequired) targets.map(::Target) else listOf()
-    )
-  }
+  )
 
   @Serializable
   private data class Target(
     val name: String,
     val number: Int,
-  ) {
-    constructor(player: Player) : this(player.name, player.playerNumber)
-  }
+  )
 
   @Serializable
   private data class Response(
@@ -38,10 +29,20 @@ object ChooseAction {
 
   suspend fun PromptContext.chooseAction(board: Board) = prompt {
     val actionsAvailable = ruleset.availableActions(player, board).associateBy { it.actionType }
-    val targets = (board.activePlayers - player).associateBy { it.playerNumber }
+    val targets = (board.activePlayers - player).associateBy { it.number }
     type = "TakeTurn"
     request(
-      Request(actionsAvailable.values.map { Option(it, targets.values) })
+      Request(actionsAvailable.values.map { option ->
+        Option(
+          option.actionType,
+          if (option.targetRequired) targets.values.map { target ->
+            Target(
+              players[target.number].name,
+              target.number
+            )
+          } else emptyList()
+        )
+      })
     )
     readResponse { (actionType, target): Response ->
       val action = actionsAvailable[actionType] ?: throw IllegalArgumentException("$actionType is not a valid action.")
