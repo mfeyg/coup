@@ -10,12 +10,6 @@ textarea {
   font-size: inherit;
 }
 
-@media (orientation: portrait) {
-  html {
-    font-size: calc(2 * (15px + 0.390625vw));
-  }
-}
-
 h2 {
   font-weight: 400;
   text-shadow: thistle 2px;

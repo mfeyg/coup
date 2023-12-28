@@ -29,6 +29,8 @@
 
 .isk {
     white-space: nowrap;
+    display: flex;
+    flex-direction: column;
 }
 
 .isk-difference {

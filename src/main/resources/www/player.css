@@ -1,10 +1,10 @@
 .player {
     border: 1px solid black;
     border-radius: 2px;
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    grid-template-rows: 1fr 2fr;
-    padding: 0.5rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0.5em;
     box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
 }
 
@@ -22,7 +22,7 @@
 
 .player-isk {
     display: list-item;
-    margin-left: 1rem;
+    margin-left: 1em;
 }
 
 .player-influences {
@@ -40,7 +40,7 @@
     text-align: center;
     justify-content: center;
     align-items: center;
-    margin: 0.1rem;
+    margin: 0.1em;
 }
 
 .player-influence.player-influence-hidden {
