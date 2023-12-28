@@ -15,21 +15,15 @@
         #eee 30%,
         #999999 55%,
         transparent 60%
-        ), radial-gradient(
-        circle 15px at center,
-        #eee 30%,
-        #999999 55%,
-        transparent 60%
         );
-    background-position: left bottom, left bottom 20px, left bottom 40px, left bottom 60px;
+    background-position: left bottom, left bottom 20px, left bottom 40px;
     background-size: calc(80px / min(var(--number), 4)) 20px,
         calc(80px / max(0, min(var(--number) - 4, 4))) 20px,
-        calc(80px / max(0, min(var(--number) - 8, 4))) 20px,
-        calc(80px / max(0, min(var(--number) - 12, 4))) 20px;
+        calc(80px / max(0, min(var(--number) - 8, 4))) 20px;
     background-repeat: space no-repeat;
     width: 80px;
     display: inline-block;
-    height: calc(20px * (1 + var(--number) / 4));
+    height: calc(min(20px * (1 + var(--number) / 4), 60px));
     margin-right: 1em;
 }
 
