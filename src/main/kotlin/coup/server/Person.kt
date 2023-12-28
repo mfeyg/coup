@@ -1,3 +1,3 @@
 package coup.server
 
-data class Person(val id: String, val name: String)
+data class Person(val id: String, val name: String, val color: String)

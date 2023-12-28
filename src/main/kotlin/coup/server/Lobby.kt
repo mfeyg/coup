@@ -49,7 +49,7 @@ class Lobby(
       players = players.values.map { player ->
         LobbyState.Player(
           player.user.name,
-          idColor(player.id).cssColor,
+          player.user.color,
           player.id == champion
         )
       },

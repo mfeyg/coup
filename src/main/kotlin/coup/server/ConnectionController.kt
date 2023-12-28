@@ -1,8 +1,11 @@
 package coup.server
 
+import io.ktor.util.*
 import io.ktor.websocket.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json.Default.decodeFromString
+import java.awt.Color
+import kotlin.experimental.xor
 
 class ConnectionController {
   class SocketConnection(private val socket: WebSocketSession, val user: Person) :
@@ -12,8 +15,25 @@ class ConnectionController {
     val id = readSocketId(socket)
       ?: newId(100).also { socket.send("Id:$it") }
     val name = readSocketName(socket)
-    return SocketConnection(socket, Person(id, name))
+    return SocketConnection(socket, Person(id, name, idColor(id).cssColor))
   }
+
+  suspend fun idColor(id: String): Color {
+    val digest = Digest("SHA-256")
+    digest += id.toByteArray()
+    val value = digest.build().reduce(Byte::xor)
+    return Color.getHSBColor(value / 255f, 0.5f, 0.95f)
+  }
+
+  @OptIn(ExperimentalStdlibApi::class)
+  val Color.cssColor: String
+    get() {
+      val colorFormat = HexFormat {
+        number.prefix = "#"
+        number.removeLeadingZeros = true
+      }
+      return (rgb and 0xffffff).toHexString(colorFormat)
+    }
 
   @Serializable
   private data class IdResponse(val id: String?)
