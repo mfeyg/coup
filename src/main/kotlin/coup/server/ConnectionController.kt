@@ -13,12 +13,12 @@ class ConnectionController {
 
   suspend fun connection(socket: WebSocketSession): SocketConnection {
     val id = readSocketId(socket)
-      ?: newId(100).also { socket.send("Id:$it") }
+      ?: newId(100).also { socket.send("Id:${it.value}") }
     val name = readSocketName(socket)
-    return SocketConnection(socket, Person(id, name, idColor(id).cssColor))
+    return SocketConnection(socket, Person(id, name, idColor(id.value).cssColor))
   }
 
-  suspend fun idColor(id: String): Color {
+  private suspend fun idColor(id: String): Color {
     val digest = Digest("SHA-256")
     digest += id.toByteArray()
     val value = digest.build().reduce(Byte::xor)
@@ -41,10 +41,10 @@ class ConnectionController {
   @Serializable
   private data class NameResponse(val name: String)
 
-  private suspend fun readSocketId(socket: WebSocketSession): String? {
+  private suspend fun readSocketId(socket: WebSocketSession): Id? {
     socket.send("GetId")
     val (id) = decodeFromString<IdResponse>(socket.receiveText())
-    return id
+    return id?.let(::Id)
   }
 
   private suspend fun readSocketName(socket: WebSocketSession): String {

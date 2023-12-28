@@ -6,21 +6,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 class LobbyController(private val newLobby: () -> Lobby) {
-  private val lobbyIds = MutableStateFlow(mapOf<String, Lobby>())
+  private val lobbyIds = MutableStateFlow(mapOf<Id, Lobby>())
   private val defaultLobbyId = newId
 
-  suspend fun connect(socket: SocketConnection, id: String?, newLobby: Boolean) {
+  suspend fun connect(socket: SocketConnection, id: Id?, newLobby: Boolean) {
     if (newLobby) {
-      socket.send("GoToLobby:${createLobby(newId)}")
+      socket.send("GoToLobby:${createLobby(newId).value}")
     } else if (id == null) {
       lobby(defaultLobbyId) ?: createLobby(defaultLobbyId)
-      socket.send("GoToLobby:$defaultLobbyId")
+      socket.send("GoToLobby:${defaultLobbyId.value}")
     } else {
       lobby(id)?.connect(socket) ?: socket.send("LobbyNotFound:$id")
     }
   }
 
-  private fun createLobby(id: String): String {
+  private fun createLobby(id: Id): Id {
     val lobby = newLobby()
     lobbyIds.update { it + (id to lobby) }
     lobby.onShutDown {
@@ -29,6 +29,6 @@ class LobbyController(private val newLobby: () -> Lobby) {
     return id
   }
 
-  private fun lobby(id: String): Lobby? = lobbyIds.value[id]?.takeIf { it.isActive }
+  private fun lobby(id: Id): Lobby? = lobbyIds.value[id]?.takeIf { it.isActive }
 
 }

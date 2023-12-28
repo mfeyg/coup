@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 class PromptWithTimeout<T>(
-  override val id: String,
+  override val id: Id,
   promptMessage: (timeout: Int?) -> String,
   private val readResponse: (String) -> T,
   private val timeoutOption: TimeoutOption<T>?,

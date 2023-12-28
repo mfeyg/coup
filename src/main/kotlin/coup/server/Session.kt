@@ -26,7 +26,7 @@ class Session<State, Message>(
 
   val messages get() = incomingMessages.asSharedFlow()
 
-  private val prompts = MutableStateFlow(mapOf<String, Prompt<*>>())
+  private val prompts = MutableStateFlow(mapOf<Id, Prompt<*>>())
 
   suspend fun <T> prompt(prompt: Prompt<T>): T {
     try {
@@ -45,7 +45,7 @@ class Session<State, Message>(
     when (val match = promptResponsePattern.matchEntire(text)) {
       is MatchResult -> {
         val (_, id, response) = match.groupValues
-        prompts.value[id]?.respond(response)
+        prompts.value[Id(id)]?.respond(response)
       }
 
       else -> incomingMessages.emit(messageParser(text))

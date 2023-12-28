@@ -16,7 +16,7 @@ class GameServer private constructor(
   private val connectPlayer: suspend (SocketConnection) -> Unit?,
   private val onComplete: (Game) -> Unit,
 ) {
-  private val observers = MutableStateFlow(mapOf<String, Session<GameState, Nothing>>())
+  private val observers = MutableStateFlow(mapOf<Id, Session<GameState, Nothing>>())
   private val scope = CoroutineScope(Dispatchers.Default)
   private val connectionCount = MutableStateFlow(0)
 
@@ -72,7 +72,7 @@ class GameServer private constructor(
         }
       }
 
-      fun session(id: String) = playerNumberById[id]?.let { playerSessions.value[it] }
+      fun session(id: Id) = playerNumberById[id]?.let { playerSessions.value[it] }
 
       val gamePlayers: List<Player> = List(players.size) { playerNumber ->
         Player(playerNumber, ruleset, ::agent)

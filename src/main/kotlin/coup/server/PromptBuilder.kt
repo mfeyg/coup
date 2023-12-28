@@ -19,12 +19,12 @@ class PromptBuilder<T> {
   var type: String? = null
   var readResponse: ((String) -> T)? = null
   private val id = newId
-  private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type, id, null, it)) }
+  private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type, id.value, null, it)) }
 
   private var timeoutOption: TimeoutOption<T>? = null
 
   fun <RequestT> request(request: RequestT, serializer: KSerializer<RequestT>) {
-    prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id, request, it)) }
+    prompt = { Json.encodeToString(PromptRequest.serializer(serializer), PromptRequest(type, id.value, request, it)) }
   }
 
   inline fun <reified T> request(request: T) = request(request, serializer())

@@ -20,13 +20,13 @@ fun Application.configureSockets() {
     webSocket("/lobby") {
       lobbyController.connect(
         connectionController.connection(this),
-        id = call.parameters["id"],
+        id = call.parameters["id"]?.let(::Id),
         newLobby = call.parameters.contains("new"),
       )
     }
     webSocket("/game") {
       val id = call.parameters["id"] ?: throw IllegalArgumentException("Game ID is required")
-      gameController.connect(connectionController.connection(this), id)
+      gameController.connect(connectionController.connection(this), Id(id))
     }
   }
 }
