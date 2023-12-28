@@ -18,7 +18,7 @@ class PromptBuilder<T> {
 
   var type: String? = null
   var readResponse: ((String) -> T)? = null
-  private val id = newId
+  private val id = Id()
   private var prompt: (timer: Int?) -> String = { Json.encodeToString(PromptRequest(type, id.value, null, it)) }
 
   private var timeoutOption: TimeoutOption<T>? = null

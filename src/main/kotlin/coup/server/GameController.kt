@@ -18,7 +18,7 @@ class GameController {
 
   fun newGame(players: List<Person>, lobby: Lobby, options: GameOptions): Id {
     val gameServer = GameServer(players.take(ruleset.maxPlayers), lobby, ruleset, options)
-    val gameId = newId
+    val gameId = Id()
     games.update { it + (gameId to gameServer) }
     gameServer.onShutDown { games.update { it - gameId } }
     gameServer.start()

@@ -13,7 +13,7 @@ class ConnectionController {
 
   suspend fun connection(socket: WebSocketSession): SocketConnection {
     val id = readSocketId(socket)
-      ?: newId(100).also { socket.send("Id:${it.value}") }
+      ?: Id(length = 100).also { socket.send("Id:${it.value}") }
     val name = readSocketName(socket)
     return SocketConnection(socket, Person(id, name, idColor(id.value).cssColor))
   }

@@ -7,11 +7,11 @@ import kotlinx.coroutines.flow.update
 
 class LobbyController(private val newLobby: () -> Lobby) {
   private val lobbyIds = MutableStateFlow(mapOf<Id, Lobby>())
-  private val defaultLobbyId = newId
+  private val defaultLobbyId = Id()
 
   suspend fun connect(socket: SocketConnection, id: Id?, newLobby: Boolean) {
     if (newLobby) {
-      socket.send("GoToLobby:${createLobby(newId).value}")
+      socket.send("GoToLobby:${createLobby(Id()).value}")
     } else if (id == null) {
       lobby(defaultLobbyId) ?: createLobby(defaultLobbyId)
       socket.send("GoToLobby:${defaultLobbyId.value}")
