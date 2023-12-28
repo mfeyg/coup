@@ -15,12 +15,12 @@ class ConnectionController {
     val id = readSocketId(socket)
       ?: Id(length = 100).also { socket.send("Id:${it.value}") }
     val name = readSocketName(socket)
-    return SocketConnection(socket, Person(id, name, idColor(id.value).cssColor))
+    return SocketConnection(socket, Person(id, name, idColor(id).cssColor))
   }
 
-  private suspend fun idColor(id: String): Color {
+  private suspend fun idColor(id: Id): Color {
     val digest = Digest("SHA-256")
-    digest += id.toByteArray()
+    digest += id.value.toByteArray()
     val value = digest.build().reduce(Byte::xor)
     return Color.getHSBColor(value / 255f, 0.5f, 0.95f)
   }
