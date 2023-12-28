@@ -37,8 +37,6 @@
 .player-influence {
     display: inline-flex;
     border: 1px solid black;
-    width: 6rem;
-    height: 2rem;
     text-align: center;
     justify-content: center;
     align-items: center;
@@ -48,13 +46,47 @@
 .player-influence.player-influence-hidden {
     border-color: darkgreen;
     background-color: rgb(189, 211, 212);
-    color: slateblue;
+    color: black;
+    min-height: 5em;
+    min-width: 5em;
 }
 
 .player-influence.player-influence-revealed {
     border-color: lightgrey;
     background-color: #eee;
     color: black;
+    opacity: 30%;
+}
+
+.player-influence::before {
+    height: 6em;
+    width: 6em;
+}
+
+.player-influence {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.7em;
+}
+
+.player-influence[data-type='Captain']::before {
+    content: url('images/closed-barbute.svg')
+}
+
+.player-influence[data-type='Contessa']::before {
+    content: url('images/crowned-skull.svg')
+}
+
+.player-influence[data-type='Assassin']::before {
+    content: url('images/cowled.svg')
+}
+
+.player-influence[data-type='Duke']::before {
+    content: url('images/imperial-crown.svg')
+}
+
+.player-influence[data-type='Ambassador']::before {
+    content: url('images/turban.svg')
 }
 
 .player-name {

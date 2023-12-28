@@ -15,9 +15,9 @@ export function Player({ player, current, active }) {
 
 function Influence({ children, hidden }) {
     if (hidden) {
-        return html`<div class="player-influence player-influence-hidden">${children}</div>`
+        return html`<div class="player-influence player-influence-hidden" data-type=${children}>${children}</div>`
     } else {
-        return html`<div class="player-influence player-influence-revealed">${children}</div>`
+        return html`<div class="player-influence player-influence-revealed" data-type=${children}>${children}</div>`
     }
 }
 
