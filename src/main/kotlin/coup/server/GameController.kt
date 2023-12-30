@@ -12,24 +12,19 @@ class GameController {
     game(id)?.connect(connection) ?: connection.send("GameNotFound")
   }
 
-  private fun game(gameId: Id) = games.value[gameId]
+  private fun game(id: Id) = games.value[id]
 
-  fun newGame(players: List<Person>, lobby: Lobby, gameOptions: GameOptions): Id {
+  fun newGame(players: List<Person>, gameOptions: GameOptions): Pair<Id, GameServer> {
     val gameServer = GameServer {
       options = gameOptions
       players.forEach { player ->
         addHumanPlayer(player)
       }
     }
-    gameServer.onComplete { game ->
-      game.winner?.let { winner ->
-        lobby.setChampion(players[winner.number])
-      }
-    }
     val id = Id()
     games.update { it + (id to gameServer) }
     gameServer.onShutDown { games.update { it - id } }
     gameServer.start()
-    return id
+    return id to gameServer
   }
 }
