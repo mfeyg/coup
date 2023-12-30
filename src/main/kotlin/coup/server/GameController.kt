@@ -26,10 +26,10 @@ class GameController {
         lobby.setChampion(players[winner.number])
       }
     }
-    val gameId = Id()
-    games.update { it + (gameId to gameServer) }
-    gameServer.onShutDown { games.update { it - gameId } }
+    val id = Id()
+    games.update { it + (id to gameServer) }
+    gameServer.onShutDown { games.update { it - id } }
     gameServer.start()
-    return gameId
+    return id
   }
 }
