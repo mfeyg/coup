@@ -17,7 +17,9 @@ class GameController {
   fun newGame(players: List<Person>, lobby: Lobby, gameOptions: GameOptions): Id {
     val gameServer = GameServer {
       options = gameOptions
-      players.forEach(::addHumanPlayer)
+      players.forEach { player ->
+        addHumanPlayer(player)
+      }
     }
     gameServer.onComplete { game ->
       game.winner?.let { winner ->
