@@ -69,6 +69,6 @@ class GameServer(
   }
 
   companion object {
-    operator fun invoke(build: GameBuilder.() -> Unit): GameServer = GameBuilder(build)
+    operator fun invoke(build: GameBuilder.() -> Unit) = GameBuilder(build)
   }
 }
