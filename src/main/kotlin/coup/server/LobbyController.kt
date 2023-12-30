@@ -26,6 +26,7 @@ class LobbyController(private val newLobby: () -> Lobby) {
     lobby.onShutDown {
       lobbyIds.update { it.filterValues { it != lobby } }
     }
+    lobby.start()
     return id
   }
 

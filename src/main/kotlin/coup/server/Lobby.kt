@@ -71,7 +71,7 @@ class Lobby(
     }
   }
 
-  init {
+  fun start() {
     with(CoroutineScope(Dispatchers.Default)) {
       val scope = this
       eachSession { session ->
