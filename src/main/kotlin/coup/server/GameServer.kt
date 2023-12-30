@@ -12,7 +12,6 @@ class GameServer(
 ) {
   private val sessions = MutableStateFlow(mapOf<Id, Session<GameState, Nothing>>())
   private val version = MutableStateFlow(0)
-  private val scope = CoroutineScope(Dispatchers.Default)
   private val connectionCount = MutableStateFlow(0)
 
   private val game = game(this)
@@ -51,19 +50,22 @@ class GameServer(
   }
 
   fun start() {
-    scope.launch {
-      connectionCount.collectLatest { connections ->
-        if (connections == 0) {
-          delay(1.hours)
-          _onShutDown.value.forEach { it() }
-          scope.cancel()
+    with(CoroutineScope(Dispatchers.Default)) {
+      val outer = this
+      launch {
+        connectionCount.collectLatest { connections ->
+          if (connections == 0) {
+            delay(1.hours)
+            _onShutDown.value.forEach { it() }
+            outer.cancel()
+          }
         }
       }
-    }
-    scope.launch {
-      launch { game.updates.collect { version.update { it + 1 } } }
-      game.play()
-      _onComplete.value.forEach { it(game) }
+      launch {
+        launch { game.updates.collect { version.update { it + 1 } } }
+        game.play()
+        _onComplete.value.forEach { it(game) }
+      }
     }
   }
 
