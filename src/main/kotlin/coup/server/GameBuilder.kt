@@ -12,7 +12,7 @@ class GameBuilder {
   private val people get() = players.map { it.first }
   var ruleset: Ruleset = StandardRules()
   var options: GameOptions = GameOptions.default
-  private var computerPlayerIndex = 0
+  private var computerPlayerNumber = 0
 
   fun addHumanPlayer(person: Person) {
     players.add(person to { number, server ->
@@ -30,7 +30,7 @@ class GameBuilder {
 
   fun addComputerPlayer() {
     val id = Id()
-    val name = "Computer ${++computerPlayerIndex}"
+    val name = "Computer ${++computerPlayerNumber}"
     val color = randomColor()
     val computer = Person(id, name, color)
     players.add(computer to { number, _ ->
