@@ -4,7 +4,7 @@ import coup.game.Game
 import coup.game.Player
 import coup.game.rules.Ruleset
 import coup.game.rules.StandardRules
-import coup.server.agent.PlayerAgent.Companion.agent
+import coup.server.agent.PlayerAgent
 import coup.server.agent.PromptContext
 
 class GameBuilder {
@@ -17,7 +17,7 @@ class GameBuilder {
   fun addHumanPlayer(person: Person) {
     players.add(person to { number, server ->
       Player(number, ruleset) { player ->
-        PromptContext(player, ruleset, people, options, server.session(person)).agent()
+        PlayerAgent(PromptContext(player, ruleset, people, options, server.session(person)))
       }
     })
   }
