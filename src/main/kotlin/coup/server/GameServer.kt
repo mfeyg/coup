@@ -64,7 +64,6 @@ class GameServer(
       launch { game.updates.collect { version.update { it + 1 } } }
       game.play()
       _onComplete.value.forEach { it(game) }
-      _onShutDown.value.forEach { it() }
     }
   }
 
