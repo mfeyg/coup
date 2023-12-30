@@ -28,8 +28,8 @@ class GameBuilder {
     val color = randomColor()
     val computer = Person(id, name, color)
     players.add(computer to { number, _ ->
-      Player(number, ruleset) {
-        ComputerAgent(ruleset, it)
+      Player(number, ruleset) { player ->
+        ComputerAgent(ruleset, player)
       }
     })
   }
