@@ -4,6 +4,7 @@ import coup.server.*
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import kotlinx.coroutines.launch
 import java.time.Duration
 
 fun Application.configureSockets() {
@@ -25,8 +26,19 @@ fun Application.configureSockets() {
       )
     }
     webSocket("/game") {
-      val id = call.parameters["id"] ?: throw IllegalArgumentException("Game ID is required")
-      gameController.connect(connectionController.connection(this), Id(id))
+      if (call.parameters.contains("sample")) {
+        val connection = connectionController.connection(this)
+        val game = GameBuilder {
+          addHumanPlayer(connection.user)
+          repeat(4) { addComputerPlayer() }
+          shufflePlayers()
+        }
+        launch { game.start() }
+        game.connect(connection)
+      } else {
+        val id = call.parameters["id"] ?: throw IllegalArgumentException("Game ID is required")
+        gameController.connect(connectionController.connection(this), Id(id))
+      }
     }
   }
 }

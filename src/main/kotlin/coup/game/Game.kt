@@ -7,9 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class Game(private val ruleset: Ruleset, numPlayers: Int, playerAgent: (Player) -> Agent) {
-
-  private val board = ruleset.setUpBoard((0 until numPlayers).map { i -> Player(i, ruleset, playerAgent) })
+class Game(private val ruleset: Ruleset, private val board: Board) {
 
   private val activePlayers by board::activePlayers
   private val deck by board::deck

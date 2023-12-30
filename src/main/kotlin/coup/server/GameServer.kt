@@ -1,35 +1,53 @@
 package coup.server
 
-import coup.game.*
 import coup.game.Game
-import coup.game.rules.Ruleset
 import coup.server.ConnectionController.SocketConnection
-import coup.server.agent.*
-import coup.server.agent.PlayerAgent.Companion.agent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
 
-class GameServer private constructor(
-  private val game: Game,
+class GameServer(
   private val players: List<Person>,
-  private val connectPlayer: suspend (SocketConnection) -> Unit?,
-  private val onComplete: (Game) -> Unit,
+  game: (GameServer) -> Game,
 ) {
-  private val observers = MutableStateFlow(mapOf<Id, Session<GameState, Nothing>>())
+  private val sessions = MutableStateFlow(mapOf<Id, Session<GameState, Nothing>>())
+  private val version = MutableStateFlow(0)
   private val scope = CoroutineScope(Dispatchers.Default)
   private val connectionCount = MutableStateFlow(0)
+
+  private val game = game(this)
+
+  private val _onComplete = MutableStateFlow(listOf<(Game) -> Unit>())
+  fun onComplete(block: (Game) -> Unit) = _onComplete.update { it + block }
 
   private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
   fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
 
-  private fun state(player: Player? = null) = game.updates.map {
+  private fun state(playerIndex: Int? = null) = version.map {
     GameState(
-      player = player?.number?.let { i -> GameState.Player(players[i], game.players[i]) },
+      player = playerIndex?.let { i -> GameState.Player(players[i], game.players[i]) },
       players = players.indices.map { i -> GameState.Opponent(players[i], game.players[i]) },
       currentTurn = game.currentPlayer.number.takeIf { game.winner == null },
       winner = game.winner?.number,
     )
+  }
+
+  private operator fun Map<Id, Session<GameState, Nothing>>.plus(person: Person): Map<Id, Session<GameState, Nothing>> {
+    if (containsKey(person.id)) return this
+    val playerIndex = players.indexOfFirst { it.id == person.id }.takeIf { it >= 0 }
+    val gameState = state(playerIndex)
+    return this + (person.id to Session(person, gameState))
+  }
+
+  fun session(person: Person) = sessions.updateAndGet { it + person }.getValue(person.id)
+
+  suspend fun connect(connection: SocketConnection) {
+    try {
+      connectionCount.update { it + 1 }
+      session(connection.user).connect(connection)
+    } finally {
+      connectionCount.update { it - 1 }
+    }
   }
 
   fun start() {
@@ -43,71 +61,14 @@ class GameServer private constructor(
       }
     }
     scope.launch {
+      launch { game.updates.collect { version.update { it + 1 } } }
       game.play()
-      onComplete(game)
+      _onComplete.value.forEach { it(game) }
+      _onShutDown.value.forEach { it() }
     }
   }
 
   companion object {
-    operator fun invoke(
-      players: List<Person>,
-      lobby: Lobby,
-      ruleset: Ruleset,
-      options: GameOptions,
-    ): GameServer {
-
-      val playerSessions = object {
-        lateinit var value: List<Session<GameState, Nothing>>
-      }
-
-      fun agent(player: Player) =
-        PromptContext(player, ruleset, players, options, object : PromptContext.Perform {
-          override suspend fun <T> invoke(prompt: Prompt<T>) =
-            playerSessions.value[player.number].prompt(prompt)
-        }).agent()
-
-      val playerNumberById = buildMap {
-        players.forEachIndexed { index, it ->
-          put(it.id, index)
-        }
-      }
-
-      fun session(id: Id) = playerNumberById[id]?.let { playerSessions.value[it] }
-
-      val gamePlayers: List<Player> = List(players.size) { playerNumber ->
-        Player(playerNumber, ruleset, ::agent)
-      }
-
-      val gameServer = GameServer(
-        Game(ruleset, players.size, ::agent),
-        players,
-        { session(it.user.id)?.connect(it) },
-        { game -> game.winner?.let { lobby.setChampion(players[it.number].id) } },
-      )
-
-      playerSessions.value = List(gamePlayers.size) { playerNumber ->
-        Session(
-          players[playerNumber],
-          gameServer.state(gamePlayers[playerNumber])
-        )
-      }
-      return gameServer
-    }
+    operator fun invoke(build: GameBuilder.() -> Unit): GameServer = GameBuilder(build)
   }
-
-  suspend fun connect(connection: SocketConnection) {
-    try {
-      connectionCount.update { it + 1 }
-      connectPlayer(connection)
-        ?: observingSession(connection.user).connect(connection)
-    } finally {
-      connectionCount.update { it - 1 }
-    }
-  }
-
-  private fun observingSession(user: Person) =
-    observers.updateAndGet { observers ->
-      if (observers.containsKey(user.id)) observers else
-        observers + (user.id to Session(user, state()))
-    }.getValue(user.id)
 }
