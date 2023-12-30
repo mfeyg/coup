@@ -17,13 +17,7 @@ class GameBuilder {
   fun addHumanPlayer(person: Person) {
     players.add(person to { number, server ->
       Player(number, ruleset) { player ->
-        PromptContext(
-          player,
-          ruleset,
-          people,
-          options,
-          server.session(person)
-        ).agent()
+        PromptContext(player, ruleset, people, options, server.session(person)).agent()
       }
     })
   }
