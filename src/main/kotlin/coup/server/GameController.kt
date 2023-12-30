@@ -14,7 +14,7 @@ class GameController {
 
   private fun game(id: Id) = games.value[id]
 
-  fun newGame(players: List<Person>, gameOptions: GameOptions): Pair<Id, GameServer> {
+  fun newGame(players: List<Person>, gameOptions: GameOptions): Pair<GameServer, Id> {
     val gameServer = GameServer {
       options = gameOptions
       players.forEach { player ->
@@ -25,6 +25,6 @@ class GameController {
     games.update { it + (id to gameServer) }
     gameServer.onShutDown { games.update { it - id } }
     gameServer.start()
-    return id to gameServer
+    return gameServer to id
   }
 }

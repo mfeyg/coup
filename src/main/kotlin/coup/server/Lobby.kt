@@ -7,7 +7,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class Lobby(
-  private val newGame: suspend (players: List<Person>, GameOptions) -> Pair<Id, GameServer>
+  private val newGame: suspend (players: List<Person>, GameOptions) -> Pair<GameServer, Id>
 ) {
 
   private sealed interface LobbyCommand {
@@ -157,12 +157,12 @@ class Lobby(
     if (champion != -1) {
       players = players.subList(champion, players.size) + players.subList(0, champion)
     }
-    val (id, game) = newGame(players.map { it.user }, options)
+    val (game, gameId) = newGame(players.map { it.user }, options)
     game.onComplete {
       it.winner?.let { winner ->
         setChampion(players[winner.number].user)
       }
     }
-    players.forEach { player -> player.event("GameStarted:${id.value}") }
+    players.forEach { player -> player.event("GameStarted:${gameId.value}") }
   }
 }
