@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.update
 class GameController {
   private val games = MutableStateFlow(mapOf<Id, GameServer>())
 
-  suspend fun connect(connection: SocketConnection, id: Id) {
-    game(id)?.connect(connection) ?: connection.send("GameNotFound")
+  suspend fun connect(connection: SocketConnection, gameId: Id) {
+    game(gameId)?.connect(connection) ?: connection.send("GameNotFound")
   }
 
   private fun game(id: Id) = games.value[id]
