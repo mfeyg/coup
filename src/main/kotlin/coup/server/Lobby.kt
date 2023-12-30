@@ -1,6 +1,7 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
+import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.minutes
@@ -129,7 +130,8 @@ class Lobby(
 
   suspend fun connect(socket: SocketConnection) {
     if (!isActive) {
-      throw IllegalStateException("Lobby is closed")
+      socket.send("LobbyNotFound")
+      return
     }
     val session = sessions.updateAndGet { sessions ->
       if (!sessions.containsKey(socket.user.id)) sessions + (socket.user.id to Session(
