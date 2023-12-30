@@ -145,8 +145,8 @@ class Lobby(
     }
   }
 
-  fun setChampion(id: Id) {
-    champion.value = id
+  fun setChampion(champion: Person) {
+    this.champion.value = champion.id
   }
 
   private suspend fun startGame() {

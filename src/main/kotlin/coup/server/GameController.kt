@@ -23,7 +23,7 @@ class GameController {
     }
     gameServer.onComplete { game ->
       game.winner?.let { winner ->
-        lobby.setChampion(players[winner.number].id)
+        lobby.setChampion(players[winner.number])
       }
     }
     val gameId = Id()
