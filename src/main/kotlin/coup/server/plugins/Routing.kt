@@ -10,6 +10,9 @@ fun Application.configureRouting() {
     get("/") {
       call.respondRedirect("/lobby.html")
     }
+    get("/demo") {
+      call.respondRedirect("/game.html?sample")
+    }
     staticResources("/", "www")
   }
 }
