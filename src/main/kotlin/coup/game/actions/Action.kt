@@ -8,9 +8,15 @@ sealed class Action(val player: Player, private val cost: Int = 0, private val e
 
   open val target: Player? = null
 
+  private var _onPerform: Action.() -> Unit = {}
+  fun onPerform(block: Action.() -> Unit) {
+    _onPerform = block
+  }
+
   suspend fun perform() {
     player.pay(cost)
     effect.invoke()
+    _onPerform()
   }
 
   class Income(player: Player) : Action(player, effect = {
