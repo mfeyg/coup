@@ -4,41 +4,42 @@ import coup.game.Deck
 import coup.game.Player
 import kotlin.math.min
 
-sealed class Action(val player: Player, private val effect: suspend () -> Unit) {
+sealed class Action(val player: Player, private val cost: Int = 0, private val effect: suspend () -> Unit) {
 
   open val target: Player? = null
 
-  suspend fun perform() = effect()
+  suspend fun perform() {
+    player.pay(cost)
+    effect.invoke()
+  }
 
-  class Income(player: Player) : Action(player, {
+  class Income(player: Player) : Action(player, effect = {
     player.gainIsk(1)
   })
 
-  class ForeignAid(player: Player) : Action(player, {
+  class ForeignAid(player: Player) : Action(player, effect = {
     player.gainIsk(2)
   })
 
-  class Tax(player: Player) : Action(player, {
+  class Tax(player: Player) : Action(player, effect = {
     player.gainIsk(3)
   })
 
-  class Steal(player: Player, override val target: Player, stealAmount: Int = 2) : Action(player, {
+  class Steal(player: Player, override val target: Player, stealAmount: Int = 2) : Action(player, effect = {
     val amountStolen = min(target.isk, stealAmount)
     target.loseIsk(amountStolen)
     player.gainIsk(amountStolen)
   })
 
-  class Exchange(player: Player, deck: Deck) : Action(player, {
+  class Exchange(player: Player, deck: Deck) : Action(player, effect = {
     player.exchangeWith(deck)
   })
 
-  class Assassinate(player: Player, override val target: Player, cost: Int) : Action(player, {
-    player.pay(cost)
+  class Assassinate(player: Player, override val target: Player, cost: Int) : Action(player, cost, effect = {
     target.loseInfluence()
   })
 
-  class Coup(player: Player, override val target: Player, cost: Int) : Action(player, {
-    player.pay(cost)
+  class Coup(player: Player, override val target: Player, cost: Int) : Action(player, cost, effect = {
     target.loseInfluence()
   })
 
