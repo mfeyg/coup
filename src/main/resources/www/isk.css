@@ -32,27 +32,3 @@
     display: flex;
     flex-direction: column;
 }
-
-.isk-difference {
-    vertical-align: super;
-    font-size: 0.5rem;
-    display: inline-block;
-    width: 0;
-    overflow: visible;
-    position: relative;
-    bottom: 0.5rem;
-}
-
-.isk-increase {
-    color: greenyellow;
-}
-.isk-increase::before {
-    content: "+";
-}
-
-.isk-decrease {
-    color: orangered;
-}
-.isk-decrease::before {
-    content: "-";
-}
