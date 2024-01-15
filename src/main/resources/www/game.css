@@ -23,6 +23,7 @@ main {
     flex-wrap: wrap;
     justify-content: center;
     max-width: 40em;
+    font-size: calc(0.8em + 0.6vw);
 }
 
 
