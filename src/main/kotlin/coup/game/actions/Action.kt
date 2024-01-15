@@ -2,9 +2,11 @@ package coup.game.actions
 
 import coup.game.Deck
 import coup.game.Player
+import coup.game.actions.Action.Type.Companion.type
 import kotlin.math.min
 
 sealed class Action(val player: Player, private val cost: Int = 0, private val effect: suspend () -> Unit) {
+
 
   open val target: Player? = null
 
@@ -17,6 +19,18 @@ sealed class Action(val player: Player, private val cost: Int = 0, private val e
     player.pay(cost)
     effect.invoke()
     _onPerform()
+  }
+
+  override fun toString() = buildString {
+    append("Action(")
+    append("type=$type")
+    append(", ")
+    append("player=$player")
+    target?.let {
+      append(", ")
+      append("target=$target")
+    }
+    append(")")
   }
 
   class Income(player: Player) : Action(player, effect = {
