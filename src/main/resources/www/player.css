@@ -1,11 +1,17 @@
 .player {
     border: 1px solid black;
     border-radius: 2px;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
     padding: 0.5em;
     box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+    width: 10em;
+    height: 8em;
+    display: grid;
+    grid-template-areas: "name isk" "cards cards";
+    grid-template-columns: 1fr 2.66em;
+}
+
+.player-isk {
+    grid-area: isk;
 }
 
 .player.player-turn {
@@ -20,11 +26,6 @@
     box-shadow: 0 0 8px 4px #FC0;
 }
 
-.player-isk {
-    display: list-item;
-    margin-left: 1em;
-}
-
 .player-influences {
     grid-column-end: span 2;
     display: flex;
@@ -32,6 +33,7 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.5em;
+    grid-area: cards;
 }
 
 .player-influence {
@@ -97,4 +99,5 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    grid-area: name;
 }

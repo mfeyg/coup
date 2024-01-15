@@ -5,7 +5,7 @@ export function Player({ player, current, active }) {
     return html`
     <div class="player ${active ? "player-turn" : ""} ${current ? "player-you": ""}">
       <div class="player-name">${current ? html`<strong>You</strong>` : player.name}</div>
-      <${Isk} amount=${player.isk} />
+      <${Isk} class="player-isk" amount=${player.isk} />
       <div class="player-influences">
         <${Influences} influences=${player.revealedInfluences} />
         <${Influences} influences=${player.heldInfluences} hidden />

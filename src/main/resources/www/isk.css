@@ -1,5 +1,9 @@
 .isk::before {
     content: "";
+    --rows: calc( clamp(0, var(--number) - 0, 1) + 
+                  clamp(0, var(--number) - 4, 1) + 
+                  clamp(0, var(--number) - 8, 1)
+                );
     background-image: radial-gradient(
         circle 0.75em at center,
         #eee 30%,
@@ -23,7 +27,7 @@
     background-repeat: space no-repeat;
     width: 4.1em;
     display: inline-block;
-    height: calc(min(1.03em * (1 + var(--number) / 4), 3.1em));
+    height: calc(1.03em * var(--rows));
     margin-right: 1em;
 }
 
