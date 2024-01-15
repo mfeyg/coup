@@ -22,9 +22,7 @@ sealed class Action(val player: Player, private val cost: Int = 0, private val e
   }
 
   override fun toString() = buildString {
-    append("Action(")
-    append("type=$type")
-    append(", ")
+    append("Action.$type(")
     append("player=$player")
     target?.let {
       append(", ")
