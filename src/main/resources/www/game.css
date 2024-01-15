@@ -12,7 +12,7 @@ main {
 }
 
 .prompt {
-    min-height: 20vh;
+    min-height: 10em;
     margin-top: 3em;
 }
 
