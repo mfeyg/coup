@@ -14,6 +14,7 @@ main {
 .prompt {
     min-height: 10em;
     margin-top: 3em;
+    text-align: center;
 }
 
 .players {
