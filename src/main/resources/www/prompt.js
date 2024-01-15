@@ -172,8 +172,8 @@ export function Prompt({ prompt, player, opponents }) {
   }
 
   return html`
-    <dialog open=${!!prompt}>
+    <div class="prompt" open=${!!prompt}>
     ${dialog}
-    </dialog>
+    </div>
   `
 }
