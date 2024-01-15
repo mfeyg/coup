@@ -25,15 +25,13 @@
         calc(4em / max(0, min(var(--number) - 4, 4))) 1em,
         calc(4em / max(0, min(var(--number) - 8, 4))) 1em;
     background-repeat: space no-repeat;
-    width: 4.1em;
-    display: inline-block;
     height: calc(1.03em * var(--rows));
-    margin-right: 1em;
 }
 
 .isk {
     white-space: nowrap;
     display: flex;
     flex-direction: column;
-    font-size: 0.6em
+    font-size: 0.6em;
+    text-align: center;
 }
