@@ -1,179 +1,149 @@
 import { html } from "htm/preact"
 import { useState } from "preact/hooks"
+import { Dialog } from "./dialog.js"
 
-function ActionPrompt({ options, onSelect }) {
-  return html`
-    Choose an action:
-    <ul class="buttons">
-    ${options.map(option => html`
-      <li><button onclick=${() => onSelect(option)}>${option.actionType}</button></li>
-    `)}
-    </ul>
-  `
+function Timer({children}) {
+  if (children != null) {
+    return `(${children})`
+  }
 }
 
-function TargetPrompt({ targets, onSelect }) {
-  return html`
-    Choose a target:
-    <ul class="buttons">
-    ${targets.map(target => html`
-      <li><button onclick=${() => onSelect(target)}>${target.name}</button></li>
-    `)}
-    </ul>
-    `
+function ActionDescription({ action, player }) {
+  switch (action.type) {
+    case "Foreign Aid":
+      return `${action.player.name} wishes to receive foreign aid.`
+    case "Tax":
+      return `${action.player.name} wishes to collect taxes.`
+    case "Steal":
+      return `${action.player.name} wishes to steal from ${action.target.number === player.number ? "you" : action.target.name}.`
+    case "Exchange":
+      return `${action.player.name} wishes to exchange with the deck.`
+    case "Assassinate":
+      return `${action.player.name} wishes to assassinate ${action.target.number === player.number ? "you" : action.target.name}.`
+  }
 }
 
-function TakeTurnPrompt({ options, onSelect }) {
+const handlers = new Map()
+
+handlers.set("TakeTurn", function TakeTurn({ prompt, respond, timer }) {
   const [action, setAction] = useState(null)
 
-  function selectAction(option) {
-    if (!option.targets?.length) {
-      onSelect({ actionType: option.actionType })
-    } else {
-      setAction(option)
-    }
+  if (action != null) {
+    return html`<${Dialog}
+     message=${html`Choose a target <${Timer}>${timer}</${Timer}>`}
+     buttons=${action.targets.map(target => ({
+        label: target.name, onSelect() { 
+          respond({ actionType: action.actionType, target: target.number })
+        } }))} />`
   }
 
-  function selectTarget(target) {
-    onSelect({ actionType: action.actionType, target: target.number })
-  }
+  return html`<${Dialog} 
+    message=${html`Choose an action <${Timer}>${timer}</${Timer}>`} 
+    buttons=${prompt.options.map(action => ({
+      label: action.actionType, onSelect() {
+        if (action.targets?.length) {
+          setAction(action)
+          return
+        }
+        respond({actionType: action.actionType})
+      }
+  }))} />`
+})
 
-  if (action == null) {
-    return html`<${ActionPrompt} options=${options} onSelect=${selectAction} />`
-  } else {
-    return html`<${TargetPrompt} targets=${action.targets} onSelect=${selectTarget} />`
-  }
-}
 
-function ResponsePrompt({ blockingInfluences, claimedInfluence, onSelect, timeout }) {
+handlers.set("RespondToAction", function RespondToAction({ prompt, player, respond, timer }) {
   const [blocking, setBlocking] = useState(false)
   if (blocking) {
-    return html`
-      <p>Choose an influence to block as: ${timeout != null && `(${timeout})`}</p>
-      <ul class="buttons">
-      ${blockingInfluences.map(influence => html`
-        <li><button onclick=${() => onSelect({ reaction: "Block", influence })}>${influence}</button></li>`)}
-        <li><button onclick=${() => setBlocking(false)}>Never mind</button></li>
-      </ul>
-    `
+    const blockAs = (influence) => respond({reaction: "Block", influence: influence})
+    return html`<${Dialog}
+       message=${html`Choose an influence to block as: <${Timer}>${timer}</${Timer}>`}
+       buttons=${[
+        ...prompt.action.blockingInfluences.map(influence =>
+         ({label: influence, onSelect() { blockAs(influence) }})
+        ), {label: "Never mind", onSelect() { setBlocking(false) }}
+      ]}
+      />`
   }
-  function AllowButton() {
-    return html`<button onclick=${() => onSelect({ reaction: "Allow" })}>Allow</button>`
+  const buttons = []
+  const allowButton = {label: "Allow", onSelect() { respond({reaction: "Allow"})}}
+  const blockButton = {label: "Block", onSelect() { setBlocking(true) }}
+  const challengeButton = {
+    label: `Challenge claim of ${prompt.action.claimedInfluence}`,
+    onSelect() { respond({reaction: "Challenge"}) }
   }
-  function BlockButton() {
-    return blockingInfluences && html`<button onclick=${() => setBlocking(true)}>Block</button>`
-  }
-  function ChallengeButon() {
-    return claimedInfluence && html`<button onclick=${() => onSelect({ reaction: "Challenge" })}>Challenge claim of ${claimedInfluence}</button>`
-  }
-  return html`
-    <p>How will you respond? ${timeout != null && `(${timeout})`}</p>
-    <ul class="buttons">
-    <li><${AllowButton} /></li>
-    <li><${BlockButton} /></li>
-    <li><${ChallengeButon} /></li>
-    </ul>
-  `
-}
+  buttons.push(allowButton)
+  prompt.action.canBeBlocked && buttons.push(blockButton)
+  prompt.action.canBeChallenged && buttons.push(challengeButton)
+  return html`<${Dialog} 
+    message=${html`
+      <${ActionDescription} player=${player} action=${prompt.action} />
+      <p>How will you respond? <${Timer}>${timer}</${Timer}></p>`} 
+    buttons=${buttons}
+    />`
+})
 
-function PromptReturn({ influences, number, onSelect }) {
+handlers.set("RespondToBlock", function RespondToBlock({ prompt, respond, timer }) {
+  return html`<${Dialog}
+     message=${html`
+      <p>${prompt.blocker.name} wishes to block as the ${prompt.influence}</p>
+      <p>How will you respond? <${Timer}>${timer}</${Timer}></p>`}
+     buttons=${[
+      {label: "Allow", onSelect() { respond({reaction: "Allow"})}},
+      {label: "Challenge", onSelect() { respond({reaction: "Challenge"})}},
+     ]} />`
+})
+
+handlers.set("RespondToChallenge", function RespondToChallenge({ prompt, player, respond, timer }) {
+  return html`<${Dialog}
+    message=${html`
+      <p>${prompt.challenger.name} challenges your claim of ${prompt.claim}</p>
+      <p>Select an influence to reveal <${Timer}>${timer}</${Timer}></p>`}
+    buttons=${player.heldInfluences.map(influence => ({
+      label: influence,
+      onSelect() { respond({influence}) },
+    }))} />`
+})
+
+handlers.set("SurrenderInfluence", function SurrenderInfluence({ player, respond, timer }) {
+  return html`<${Dialog}
+    message=${html`Choose an influence to surrender <${Timer}>${timer}</${Timer}>`} 
+    buttons=${player.heldInfluences.map(influence => ({
+      label: influence,
+      onSelect() { respond({influence}) },
+    }))} />`
+})
+
+handlers.set("Exchange", function Exchange({ prompt, player, respond, timer }) {
+  const influences = player.heldInfluences.concat(prompt.drawnInfluences)
   const [selected, setSelected] = useState([])
-  function select(influence) {
-    if (selected.length + 1 === number) {
-      onSelect(selected.concat(influence))
-    } else {
-      setSelected(selected.concat(influence))
-    }
+  const remaining = influences
+  selected.forEach(influence =>
+    remaining.splice(remaining.indexOf(influence), 1)
+  )
+  if (selected.length === player.heldInfluences.length) {
+    respond({returnedInfluences: remaining})
   }
-  selected.forEach(influence => influences.splice(influences.indexOf(influence), 1))
-  return html`
-  <p>Select influences to return:</p>
-  <ul class="buttons">
-  ${influences.map(influence => html`
-    <li><button onclick=${() => select(influence)}>${influence}</button></li>`)}
-  </ul>
-  `
-}
+  return html`<${Dialog}
+  message=${html`
+    <p>You drew: ${prompt.drawnInfluences.join(", ")}</p>
+    <p>Select influences to keep <${Timer}>${timer}</${Timer}></p>`}
+  buttons=${remaining.map(influence => ({
+    label: influence,
+    onSelect() { setSelected(selected.concat(influence)) },
+  }))} />`
+})
 
-function actionDescription(actor, actionType, target) {
-  switch (actionType) {
-    case "Foreign Aid":
-      return `${actor} wishes to receive foreign aid.`
-    case "Tax":
-      return `${actor} wishes to collect taxes.`
-    case "Steal":
-      return `${actor} wishes to steal from ${target}.`
-    case "Exchange":
-      return `${actor} wishes to exchange with the deck.`
-    case "Assassinate":
-      return `${actor} wishes to assassinate ${target}.`
-  }
-}
-
-export function Prompt({ prompt, player, opponents }) {
-  const { type, prompt: message } = prompt ?? {}
+export function Prompt({ prompt, player }) {
   const respond = (response) => {
     prompt.respond(response)
   }
-  let dialog
 
-  switch (type) {
-    case "TakeTurn":
-      dialog = html`<${TakeTurnPrompt} options=${message.options} onSelect=${respond} />`
-      break;
-    case "RespondToAction":
-      dialog = html`
-      <p>${actionDescription(
-        opponents[message.player].name,
-        message.type,
-        message.target === player.number ? "you" : opponents[message.target]?.name
-      )}</p>
-      <${ResponsePrompt}
-        blockingInfluences=${message.canBeBlocked && message.blockingInfluences}
-        claimedInfluence=${message.canBeChallenged && message.claimedInfluence}
-        onSelect=${respond}
-        timeout=${prompt.timeout}
-        />
-      `
-      break;
-    case "RespondToBlock":
-      dialog = html`
-      <p>${opponents[message.blocker].name} wishes to block as the ${message.blockingInfluence}.</p>
-      <${ResponsePrompt}
-        claimedInfluence=${message.blockingInfluence}
-        onSelect=${respond}
-        timeout=${prompt.timeout}
-        />
-      `
-      break;
-    case "RespondToChallenge":
-      dialog = html`
-      <p>${opponents[message.challenger].name} challenges your claim of ${message.claim}.</p>
-      <p>While influence will you show?</p>
-      ${player.heldInfluences.map(influence => html`<button onclick=${() => respond({ influence })}>${influence}</button>`)}
-      `
-      break;
-    case "SurrenderInfluence":
-      dialog = html`
-      <p>Select an influence to surrender:</p>
-      ${player.heldInfluences.map(influence => html`<button onclick=${() => respond({ influence })}>${influence}</button>`)}
-      `
-      break;
-    case "Exchange":
-      dialog = html`
-      <p>Your influences: ${player.heldInfluences.join(", ")}</p>
-      <p>You drew: ${message.drawnInfluences.join(", ")}</p>
-      <${PromptReturn}
-        influences=${player.heldInfluences.concat(message.drawnInfluences)}
-        number=${2} 
-        onSelect=${influences => respond({ returnedInfluences: influences })} />
-      `
-      break;
+  if (handlers.has(prompt?.type)) {
+    return html`<${handlers.get(prompt.type)} 
+      player=${player}
+      prompt=${prompt.prompt}
+      respond=${respond}
+      timer=${prompt.timeout}
+    />`
   }
-
-  return html`
-    <div class="prompt" open=${!!prompt}>
-    ${dialog}
-    </div>
-  `
 }

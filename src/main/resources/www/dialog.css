@@ -1,0 +1,16 @@
+ul.dialog-buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0;
+    justify-content: center;
+}
+
+li.dialog-button {
+    display: block;
+    margin: 0.2rem;
+}
+
+li.dialog-button button {
+    margin: 0;
+}

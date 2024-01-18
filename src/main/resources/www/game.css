@@ -11,7 +11,7 @@ main {
     width: 100%;
 }
 
-.prompt {
+.prompt, .dialog {
     min-height: 10em;
     margin-top: 3em;
     text-align: center;

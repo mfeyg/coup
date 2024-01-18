@@ -2,16 +2,18 @@ package coup.server.agent
 
 import coup.game.Influence
 import coup.game.Reaction.Block
+import coup.server.dto.PlayerData
+import coup.server.dto.PlayerData.Companion.dto
 import kotlinx.serialization.Serializable
 
 object RespondToBlock {
 
   @Serializable
   private data class Request(
-    val blocker: Int,
-    val blockingInfluence: Influence
+    val blocker: PlayerData,
+    val influence: Influence
   ) {
-    constructor(block: Block) : this(block.blocker.number, block.blockingInfluence)
+    constructor(block: Block) : this(block.blocker.dto(), block.blockingInfluence)
   }
 
   @Serializable

@@ -1,36 +1,17 @@
 package coup.server.agent
 
-import coup.game.actions.Action
-import coup.game.actions.Action.Type.Companion.type
 import coup.game.Influence
-import coup.game.Player
 import coup.game.Reaction
-import coup.game.rules.Ruleset
+import coup.game.actions.Action
 import coup.server.agent.RespondToAction.Response.Type.*
+import coup.server.dto.ActionData
+import coup.server.dto.ActionData.Companion.dto
 import kotlinx.serialization.Serializable
 
 object RespondToAction {
 
   @Serializable
-  private data class Request(
-    val player: Int,
-    val type: ActionType,
-    val target: Int?,
-    val canBeChallenged: Boolean,
-    val canBeBlocked: Boolean,
-    val blockingInfluences: Set<Influence>,
-    val claimedInfluence: Influence?,
-  ) {
-    constructor(player: Player, action: Action, ruleset: Ruleset) : this(
-      player = action.player.number,
-      type = ActionType(action.type),
-      target = action.target?.number,
-      canBeChallenged = ruleset.canChallenge(player, action),
-      canBeBlocked = ruleset.canAttemptBlock(player, action),
-      blockingInfluences = ruleset.blockingInfluences(action),
-      claimedInfluence = ruleset.requiredInfluence(action),
-    )
-  }
+  private data class Request(val action: ActionData)
 
   @Serializable
   private data class Response(
@@ -45,7 +26,7 @@ object RespondToAction {
   suspend fun PromptContext.respondToAction(action: Action) = prompt {
     type = "RespondToAction"
     request(
-      Request(player, action, ruleset)
+      Request(action.dto(player, ruleset))
     )
     readResponse { (reaction, influence): Response ->
       when (reaction) {

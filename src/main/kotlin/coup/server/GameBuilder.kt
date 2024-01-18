@@ -17,7 +17,7 @@ class GameBuilder {
 
   fun addHumanPlayer(person: Person, agentWrapper: (Agent) -> Agent = { it }) {
     players.add(person to { number, server ->
-      Player(number, ruleset) { player ->
+      Player(number, person.name, ruleset) { player ->
         agentWrapper(PlayerAgent(PromptContext(player, ruleset, people, options, server.session(person))))
       }
     })
@@ -29,7 +29,7 @@ class GameBuilder {
     val color = randomColor()
     val computer = Person(id, name, color)
     players.add(computer to { number, _ ->
-      Player(number, ruleset) { player ->
+      Player(number, name, ruleset) { player ->
         agentWrapper(ComputerAgent(ruleset, player))
       }
     })

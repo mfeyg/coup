@@ -1,7 +1,11 @@
 package coup.server.agent
 
 import coup.game.Board
-import coup.server.agent.ActionType.Companion.actionType
+import coup.game.actions.Action
+import coup.server.dto.ActionType
+import coup.server.dto.ActionType.Companion.dto
+import coup.server.dto.PlayerData
+import coup.server.dto.PlayerData.Companion.dto
 import kotlinx.serialization.Serializable
 
 object ChooseAction {
@@ -12,13 +16,7 @@ object ChooseAction {
   @Serializable
   private data class Option(
     val actionType: ActionType,
-    val targets: List<Target> = emptyList(),
-  )
-
-  @Serializable
-  private data class Target(
-    val name: String,
-    val number: Int,
+    val targets: List<PlayerData> = emptyList(),
   )
 
   @Serializable
@@ -28,18 +26,15 @@ object ChooseAction {
   )
 
   suspend fun PromptContext.chooseAction(board: Board) = prompt {
-    val actionsAvailable = ruleset.availableActions(player, board).associateBy { it.actionType }
+    val actionsAvailable = ruleset.availableActions(player, board).associateBy { it.type.dto() }
     val targets = (board.activePlayers - player).associateBy { it.number }
     type = "TakeTurn"
     request(
       Request(actionsAvailable.values.map { option ->
         Option(
-          option.actionType,
-          if (option.targetRequired) targets.values.map { target ->
-            Target(
-              players[target.number].name,
-              target.number
-            )
+          option.type.dto(),
+          if (option.targetRequired) targets.values.map {
+            it.dto()
           } else emptyList()
         )
       })
@@ -53,5 +48,6 @@ object ChooseAction {
       }
       action.build()
     }
+    timeout(options.responseTimer) { Action.Income(player) }
   }
 }

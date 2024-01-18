@@ -1,7 +1,11 @@
 package coup.server
 
 import coup.game.Game
+import coup.game.Player
 import coup.server.ConnectionController.SocketConnection
+import coup.server.dto.GameState
+import coup.server.dto.PlayerData.Companion.dto
+import coup.server.dto.CurrentPlayerData.Companion.asCurrentPlayer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.hours
@@ -22,10 +26,10 @@ class GameServer(
   private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
   fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
 
-  private fun state(playerIndex: Int? = null) = version.map {
+  private fun state(player: () -> Player? = { null }) = version.map {
     GameState(
-      player = playerIndex?.let { i -> GameState.Player(players[i], game.players[i]) },
-      players = players.indices.map { i -> GameState.Opponent(players[i], game.players[i]) },
+      player = player()?.asCurrentPlayer(),
+      players = game.players.map { it.dto() },
       currentTurn = game.currentPlayer.number.takeIf { game.winner == null },
       winner = game.winner?.number,
     )
@@ -34,7 +38,7 @@ class GameServer(
   private operator fun Map<Id, Session<GameState, Nothing>>.plus(person: Person): Map<Id, Session<GameState, Nothing>> {
     if (containsKey(person.id)) return this
     val playerIndex = players.indexOfFirst { it.id == person.id }.takeIf { it >= 0 }
-    val gameState = state(playerIndex)
+    val gameState = state { playerIndex?.let { game.players[it] } }
     return this + (person.id to Session(person, gameState))
   }
 

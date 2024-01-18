@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.*
 
 class Player(
   val number: Int,
+  val name: String,
   private val ruleset: Ruleset,
   agent: (Player) -> Agent,
 ) {

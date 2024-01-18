@@ -1,19 +1,17 @@
-package coup.server.agent
+package coup.server.dto
 
 import coup.game.actions.Action
-import coup.game.actions.ActionBuilder
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 enum class ActionType {
-  Income,
-
   @SerialName("Foreign Aid")
-  ForeignAid, Tax, Steal, Exchange, Assassinate, Coup;
+  ForeignAid,
+  Income, Tax, Steal, Exchange, Assassinate, Coup;
 
   companion object {
-    operator fun invoke(actionType: Action.Type) = when (actionType) {
+    fun Action.Type.dto() = when (this) {
       Action.Type.Income -> Income
       Action.Type.ForeignAid -> ForeignAid
       Action.Type.Tax -> Tax
@@ -22,8 +20,5 @@ enum class ActionType {
       Action.Type.Assassinate -> Assassinate
       Action.Type.Coup -> Coup
     }
-
-    val ActionBuilder.actionType
-      get() = ActionType(type)
   }
 }
