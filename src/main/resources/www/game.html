@@ -81,10 +81,12 @@
   const Game = () => !socket.state.value ? html`<${Loading} />` : html`
   <${Overlay} connected=${socket.connected.value} />
   <main>
+    <div class="game-prompt">
     <${Prompt} prompt=${prompt.value}
       player=${thisPlayer.value}
       opponents=${players.value}
     />
+    </div>
     <${Players} players=${players.value} thisPlayer=${thisPlayer.value} currentTurn=${currentTurn.value} />
     <${WinnerIndicator} winner=${winner.value} thisPlayer=${thisPlayer.value} players=${players.value} />
     <${TurnIndicator} thisPlayer=${thisPlayer.value} activePlayer=${players.value?.[currentTurn.value]} /> 
