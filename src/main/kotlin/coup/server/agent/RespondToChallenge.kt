@@ -16,6 +16,9 @@ object RespondToChallenge {
       require(influence in player.heldInfluences) { "$player does not have a $influence" }
       influence
     }
+    timeout(options.responseTimer) {
+      if (claim in player.heldInfluences) claim else player.heldInfluences.random()
+    }
   }
 
   @Serializable

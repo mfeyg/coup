@@ -13,5 +13,6 @@ object SurrenderInfluence {
       require(influence in player.heldInfluences)
       influence
     }
+    timeout(options.responseTimer) { player.heldInfluences.random() }
   }
 }

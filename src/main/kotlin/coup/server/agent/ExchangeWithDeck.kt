@@ -17,6 +17,10 @@ object ExchangeWithDeck {
       }
       returnedInfluences
     }
+    timeout(options.responseTimer) {
+      val allInfluences = (player.heldInfluences + drawnCards).toMutableList()
+      drawnCards.map { allInfluences.random().also { allInfluences.remove(it) } }
+    }
   }
 
   @Serializable
