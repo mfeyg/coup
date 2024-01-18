@@ -116,17 +116,18 @@ handlers.set("SurrenderInfluence", function SurrenderInfluence({ player, respond
 handlers.set("Exchange", function Exchange({ prompt, player, respond, timer }) {
   const influences = player.heldInfluences.concat(prompt.drawnInfluences)
   const [selected, setSelected] = useState([])
+  const leftToPick = player.heldInfluences.length - selected.length
   const remaining = influences
   selected.forEach(influence =>
     remaining.splice(remaining.indexOf(influence), 1)
   )
-  if (selected.length === player.heldInfluences.length) {
+  if (leftToPick === 0) {
     respond({returnedInfluences: remaining})
   }
   return html`<${Dialog}
   message=${html`
     <p>You drew: ${prompt.drawnInfluences.join(", ")}</p>
-    <p>Select influences to keep <${Timer}>${timer}</${Timer}></p>`}
+    <p>Select influence(s) to keep <${Timer}>${timer}</${Timer}></p>`}
   buttons=${remaining.map(influence => ({
     label: influence,
     onSelect() { setSelected(selected.concat(influence)) },
