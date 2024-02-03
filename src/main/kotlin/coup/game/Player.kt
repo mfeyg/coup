@@ -54,7 +54,7 @@ class Player(
 
   private fun loseInfluence(influence: Influence) {
     state.update {
-      require(influence in it.heldInfluences)
+      require(influence in it.heldInfluences) { "$this doesn't have a $influence" }
       it.copy(
         revealedInfluences = it.revealedInfluences + influence,
         heldInfluences = it.heldInfluences - influence,
@@ -106,7 +106,7 @@ class Player(
     return influence
   }
 
-  override fun toString() = "Player $number"
+  override fun toString() = "Player $number <<$name>>"
 
   companion object {
 
