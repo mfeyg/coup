@@ -17,7 +17,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
 
   private fun nextTurn() = with(currentTurn) { value = value.next() }
 
-  val activePlayer: Player get() = currentTurn.value.currentPlayer
+  val activePlayer: Player get() = currentTurn.value.player
   val winner: Player? get() = activePlayers.singleOrNull()
 
   val players by board::players

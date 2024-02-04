@@ -1,7 +1,7 @@
 package coup.game
 
 class TurnProgression(private val players: List<Player>) {
-  val currentPlayer = players.first()
+  val player = players.first()
 
   fun next(): TurnProgression {
     val players = players.toMutableList()
