@@ -110,36 +110,16 @@ class Player(
 
   companion object {
 
-    suspend fun Collection<Player>.reaction(action: Action): Reaction {
-      val response = CompletableDeferred<Reaction>()
+    private suspend fun <T : Any> Collection<Player>.prompt(respond: suspend Player.() -> T?): T? {
+      val response = CompletableDeferred<T?>()
       coroutineScope {
         launch {
-          val outer = this
+          val outerScope = this
           forEach { responder ->
             launch {
-              val reaction = responder.respondToAction(action)
-              if (reaction != Reaction.Allow) {
-                response.complete(reaction)
-                outer.cancel()
-              }
-            }
-          }
-        }
-      }
-      response.complete(Reaction.Allow)
-      return response.await()
-    }
-
-    suspend fun Collection<Player>.challenger(block: Block): Player? {
-      val response = CompletableDeferred<Player?>()
-      coroutineScope {
-        launch {
-          val outer = this
-          forEach { responder ->
-            launch {
-              if (responder.challengesBlock(block)) {
-                response.complete(responder)
-                outer.cancel()
+              responder.respond()?.let {
+                response.complete(it)
+                outerScope.cancel()
               }
             }
           }
@@ -148,5 +128,10 @@ class Player(
       response.complete(null)
       return response.await()
     }
+
+    suspend fun Collection<Player>.reaction(action: Action) =
+      prompt { respondToAction(action).takeIf { it != Reaction.Allow } } ?: Reaction.Allow
+
+    suspend fun Collection<Player>.challenger(block: Block) = prompt { takeIf { challengesBlock(block) } }
   }
 }
