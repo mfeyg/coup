@@ -2,7 +2,7 @@ package coup.game
 
 import coup.game.Influence.*
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 
 class DeckTest {
   @Test
@@ -11,7 +11,7 @@ class DeckTest {
     val cards = mutableListOf<Influence>()
     repeat(9) { cards += deck.draw() }
 
-    assertContentEquals(
+    assertEquals(
       listOf(
         Contessa, Contessa, Contessa,
         Assassin, Assassin, Assassin,
