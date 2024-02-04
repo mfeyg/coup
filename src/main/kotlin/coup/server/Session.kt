@@ -66,7 +66,7 @@ class Session<State, Message>(
               if (it.values.isEmpty()) {
                 connection.send("Prompts[]")
               }
-              combine(it.values.map { it.prompt }) { prompts ->
+              combine(it.values.map { it.message }) { prompts ->
                 connection.send("Prompts[" + prompts.joinToString(",") + "]")
               }.collect()
             }
