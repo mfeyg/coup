@@ -9,7 +9,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 
-/** Represents a user's session. */
+/** Represents a user's session with a particular page. Persists between connections. */
 class Session<State, Message>(
   val user: Person,
   private val state: Flow<State>,
