@@ -59,7 +59,7 @@ class Lobby(
     with(CoroutineScope(Dispatchers.Default)) {
       shutDownWhenEmptyFor(5.minutes)
       launch { manageGameStartTimer(startingIn) }
-      launch { forEachSession { respondToCommands(it.messages) } }
+      launch { forEachSession { processCommands(it.messages) } }
     }
   }
 
@@ -107,7 +107,7 @@ class Lobby(
     }
   }
 
-  private suspend fun respondToCommands(commands: Flow<LobbyCommand>) = commands.collect { command ->
+  private suspend fun processCommands(commands: Flow<LobbyCommand>) = commands.collect { command ->
     when (command) {
       is LobbyCommand.StartGame -> startingIn.value = 3
       is LobbyCommand.CancelGameStart -> startingIn.value = null
