@@ -58,10 +58,12 @@ class StandardRules : Ruleset {
     else -> 0
   }
 
-  override fun availableActions(player: Player, board: Board) =
-    if (player.isk >= 10) listOf(ActionBuilder(this, player, board, Coup))
-    else actions.filter { action -> cost(action) <= player.isk }
-      .map { ActionBuilder(this, player, board, it) }
+  override fun availableActions(player: Player, board: Board): List<ActionBuilder> {
+    val actions =
+      if (player.isk >= 10) listOf(Coup)
+      else actions.filter { action -> cost(action) <= player.isk }
+    return actions.map { ActionBuilder(this, player, board, it) }
+  }
 
   override fun requiredInfluence(actionType: Action.Type) = when (actionType) {
     Tax -> Duke
