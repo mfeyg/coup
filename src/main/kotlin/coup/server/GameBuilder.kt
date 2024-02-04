@@ -6,7 +6,6 @@ import coup.game.rules.Ruleset
 import coup.game.rules.StandardRules
 import coup.server.agent.ComputerAgent
 import coup.server.agent.PlayerAgent
-import coup.server.agent.PromptContext
 
 class GameBuilder {
   private val players = mutableListOf<Pair<Person, (number: Int, GameServer) -> Player>>()
@@ -18,7 +17,7 @@ class GameBuilder {
   fun addHumanPlayer(person: Person) {
     players.add(person to { number, server ->
       Player(number, person.name, ruleset) { player ->
-        PlayerAgent(PromptContext(player, ruleset, people, options, server.session(person)))
+        PlayerAgent(player, ruleset, people, options, server.session(person))
       }
     })
   }
