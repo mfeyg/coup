@@ -34,14 +34,12 @@ class GameServer(
     )
   }
 
-  private operator fun Map<Id, Session<GameState, Nothing>>.plus(person: Person): Map<Id, Session<GameState, Nothing>> {
-    if (containsKey(person.id)) return this
+  fun session(person: Person) = sessions.updateAndGet sessions@{ value ->
+    if (value.containsKey(person.id)) return@sessions value
     val playerIndex = players.indexOfFirst { it.id == person.id }.takeIf { it >= 0 }
     val gameState = state { playerIndex?.let { game.players[it] } }
-    return this + (person.id to Session(person, gameState))
-  }
-
-  fun session(person: Person) = sessions.updateAndGet { it + person }.getValue(person.id)
+    return@sessions value + (person.id to Session(person, gameState))
+  }.getValue(person.id)
 
   suspend fun connect(connection: UserConnection) {
     try {
