@@ -1,6 +1,7 @@
 package coup.server
 
 import coup.server.ConnectionController.SocketConnection
+import coup.server.agent.Prompt
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED

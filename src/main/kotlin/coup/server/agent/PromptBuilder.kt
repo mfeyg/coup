@@ -1,6 +1,7 @@
-package coup.server
+package coup.server.agent
 
-import coup.server.PromptWithTimeout.TimeoutOption
+import coup.server.Id
+import coup.server.agent.PromptWithTimeout.TimeoutOption
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString

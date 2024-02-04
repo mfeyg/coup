@@ -1,5 +1,6 @@
-package coup.server
+package coup.server.agent
 
+import coup.server.Id
 import kotlinx.coroutines.flow.Flow
 
 interface Prompt<T> {

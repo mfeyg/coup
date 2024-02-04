@@ -1,5 +1,6 @@
-package coup.server
+package coup.server.agent
 
+import coup.server.Id
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
