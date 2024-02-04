@@ -1,5 +1,6 @@
-package coup.server
+package coup.server.dto
 
+import coup.server.GameOptions
 import kotlinx.serialization.Serializable
 
 @Serializable

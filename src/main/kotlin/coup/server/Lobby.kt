@@ -1,5 +1,6 @@
 package coup.server
 
+import coup.server.dto.LobbyState
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -9,35 +10,6 @@ import kotlin.time.Duration.Companion.seconds
 class Lobby(
   private val newGame: suspend (players: List<Person>, GameOptions) -> Pair<GameServer, Id>
 ) {
-
-  private sealed interface LobbyCommand {
-    data object StartGame : LobbyCommand
-    data object CancelGameStart : LobbyCommand
-    data class SetResponseTimer(val responseTimer: Int?) : LobbyCommand {
-      companion object {
-        val PATTERN = Regex("SetResponseTimer:(null|\\d+)")
-        fun parse(input: String): SetResponseTimer {
-          val (value) = PATTERN.matchEntire(input)?.destructured
-            ?: throw IllegalArgumentException("Unexpected input: $input")
-          return SetResponseTimer(
-            when (value) {
-              "null" -> null
-              else -> value.toInt()
-            }
-          )
-        }
-      }
-    }
-
-    companion object {
-      fun valueOf(command: String) = when {
-        command == "StartGame" -> StartGame
-        command == "CancelGameStart" -> CancelGameStart
-        command matches SetResponseTimer.PATTERN -> SetResponseTimer.parse(command)
-        else -> throw IllegalArgumentException("Unknown command $command")
-      }
-    }
-  }
 
   private val sessions = MutableStateFlow(mapOf<Id, Session<LobbyState, LobbyCommand>>())
 
