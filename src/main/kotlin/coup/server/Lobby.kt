@@ -14,24 +14,27 @@ class Lobby(
 
   private val sessions = MutableStateFlow(mapOf<Id, Session<LobbyState, LobbyCommand>>())
 
-  private val options = MutableStateFlow(GameOptions.default)
+  private val gameOptions = MutableStateFlow(GameOptions.default)
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<Id?>(null)
-  private val state = combine(sessions, champion, startingIn, options) { sessions, champion, startingIn, options ->
-    LobbyState(
-      players = sessions.values.map { session ->
-        LobbyState.Player(
-          session.user.name,
-          session.user.color,
-          session.userId == champion
-        )
-      },
-      startingIn = startingIn,
-      options = options,
-    )
-  }
-  val isActive: Boolean get() = !shuttingDown.value
+
+  private val state =
+    combine(sessions, champion, startingIn, gameOptions) { sessions, champion, startingIn, gameOptions ->
+      LobbyState(
+        players = sessions.values.map { session ->
+          LobbyState.Player(
+            session.user.name,
+            session.user.color,
+            session.userId == champion
+          )
+        },
+        startingIn = startingIn,
+        options = gameOptions,
+      )
+    }
+
   private val shuttingDown = MutableStateFlow(false)
+  val isActive: Boolean get() = !shuttingDown.value
 
   suspend fun connect(socket: UserConnection) {
     if (!isActive) {
@@ -110,7 +113,7 @@ class Lobby(
       is LobbyCommand.CancelGameStart -> startingIn.value = null
       is LobbyCommand.SetResponseTimer -> {
         startingIn.value = null
-        options.update { it.copy(responseTimer = command.responseTimer) }
+        gameOptions.update { it.copy(responseTimer = command.responseTimer) }
       }
     }
   }
@@ -125,7 +128,7 @@ class Lobby(
 
   private suspend fun startGame() {
     var players = this.sessions.value.values.toList()
-    val options = options.value
+    val options = gameOptions.value
     val championId = champion.value
     val champion = players.indexOfFirst { it.userId == championId }
     if (champion != -1) {
