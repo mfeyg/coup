@@ -24,6 +24,6 @@ class Deck(cards: List<Influence>) {
   }
 
   constructor(cards: List<Influence>, repeated: Int) : this(
-    sequence { cards.forEach { card -> repeat(repeated) { yield(card) } } }.toList()
+    buildList { cards.forEach { card -> repeat(repeated) { add(card) } } }
   )
 }
