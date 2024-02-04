@@ -4,6 +4,7 @@ import coup.game.Game
 import coup.game.Player
 import coup.game.rules.Ruleset
 import coup.game.rules.StandardRules
+import coup.server.agent.ComputerAgent
 import coup.server.agent.PlayerAgent
 import coup.server.agent.PromptContext
 

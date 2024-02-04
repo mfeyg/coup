@@ -1,4 +1,4 @@
-package coup.server
+package coup.server.agent
 
 import coup.game.*
 import coup.game.actions.Action
