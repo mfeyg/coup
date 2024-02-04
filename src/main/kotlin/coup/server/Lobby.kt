@@ -34,10 +34,10 @@ class Lobby(
     }
 
   private val shuttingDown = MutableStateFlow(false)
-  val isActive: Boolean get() = !shuttingDown.value
+  val active: Boolean get() = !shuttingDown.value
 
   suspend fun connect(socket: UserConnection) {
-    if (!isActive) {
+    if (!active) {
       socket.send("LobbyNotFound")
       return
     }

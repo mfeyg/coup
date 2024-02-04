@@ -29,6 +29,6 @@ class LobbyController(private val newLobby: () -> Lobby) {
     return id
   }
 
-  private fun lobby(id: Id): Lobby? = lobbyIds.value[id]?.takeIf { it.isActive }
+  private fun lobby(id: Id): Lobby? = lobbyIds.value[id]?.takeIf { it.active }
 
 }
