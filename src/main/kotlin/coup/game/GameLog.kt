@@ -12,7 +12,7 @@ class GameLog private constructor(
 ) {
   constructor() : this(_events = MutableStateFlow(listOf()))
 
-  private val logger = LoggerFactory.getLogger(GameLog::class.java)
+  private val logger = LoggerFactory.getLogger(this::class.java)
 
   /** A log event. */
   data class Event(val eventType: String, val context: Map<String, Any>)
