@@ -37,7 +37,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
     val action = logContext("action") { player.chooseAction(board) }
     logEvent("Action selected")
 
-    when (val response = activePlayers.reaction(action)) {
+    when (val reaction = activePlayers.reaction(action)) {
       is Reaction.Allow -> {
         logEvent("Action allowed")
         logEvent("Action performed")
@@ -45,7 +45,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
       }
 
       is Reaction.Block -> {
-        val block = logContext("block") { response }
+        val block = logContext("block") { reaction }
         val (blocker, blockingInfluence) = block
         logEvent("Block attempted")
         val challenger = logContext("challenger") { activePlayers.challenger(block) }
@@ -73,7 +73,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
       }
 
       is Reaction.Challenge -> {
-        val challenger = logContext("challenger") { response.challenger }
+        val challenger = logContext("challenger") { reaction.challenger }
         logEvent("Action challenged")
         val requiredInfluence = ruleset.requiredInfluence(action)!!
         val revealedInfluence = player.respondToChallenge(requiredInfluence, challenger)
