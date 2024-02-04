@@ -33,7 +33,7 @@ class GameLog private constructor(
     fun build() = _context.toMap()
   }
 
-  /** Logs the given event with optional additions context entries. */
+  /** Logs the given event with optional additional context entries. */
   fun logEvent(eventType: String, block: ContextBuilder.() -> Unit = {}) {
     val context = ContextBuilder(_context.get()).also(block).build()
     with(logger.atInfo()) {
