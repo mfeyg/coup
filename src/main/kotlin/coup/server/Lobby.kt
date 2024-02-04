@@ -55,8 +55,8 @@ class Lobby(
   fun start() {
     with(CoroutineScope(Dispatchers.Default)) {
       shutDownWhenEmptyFor(5.minutes)
-      launch { respondToCommands() }
-      launch { gameStartTimer() }
+      launch { manageGameStartTimer(startingIn) }
+      launch { forEachSession { respondToCommands(it.messages) } }
     }
   }
 
@@ -74,7 +74,26 @@ class Lobby(
     }
   }
 
-  private suspend fun eachSession(block: suspend (Session<LobbyState, LobbyCommand>) -> Unit) = coroutineScope {
+  private suspend fun manageGameStartTimer(timer: MutableStateFlow<Int?>) = coroutineScope {
+    launch { sessions.collect { timer.value = null } }
+    timer.collectLatest { value ->
+      when (value) {
+        null -> {}
+        0 -> {
+          startGame()
+          delay(5.seconds)
+          timer.value = null
+        }
+
+        else -> {
+          delay(1.seconds)
+          timer.value = value - 1
+        }
+      }
+    }
+  }
+
+  private suspend fun forEachSession(block: suspend (Session<LobbyState, LobbyCommand>) -> Unit) = coroutineScope {
     val runningJobs = mutableMapOf<Session<LobbyState, LobbyCommand>, Job>()
     this@Lobby.sessions.map { it.values.toSet() }.collect { sessions ->
       runningJobs.minus(sessions).forEach { (_, job) -> job.cancel() }
@@ -85,39 +104,17 @@ class Lobby(
     }
   }
 
-  private suspend fun respondToCommands() {
-    eachSession { session ->
-      session.messages.collect { command ->
-        when (command) {
-          is LobbyCommand.StartGame -> startingIn.value = 3
-          is LobbyCommand.CancelGameStart -> startingIn.value = null
-          is LobbyCommand.SetResponseTimer -> {
-            startingIn.value = null
-            options.update { it.copy(responseTimer = command.responseTimer) }
-          }
-        }
+  private suspend fun respondToCommands(commands: Flow<LobbyCommand>) = commands.collect { command ->
+    when (command) {
+      is LobbyCommand.StartGame -> startingIn.value = 3
+      is LobbyCommand.CancelGameStart -> startingIn.value = null
+      is LobbyCommand.SetResponseTimer -> {
+        startingIn.value = null
+        options.update { it.copy(responseTimer = command.responseTimer) }
       }
     }
   }
 
-  private suspend fun gameStartTimer() = coroutineScope {
-    launch { sessions.collect { startingIn.value = null } }
-    startingIn.collectLatest { value ->
-      when (value) {
-        null -> {}
-        0 -> {
-          startGame()
-          delay(5.seconds)
-          startingIn.value = null
-        }
-
-        else -> {
-          delay(1.seconds)
-          startingIn.value = value - 1
-        }
-      }
-    }
-  }
   private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
 
   fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
