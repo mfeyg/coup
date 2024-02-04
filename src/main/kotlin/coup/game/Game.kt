@@ -11,7 +11,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
 
   private val activePlayers by board::activePlayers
   private val deck by board::deck
-  private val gameLog = GameLog()
+  private val log = GameLog()
 
   private val currentTurn = MutableStateFlow(TurnProgression(activePlayers))
 
@@ -26,10 +26,10 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
 
   suspend fun play() {
     while (winner == null) takeTurn()
-    gameLog.logEvent("Game over") { "winner" `is` winner!! }
+    log.logEvent("Game over") { "winner" `is` winner!! }
   }
 
-  private suspend fun takeTurn() = gameLog.logScope {
+  private suspend fun takeTurn() = log.logScope {
     val player = activePlayer
     logContext { "player" `is` player }
     logEvent("New turn")
