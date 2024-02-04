@@ -11,6 +11,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
 
   private val activePlayers by board::activePlayers
   private val deck by board::deck
+  private val gameLog = GameLog()
 
   private val currentTurn = MutableStateFlow(Turn(activePlayers))
 
@@ -20,41 +21,80 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
   val winner: Player? get() = activePlayers.singleOrNull()
 
   val players by board::players
-  val updates = combine(board.players.map { it.updates } + currentTurn) {}
+
+  val updates = combine<Unit, Unit>(board.updates, currentTurn.map {}) {}
 
   suspend fun play() {
     while (winner == null) takeTurn()
+    gameLog.logEvent("Game over") { "winner" `is` winner!! }
   }
 
-  private suspend fun takeTurn() {
+  private suspend fun takeTurn() = gameLog.logScope {
     val player = currentPlayer
-    val action = player.chooseAction(board)
+    logContext { "player" `is` player }
+    logEvent("New turn")
+
+    val action = logContext("action") { player.chooseAction(board) }
+    logEvent("Action selected")
 
     when (val response = activePlayers.reaction(action)) {
-      is Reaction.Allow -> action.perform()
+      is Reaction.Allow -> {
+        logEvent("Action allowed")
+        logEvent("Action performed")
+        action.perform()
+      }
 
       is Reaction.Block -> {
-        val (blocker, blockingInfluence) = response
-        val challenger = activePlayers.challenger(response)
+        val block = logContext("block") { response }
+        val (blocker, blockingInfluence) = block
+        logEvent("Block attempted")
+        val challenger = logContext("challenger") { activePlayers.challenger(block) }
         if (challenger != null) {
+          logEvent("Block challenged")
           val revealedInfluence = blocker.respondToChallenge(blockingInfluence, challenger)
+          logEvent("Blocker revealed influence") { "influence" `is` revealedInfluence }
           if (revealedInfluence == blockingInfluence) coroutineScope {
-            launch { blocker.swapOut(blockingInfluence, deck) }
-            launch { challenger.loseInfluence() }
+            logEvent("Block validated")
+            launch {
+              logEvent("Blocker swaps out influence") { "influence" `is` revealedInfluence }
+              blocker.swapOut(blockingInfluence, deck)
+            }
+            launch {
+              challenger.loseInfluence()?.let { influence ->
+                logEvent("Challenger surrenders influence") { "influence" `is` influence }
+              }
+            }
           } else {
+            logEvent("Blocker lost influence") { "influence" `is` revealedInfluence }
+            logEvent("Action performed")
             action.perform()
           }
         }
       }
 
       is Reaction.Challenge -> {
-        val (challenger) = response
+        val challenger = logContext("challenger") { response.challenger }
+        logEvent("Action challenged")
         val requiredInfluence = ruleset.requiredInfluence(action)!!
         val revealedInfluence = player.respondToChallenge(requiredInfluence, challenger)
+        logEvent("Player revealed influence") { "influence" `is` revealedInfluence }
         if (revealedInfluence == requiredInfluence) coroutineScope {
-          launch { player.swapOut(revealedInfluence, deck) }
-          launch { challenger.loseInfluence() }
-          launch { action.perform() }
+          logEvent("Action validated")
+          launch {
+            logEvent("Player swaps out influence") { "influence" `is` revealedInfluence }
+            player.swapOut(revealedInfluence, deck)
+          }
+          launch {
+            challenger.loseInfluence()?.let { influence ->
+              logEvent("Challenger surrenders influence") { "influence" `is` influence }
+            }
+          }
+          launch {
+            logEvent("Action performed")
+            action.perform()
+          }
+        } else {
+          logEvent("Player lost influence") { "influence" `is` revealedInfluence }
         }
       }
     }

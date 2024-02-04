@@ -1,6 +1,5 @@
 package coup.server
 
-import coup.game.Agent
 import coup.game.Game
 import coup.game.Player
 import coup.game.rules.Ruleset
@@ -15,22 +14,22 @@ class GameBuilder {
   var options: GameOptions = GameOptions.default
   private var computerPlayerNumber = 0
 
-  fun addHumanPlayer(person: Person, agentWrapper: (Agent) -> Agent = { it }) {
+  fun addHumanPlayer(person: Person) {
     players.add(person to { number, server ->
       Player(number, person.name, ruleset) { player ->
-        agentWrapper(PlayerAgent(PromptContext(player, ruleset, people, options, server.session(person))))
+        PlayerAgent(PromptContext(player, ruleset, people, options, server.session(person)))
       }
     })
   }
 
-  fun addComputerPlayer(agentWrapper: (Agent) -> Agent = { it }) {
+  fun addComputerPlayer() {
     val id = Id()
     val name = "Computer ${++computerPlayerNumber}"
     val color = randomColor()
     val computer = Person(id, name, color)
     players.add(computer to { number, _ ->
       Player(number, name, ruleset) { player ->
-        agentWrapper(ComputerAgent(ruleset, player))
+        ComputerAgent(ruleset, player)
       }
     })
   }

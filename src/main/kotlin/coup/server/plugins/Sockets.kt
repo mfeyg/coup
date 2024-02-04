@@ -29,8 +29,8 @@ fun Application.configureSockets() {
       if (call.parameters.contains("sample")) {
         val connection = connectionController.connection(this)
         val game = GameBuilder {
-          addHumanPlayer(connection.user, ::LoggingAgent)
-          repeat(4) { addComputerPlayer(::LoggingAgent) }
+          addHumanPlayer(connection.user)
+          repeat(4) { addComputerPlayer() }
           shufflePlayers()
         }
         launch { game.start() }
