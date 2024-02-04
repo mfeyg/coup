@@ -83,13 +83,11 @@ class StandardRules : Ruleset {
   override fun canChallenge(player: Player, action: Action) =
     player != action.player && requiredInfluence(action) != null
 
-  override fun canAttemptBlock(player: Player, action: Action): Boolean {
-    if (player == action.player) return false
-    return when (action) {
+  override fun canAttemptBlock(player: Player, action: Action) =
+    player != action.player && when (action) {
       is Action.ForeignAid -> true
       is Action.Steal -> player == action.target
       is Action.Assassinate -> player == action.target
       else -> false
     }
-  }
 }
