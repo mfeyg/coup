@@ -15,7 +15,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
 
   private val currentTurn = MutableStateFlow(TurnProgression(activePlayers))
 
-  private fun nextTurn() = with(currentTurn) { value = value.next() }
+  private fun endTurn() = with(currentTurn) { value = value.next() }
 
   val activePlayer: Player get() = currentTurn.value.player
   val winner: Player? get() = activePlayers.singleOrNull()
@@ -99,6 +99,6 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
       }
     }
 
-    nextTurn()
+    endTurn()
   }
 }
