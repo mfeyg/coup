@@ -18,8 +18,9 @@ class ActionBuilder(
     get() = type in setOf(Steal, Assassinate, Coup)
 
   fun build(): Action {
-    if (targetRequired != (target != null)) {
-      throw IllegalStateException("Action $type " + (if (targetRequired) "requires" else "does not take") + " a target.")
+    val targetProvided = target != null
+    check(targetProvided == targetRequired) {
+      "Action $type " + (if (targetRequired) "requires" else "does not take") + " a target."
     }
     return when (type) {
       Income -> Action.Income(player)
