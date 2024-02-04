@@ -13,7 +13,7 @@ class ConnectionController {
     val id = readSocketId(socket)
       ?: Id(length = 100).also { socket.send("Id:${it.value}") }
     val name = readSocketName(socket)
-    return UserConnection(socket, Person(id, name, idColor(id).cssColor))
+    return UserConnection(Person(id, name, idColor(id).cssColor), socket)
   }
 
   private suspend fun idColor(id: Id): Color {

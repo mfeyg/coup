@@ -2,5 +2,5 @@ package coup.server
 
 import io.ktor.websocket.*
 
-class UserConnection(private val socket: WebSocketSession, val user: Person) :
+class UserConnection(val user: Person, private val socket: WebSocketSession) :
   WebSocketSession by socket
