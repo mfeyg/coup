@@ -110,6 +110,11 @@ class Player(
 
   companion object {
 
+    suspend fun Collection<Player>.reaction(action: Action) =
+      prompt { respondToAction(action).takeIf { it != Reaction.Allow } } ?: Reaction.Allow
+
+    suspend fun Collection<Player>.challenger(block: Block) = prompt { takeIf { challengesBlock(block) } }
+
     /** Prompts a collection of players and returns the first non-null response (if any). */
     private suspend fun <T : Any> Collection<Player>.prompt(respond: suspend Player.() -> T?): T? {
       val response = CompletableDeferred<T?>()
@@ -129,10 +134,5 @@ class Player(
       response.complete(null)
       return response.await()
     }
-
-    suspend fun Collection<Player>.reaction(action: Action) =
-      prompt { respondToAction(action).takeIf { it != Reaction.Allow } } ?: Reaction.Allow
-
-    suspend fun Collection<Player>.challenger(block: Block) = prompt { takeIf { challengesBlock(block) } }
   }
 }
