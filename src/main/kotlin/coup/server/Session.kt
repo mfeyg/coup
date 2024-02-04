@@ -17,7 +17,7 @@ class Session<State, Message>(
   private val messageParser: (String) -> Message = { throw IllegalArgumentException("Unexpected message $it") },
 ) {
 
-  val id by user::id
+  val userId by user::id
 
   private val incomingMessages = MutableSharedFlow<Message>()
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)

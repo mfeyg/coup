@@ -50,7 +50,7 @@ class Lobby(
         LobbyState.Player(
           player.user.name,
           player.user.color,
-          player.id == champion
+          player.userId == champion
         )
       },
       startingIn = startingIn,
@@ -142,7 +142,7 @@ class Lobby(
     try {
       session.connect(socket)
     } finally {
-      sessions.update { sessions -> if (session.connectionCount == 0) sessions - session.id else sessions }
+      sessions.update { sessions -> if (session.connectionCount == 0) sessions - session.userId else sessions }
     }
   }
 
@@ -154,7 +154,7 @@ class Lobby(
     var players = this.sessions.value.values.toList()
     val options = options.value
     val championId = champion.value
-    val champion = players.indexOfFirst { it.id == championId }
+    val champion = players.indexOfFirst { it.userId == championId }
     if (champion != -1) {
       players = players.subList(champion, players.size) + players.subList(0, champion)
     }
