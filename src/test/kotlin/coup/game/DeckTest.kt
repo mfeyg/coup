@@ -12,12 +12,12 @@ class DeckTest {
     repeat(9) { cards += deck.draw() }
 
     assertContentEquals(
-      cards,
       listOf(
         Contessa, Contessa, Contessa,
         Assassin, Assassin, Assassin,
         Ambassador, Ambassador, Ambassador
-      )
+      ),
+      cards
     )
   }
 }
