@@ -5,7 +5,11 @@ import coup.game.Player
 import coup.game.actions.Action.Type.Companion.type
 import kotlin.math.min
 
-sealed class Action(val player: Player, private val cost: Int = 0, private val effect: suspend () -> Unit) {
+sealed class Action(
+  val player: Player,
+  private val cost: Int = 0,
+  private val effect: suspend () -> Unit
+) {
 
   open val target: Player? = null
 
