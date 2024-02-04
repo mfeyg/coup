@@ -13,7 +13,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
   private val deck by board::deck
   private val gameLog = GameLog()
 
-  private val currentTurn = MutableStateFlow(Turn(activePlayers))
+  private val currentTurn = MutableStateFlow(TurnProgression(activePlayers))
 
   private fun nextTurn() = with(currentTurn) { value = value.next() }
 
