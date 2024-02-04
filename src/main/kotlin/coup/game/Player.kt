@@ -120,12 +120,12 @@ class Player(
       val response = CompletableDeferred<T?>()
       coroutineScope {
         launch {
-          val outerScope = this
+          val scope = this
           forEach { responder ->
             launch {
               responder.respond()?.let {
                 response.complete(it)
-                outerScope.cancel()
+                scope.cancel()
               }
             }
           }
