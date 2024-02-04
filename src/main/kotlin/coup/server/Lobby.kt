@@ -9,7 +9,6 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /** A lobby from which to start a game. */
-// TODO: Can probably separate the idea of a Lobby from the lobby server.
 class Lobby(
   private val newGame: suspend (players: List<Person>, GameOptions) -> Pair<GameServer, Id>
 ) {
