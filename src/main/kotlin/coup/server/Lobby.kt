@@ -1,6 +1,6 @@
 package coup.server
 
-import coup.server.ConnectionController.SocketConnection
+import coup.server.ConnectionController.UserConnection
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -128,7 +128,7 @@ class Lobby(
     scope.cancel()
   }
 
-  suspend fun connect(socket: SocketConnection) {
+  suspend fun connect(socket: UserConnection) {
     if (!isActive) {
       socket.send("LobbyNotFound")
       return

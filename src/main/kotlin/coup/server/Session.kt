@@ -1,6 +1,6 @@
 package coup.server
 
-import coup.server.ConnectionController.SocketConnection
+import coup.server.ConnectionController.UserConnection
 import coup.server.agent.Prompt
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
@@ -22,7 +22,7 @@ class Session<State, Message>(
 
   private val incomingMessages = MutableSharedFlow<Message>()
   private val events = MutableSharedFlow<String>(replay = UNLIMITED)
-  private val connections = MutableStateFlow(setOf<SocketConnection>())
+  private val connections = MutableStateFlow(setOf<UserConnection>())
   val connectionCount get() = connections.value.size
 
   val messages get() = incomingMessages.asSharedFlow()
@@ -53,7 +53,7 @@ class Session<State, Message>(
     }
   }
 
-  suspend fun connect(connection: SocketConnection) {
+  suspend fun connect(connection: UserConnection) {
     connections.update { it + connection }
     try {
       coroutineScope {

@@ -1,6 +1,6 @@
 package coup.server
 
-import coup.server.ConnectionController.SocketConnection
+import coup.server.ConnectionController.UserConnection
 import io.ktor.websocket.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.update
 class GameController {
   private val games = MutableStateFlow(mapOf<Id, GameServer>())
 
-  suspend fun connect(connection: SocketConnection, gameId: Id) {
+  suspend fun connect(connection: UserConnection, gameId: Id) {
     game(gameId)?.connect(connection) ?: connection.send("GameNotFound")
   }
 

@@ -8,14 +8,14 @@ import java.awt.Color
 import kotlin.experimental.xor
 
 class ConnectionController {
-  class SocketConnection(private val socket: WebSocketSession, val user: Person) :
+  class UserConnection(private val socket: WebSocketSession, val user: Person) :
     WebSocketSession by socket
 
-  suspend fun connection(socket: WebSocketSession): SocketConnection {
+  suspend fun connection(socket: WebSocketSession): UserConnection {
     val id = readSocketId(socket)
       ?: Id(length = 100).also { socket.send("Id:${it.value}") }
     val name = readSocketName(socket)
-    return SocketConnection(socket, Person(id, name, idColor(id).cssColor))
+    return UserConnection(socket, Person(id, name, idColor(id).cssColor))
   }
 
   private suspend fun idColor(id: Id): Color {

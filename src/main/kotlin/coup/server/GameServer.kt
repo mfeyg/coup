@@ -2,7 +2,7 @@ package coup.server
 
 import coup.game.Game
 import coup.game.Player
-import coup.server.ConnectionController.SocketConnection
+import coup.server.ConnectionController.UserConnection
 import coup.server.dto.GameState
 import coup.server.dto.PlayerData.Companion.dto
 import coup.server.dto.CurrentPlayerData.Companion.asCurrentPlayer
@@ -44,7 +44,7 @@ class GameServer(
 
   fun session(person: Person) = sessions.updateAndGet { it + person }.getValue(person.id)
 
-  suspend fun connect(connection: SocketConnection) {
+  suspend fun connect(connection: UserConnection) {
     try {
       connectionCount.update { it + 1 }
       session(connection.user).connect(connection)
