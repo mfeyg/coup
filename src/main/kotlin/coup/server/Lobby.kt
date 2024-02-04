@@ -4,6 +4,7 @@ import coup.server.dto.LobbyState
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -32,73 +33,6 @@ class Lobby(
   val isActive: Boolean get() = !shuttingDown.value
   private val shuttingDown = MutableStateFlow(false)
 
-  private fun CoroutineScope.eachSession(block: suspend (Session<LobbyState, LobbyCommand>) -> Unit) = launch {
-    val runningJobs = mutableMapOf<Session<LobbyState, LobbyCommand>, Job>()
-    this@Lobby.sessions.map { it.values.toSet() }.collect { sessions ->
-      runningJobs.minus(sessions).forEach { (_, job) -> job.cancel() }
-      runningJobs.keys.retainAll(sessions)
-      sessions.minus(runningJobs.keys).forEach { session ->
-        runningJobs[session] = launch { block(session) }
-      }
-    }
-  }
-
-  fun start() {
-    with(CoroutineScope(Dispatchers.Default)) {
-      val scope = this
-      eachSession { session ->
-        session.messages.collect { command ->
-          when (command) {
-            is LobbyCommand.StartGame -> startingIn.value = 3
-            is LobbyCommand.CancelGameStart -> startingIn.value = null
-            is LobbyCommand.SetResponseTimer -> {
-              startingIn.value = null
-              options.update { it.copy(responseTimer = command.responseTimer) }
-            }
-          }
-        }
-      }
-      launch {
-        sessions.collectLatest { sessions ->
-          startingIn.value = null
-          if (sessions.isEmpty()) {
-            delay(5.minutes)
-            shutdown(scope)
-          }
-        }
-      }
-      launch {
-        startingIn.collectLatest startingIn@{ value ->
-          if (value == null) return@startingIn
-          when (value) {
-            0 -> {
-              startGame()
-              delay(5.seconds)
-              startingIn.value = null
-            }
-
-            else -> {
-              delay(1.seconds)
-              startingIn.value = value - 1
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
-  fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
-
-  private fun shutdown(scope: CoroutineScope) {
-    shuttingDown.value = true
-    for (session in sessions.value.values) {
-      session.disconnect()
-    }
-    _onShutDown.value.forEach { it() }
-    scope.cancel()
-  }
-
   suspend fun connect(socket: UserConnection) {
     if (!isActive) {
       socket.send("LobbyNotFound")
@@ -117,6 +51,76 @@ class Lobby(
       sessions.update { sessions -> if (session.connectionCount == 0) sessions - session.userId else sessions }
     }
   }
+
+  fun start() {
+    with(CoroutineScope(Dispatchers.Default)) {
+      shutDownWhenEmptyFor(5.minutes)
+      launch { respondToCommands() }
+      launch { gameStartTimer() }
+    }
+  }
+
+  private fun CoroutineScope.shutDownWhenEmptyFor(delay: Duration) = launch {
+    sessions.collectLatest { value ->
+      if (value.isEmpty()) {
+        delay(delay)
+        shuttingDown.value = true
+        for (session in sessions.value.values) {
+          session.disconnect()
+        }
+        _onShutDown.value.forEach { it() }
+        this@shutDownWhenEmptyFor.cancel()
+      }
+    }
+  }
+
+  private suspend fun eachSession(block: suspend (Session<LobbyState, LobbyCommand>) -> Unit) = coroutineScope {
+    val runningJobs = mutableMapOf<Session<LobbyState, LobbyCommand>, Job>()
+    this@Lobby.sessions.map { it.values.toSet() }.collect { sessions ->
+      runningJobs.minus(sessions).forEach { (_, job) -> job.cancel() }
+      runningJobs.keys.retainAll(sessions)
+      sessions.minus(runningJobs.keys).forEach { session ->
+        runningJobs[session] = launch { block(session) }
+      }
+    }
+  }
+
+  private suspend fun respondToCommands() {
+    eachSession { session ->
+      session.messages.collect { command ->
+        when (command) {
+          is LobbyCommand.StartGame -> startingIn.value = 3
+          is LobbyCommand.CancelGameStart -> startingIn.value = null
+          is LobbyCommand.SetResponseTimer -> {
+            startingIn.value = null
+            options.update { it.copy(responseTimer = command.responseTimer) }
+          }
+        }
+      }
+    }
+  }
+
+  private suspend fun gameStartTimer() = coroutineScope {
+    launch { sessions.collect { startingIn.value = null } }
+    startingIn.collectLatest { value ->
+      when (value) {
+        null -> {}
+        0 -> {
+          startGame()
+          delay(5.seconds)
+          startingIn.value = null
+        }
+
+        else -> {
+          delay(1.seconds)
+          startingIn.value = value - 1
+        }
+      }
+    }
+  }
+  private val _onShutDown = MutableStateFlow(listOf<() -> Unit>())
+
+  fun onShutDown(block: () -> Unit) = _onShutDown.update { it + block }
 
   private fun setChampion(champion: Person) {
     this.champion.value = champion.id
