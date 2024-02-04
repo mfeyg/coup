@@ -3,17 +3,15 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="name.css">
 
-<dialog open>
 <form id="name-form" action="lobby.html" onsubmit="localStorage.setItem('name', document.getElementById('name').value)">
   <label>Enter your name: <input required autocomplete="off" id="name" autofocus></label>
 </form>
-</dialog>
 
 <script>
 let redirect = new URLSearchParams(location.search).get("redirect")
 if (redirect != null) {
   redirect = new URL(location.origin + redirect)
-  const form = document.getElementById("name-form")
+  const form = document.querySelector("form")
   form.action = redirect.pathname
   redirect.searchParams.forEach((value, name) => {
     const hidden = document.createElement("input")
