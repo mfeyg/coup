@@ -15,21 +15,21 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PlayerTest {
-  private val agentForPlayer = mutableMapOf<Player, Agent>()
+  private val playerAgent = mutableMapOf<Player, Agent>()
   private val rules = StandardRules()
 
-  private fun mockPlayer(num: Int): Player {
+  private fun mockPlayer(playerNumber: Int = playerAgent.size): Player {
     val agent = mockk<Agent>()
-    val player = Player(num, "test player $num", rules) { agent }
-    agentForPlayer[player] = agent
+    val player = Player(playerNumber, "Test Player", rules) { agent }
+    playerAgent[player] = agent
     return player
   }
 
-  private fun withAgent(player: Player, block: Agent.() -> Unit) = with(agentForPlayer[player]!!, block)
+  private fun withAgent(player: Player, block: Agent.() -> Unit) = with(playerAgent[player]!!, block)
 
-  private val player1 = mockPlayer(1)
-  private val player2 = mockPlayer(2)
-  private val player3 = mockPlayer(3)
+  private val player1 = mockPlayer()
+  private val player2 = mockPlayer()
+  private val player3 = mockPlayer()
 
   @Test
   fun respondToAction_allow() = runBlocking {
