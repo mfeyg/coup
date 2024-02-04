@@ -54,13 +54,13 @@ class GameServer(
 
   fun start() {
     with(CoroutineScope(Dispatchers.Default)) {
-      val outer = this
+      val scope = this
       launch {
         connectionCount.collectLatest { connections ->
           if (connections == 0) {
             delay(1.hours)
             _onShutDown.value.forEach { it() }
-            outer.cancel()
+            scope.cancel()
           }
         }
       }
