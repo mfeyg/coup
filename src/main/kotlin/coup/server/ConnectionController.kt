@@ -8,8 +8,6 @@ import java.awt.Color
 import kotlin.experimental.xor
 
 class ConnectionController {
-  class UserConnection(private val socket: WebSocketSession, val user: Person) :
-    WebSocketSession by socket
 
   suspend fun connection(socket: WebSocketSession): UserConnection {
     val id = readSocketId(socket)

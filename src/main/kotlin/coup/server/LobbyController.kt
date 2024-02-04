@@ -1,6 +1,5 @@
 package coup.server
 
-import coup.server.ConnectionController.UserConnection
 import io.ktor.websocket.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update

@@ -2,7 +2,6 @@ package coup.server
 
 import coup.game.Game
 import coup.game.Player
-import coup.server.ConnectionController.UserConnection
 import coup.server.dto.GameState
 import coup.server.dto.PlayerData.Companion.dto
 import coup.server.dto.CurrentPlayerData.Companion.asCurrentPlayer

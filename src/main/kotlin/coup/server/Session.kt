@@ -1,6 +1,5 @@
 package coup.server
 
-import coup.server.ConnectionController.UserConnection
 import coup.server.agent.Prompt
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
