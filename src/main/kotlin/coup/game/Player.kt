@@ -106,7 +106,7 @@ class Player(
     return influence
   }
 
-  override fun toString() = "Player $number <<$name>>"
+  override fun toString() = "Player ${number + 1} <<$name>>"
 
   companion object {
 
