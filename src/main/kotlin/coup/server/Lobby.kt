@@ -17,13 +17,13 @@ class Lobby(
   private val options = MutableStateFlow(GameOptions.default)
   private val startingIn = MutableStateFlow<Int?>(null)
   private val champion = MutableStateFlow<Id?>(null)
-  private val state = combine(sessions, champion, startingIn, options) { players, champion, startingIn, options ->
+  private val state = combine(sessions, champion, startingIn, options) { sessions, champion, startingIn, options ->
     LobbyState(
-      players = players.values.map { player ->
+      players = sessions.values.map { session ->
         LobbyState.Player(
-          player.user.name,
-          player.user.color,
-          player.userId == champion
+          session.user.name,
+          session.user.color,
+          session.userId == champion
         )
       },
       startingIn = startingIn,
