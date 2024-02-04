@@ -17,7 +17,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
 
   private fun nextTurn() = with(currentTurn) { value = value.next() }
 
-  val currentPlayer: Player get() = currentTurn.value.currentPlayer
+  val activePlayer: Player get() = currentTurn.value.currentPlayer
   val winner: Player? get() = activePlayers.singleOrNull()
 
   val players by board::players
@@ -30,7 +30,7 @@ class Game(private val ruleset: Ruleset, private val board: Board) {
   }
 
   private suspend fun takeTurn() = gameLog.logScope {
-    val player = currentPlayer
+    val player = activePlayer
     logContext { "player" `is` player }
     logEvent("New turn")
 

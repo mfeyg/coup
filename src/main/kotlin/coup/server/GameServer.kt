@@ -29,7 +29,7 @@ class GameServer(
     GameState(
       player = player()?.asCurrentPlayer(),
       players = game.players.map { it.dto() },
-      currentTurn = game.currentPlayer.number.takeIf { game.winner == null },
+      currentTurn = game.activePlayer.number.takeIf { game.winner == null },
       winner = game.winner?.number,
     )
   }
