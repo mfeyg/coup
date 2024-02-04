@@ -34,11 +34,12 @@ class GameServer(
     )
   }
 
-  fun session(person: Person) = sessions.updateAndGet sessions@{ value ->
-    if (value.containsKey(person.id)) return@sessions value
-    val playerIndex = players.indexOfFirst { it.id == person.id }.takeIf { it >= 0 }
-    val gameState = state { playerIndex?.let { game.players[it] } }
-    return@sessions value + (person.id to Session(person, gameState))
+  fun session(person: Person) = sessions.updateAndGet { value ->
+    if (value.containsKey(person.id)) value else {
+      val playerIndex = players.indexOfFirst { it.id == person.id }.takeIf { it >= 0 }
+      val gameState = state { playerIndex?.let { game.players[it] } }
+      value + (person.id to Session(person, gameState))
+    }
   }.getValue(person.id)
 
   suspend fun connect(connection: UserConnection) {
