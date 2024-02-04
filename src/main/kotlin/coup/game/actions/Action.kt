@@ -7,18 +7,11 @@ import kotlin.math.min
 
 sealed class Action(val player: Player, private val cost: Int = 0, private val effect: suspend () -> Unit) {
 
-
   open val target: Player? = null
-
-  private var _onPerform: Action.() -> Unit = {}
-  fun onPerform(block: Action.() -> Unit) {
-    _onPerform = block
-  }
 
   suspend fun perform() {
     player.pay(cost)
     effect.invoke()
-    _onPerform()
   }
 
   override fun toString() = buildString {
