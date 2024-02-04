@@ -110,6 +110,7 @@ class Player(
 
   companion object {
 
+    /** Prompts a collection of players and returns the first non-null response (if any). */
     private suspend fun <T : Any> Collection<Player>.prompt(respond: suspend Player.() -> T?): T? {
       val response = CompletableDeferred<T?>()
       coroutineScope {
